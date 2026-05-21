@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { Home, Phone, Music, Image as ImageIcon } from 'lucide-react'
+import { Home, Phone, Music, Image as ImageIcon, UserPlus } from 'lucide-react'
 
 const PUBLIC_LINKS = [
   { href: '/',          icon: Home,       label: 'Página principal',  desc: 'Inicio, historia y presentación de la banda' },
@@ -33,10 +33,29 @@ export default function VisitantePage() {
           Bienvenido, {profile?.displayName?.split(' ')[0] ?? 'Visitante'}
         </h1>
         <p className="font-serif italic text-gold mb-2">&ldquo;Disciplina, progreso y honor&rdquo;</p>
-        <p className="text-gray-500 text-sm mb-8">
+        <p className="text-gray-500 text-sm mb-6">
           Tu cuenta tiene acceso de visitante. Puedes explorar el sitio público
           mientras el administrador define tu rol.
         </p>
+
+        {/* CTA — Solicitar ingreso */}
+        <Link
+          href="/ingresos"
+          className="flex items-center gap-4 bg-gradient-to-r from-navy to-royal text-white rounded-xl px-6 py-5 mb-6 hover:shadow-lg transition-all group border-2 border-gold/30 hover:border-gold"
+        >
+          <div className="w-12 h-12 rounded-xl bg-gold/20 flex items-center justify-center shrink-0 group-hover:bg-gold/30 transition-all">
+            <UserPlus size={22} className="text-gold" />
+          </div>
+          <div className="text-left flex-1">
+            <p className="font-display text-sm font-bold uppercase tracking-wider text-gold">
+              ¿Quieres unirte a la banda?
+            </p>
+            <p className="text-xs text-gray-300 mt-0.5">
+              Completa la solicitud de ingreso — te contactamos en pocos días
+            </p>
+          </div>
+          <span className="text-gold text-lg">→</span>
+        </Link>
 
         <div className="grid gap-3 text-left">
           {PUBLIC_LINKS.map(({ href, icon: Icon, label, desc }) => (

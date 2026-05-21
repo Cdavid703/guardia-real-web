@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { href: '/servicios',  label: 'Servicios' },
   { href: '/galeria',    label: 'Galería' },
   { href: '/noticias',   label: 'Noticias' },
+  { href: '/ingresos',   label: 'Ingresos' },
   { href: '/contacto',   label: 'Contacto' },
 ]
 

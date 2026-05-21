@@ -206,6 +206,29 @@ export async function createEvent(data: Record<string, unknown>) {
   })
 }
 
+// ── Firestore: Ingreso requests ───────────────────────────────────
+export async function createIngresoRequest(data: Record<string, unknown>) {
+  return addDoc(collection(db, 'ingresos'), {
+    ...data,
+    status:    'nuevo',
+    createdAt: serverTimestamp(),
+  })
+}
+
+export async function getIngresoRequests() {
+  const snap = await getDocs(
+    query(collection(db, 'ingresos'), orderBy('createdAt', 'desc'))
+  )
+  return snap.docs.map(d => {
+    const data = d.data()
+    return {
+      id: d.id,
+      ...data,
+      createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date(),
+    }
+  })
+}
+
 // ── Firestore: Gallery ────────────────────────────────────────────
 export async function getGalleryItems(limitCount = 20) {
   const snap = await getDocs(

@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, Clock, CheckCircle, XCircle, Shield } from 'lucide-react'
-import { getAllUsers, updateUserRole } from '@/lib/firebase'
+import { Users, Clock, CheckCircle, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react'
+import { getAllUsers, updateUserRole, getIngresoRequests } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { cn, getRoleLabel, getRoleBadgeColor, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
-import type { UserProfile, UserRole } from '@/types'
+import type { UserProfile, UserRole, IngresoRequest } from '@/types'
 import Image from 'next/image'
 
 const ROLES: { value: UserRole; label: string }[] = [
@@ -15,15 +15,33 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: 'director',   label: 'Director Musical' },
   { value: 'integrante', label: 'Integrante' },
   { value: 'junta',      label: 'Junta Directiva' },
+  { value: 'visitante',  label: 'Visitante' },
   { value: 'pending',    label: 'Pendiente' },
 ]
+
+const INGRESO_STATUS_COLORS: Record<string, string> = {
+  nuevo:      'bg-blue-100 text-blue-700',
+  contactado: 'bg-amber-100 text-amber-700',
+  aceptado:   'bg-green-100 text-green-700',
+  rechazado:  'bg-red-100 text-red-700',
+}
+
+const INGRESO_STATUS_LABELS: Record<string, string> = {
+  nuevo:      'Nuevo',
+  contactado: 'Contactado',
+  aceptado:   'Aceptado',
+  rechazado:  'Rechazado',
+}
 
 export default function AdminPage() {
   const { profile } = useAuth()
   const router = useRouter()
-  const [users,   setUsers]   = useState<UserProfile[]>([])
-  const [loading, setLoading] = useState(true)
-  const [filter,  setFilter]  = useState<UserRole | 'all'>('all')
+  const [users,     setUsers]     = useState<UserProfile[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [filter,    setFilter]    = useState<UserRole | 'all'>('all')
+  const [ingresos,  setIngresos]  = useState<(IngresoRequest & { id: string })[]>([])
+  const [ingLoading,setIngLoading]= useState(true)
+  const [expanded,  setExpanded]  = useState<string | null>(null)
 
   useEffect(() => {
     if (profile && profile.role !== 'admin') {
@@ -33,6 +51,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchUsers()
+    fetchIngresos()
   }, [])
 
   const fetchUsers = async () => {
@@ -44,6 +63,18 @@ export default function AdminPage() {
       toast.error('Error al cargar usuarios')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchIngresos = async () => {
+    setIngLoading(true)
+    try {
+      const data = await getIngresoRequests()
+      setIngresos(data as (IngresoRequest & { id: string })[])
+    } catch {
+      toast.error('Error al cargar solicitudes de ingreso')
+    } finally {
+      setIngLoading(false)
     }
   }
 
@@ -60,10 +91,10 @@ export default function AdminPage() {
   const filtered = filter === 'all' ? users : users.filter(u => u.role === filter)
 
   const stats = [
-    { label: 'Total usuarios',    value: users.length,                                     icon: Users,        color: 'text-navy' },
-    { label: 'Pendientes',        value: users.filter(u => u.role === 'pending').length,   icon: Clock,        color: 'text-amber-600' },
-    { label: 'Activos',           value: users.filter(u => u.role !== 'pending').length,   icon: CheckCircle,  color: 'text-green-600' },
-    { label: 'Administradores',   value: users.filter(u => u.role === 'admin').length,     icon: Shield,       color: 'text-red-600' },
+    { label: 'Total usuarios',       value: users.length,                                          icon: Users,          color: 'text-navy' },
+    { label: 'Pendientes',           value: users.filter(u => u.role === 'pending').length,        icon: Clock,          color: 'text-amber-600' },
+    { label: 'Activos',              value: users.filter(u => u.role !== 'pending').length,        icon: CheckCircle,    color: 'text-green-600' },
+    { label: 'Solicitudes ingreso',  value: ingresos.filter(i => i.status === 'nuevo').length,     icon: ClipboardList,  color: 'text-blue-600' },
   ]
 
   return (
@@ -119,6 +150,92 @@ export default function AdminPage() {
             </span>
           </button>
         ))}
+      </div>
+
+      {/* Ingresos section */}
+      <div className="mb-10">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="font-display text-navy text-xl font-bold uppercase tracking-wider">
+              Solicitudes de ingreso
+            </h2>
+            <p className="text-gray-400 text-xs mt-0.5">
+              {ingresos.filter(i => i.status === 'nuevo').length} nuevas solicitudes sin revisar
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          {ingLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="w-6 h-6 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
+            </div>
+          ) : ingresos.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              <ClipboardList size={32} className="mx-auto mb-3 opacity-30" />
+              <p className="text-sm">No hay solicitudes de ingreso todavía</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {ingresos.map(ing => (
+                <div key={ing.id} className="px-5 py-4">
+                  <div
+                    className="flex items-center justify-between cursor-pointer"
+                    onClick={() => setExpanded(expanded === ing.id ? null : ing.id)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-navy text-white text-sm font-bold flex items-center justify-center shrink-0">
+                        {ing.nombreCompleto?.[0]?.toUpperCase() ?? '?'}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-dark">{ing.nombreCompleto}</p>
+                        <p className="text-xs text-gray-400">{ing.instrumentoInteres} · {ing.telefono}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={cn('badge text-xs', INGRESO_STATUS_COLORS[ing.status] ?? 'bg-gray-100 text-gray-600')}>
+                        {INGRESO_STATUS_LABELS[ing.status] ?? ing.status}
+                      </span>
+                      <p className="text-xs text-gray-400 hidden sm:block">
+                        {formatDate(ing.createdAt as Date, { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                      {expanded === ing.id
+                        ? <ChevronUp size={16} className="text-gray-400" />
+                        : <ChevronDown size={16} className="text-gray-400" />}
+                    </div>
+                  </div>
+
+                  {expanded === ing.id && (
+                    <div className="mt-4 ml-12 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                      {[
+                        ['Email',              ing.email],
+                        ['Teléfono',           ing.telefono],
+                        ['Identificación',     ing.identificacion],
+                        ['Fecha nacimiento',   ing.fechaNacimiento],
+                        ['Barrio / Ciudad',    `${ing.barrio}, ${ing.ciudad}`],
+                        ['Instrumento',        ing.instrumentoInteres],
+                        ['Experiencia',        ing.experienciaPrevia ? `Sí — ${ing.nivelExperiencia}` : 'No'],
+                        ['Disponibilidad',     ing.disponibilidad],
+                        ['Cómo se enteró',     ing.comoSeEntero],
+                      ].map(([label, value]) => (
+                        <div key={label}>
+                          <p className="font-bold text-gray-400 uppercase tracking-wider mb-0.5">{label}</p>
+                          <p className="text-dark">{value}</p>
+                        </div>
+                      ))}
+                      {ing.mensaje && (
+                        <div className="col-span-full">
+                          <p className="font-bold text-gray-400 uppercase tracking-wider mb-0.5">Mensaje</p>
+                          <p className="text-dark italic">{ing.mensaje}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Users table */}

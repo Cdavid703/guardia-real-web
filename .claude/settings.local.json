@@ -5,7 +5,10 @@
       "PowerShell(Get-Command npm -ErrorAction SilentlyContinue)",
       "PowerShell($env:PATH)",
       "PowerShell(Get-ChildItem \"C:\\\\\", \"C:\\\\Program Files\", \"C:\\\\Program Files \\(x86\\)\", \"$env:LOCALAPPDATA\" -Filter \"node.exe\" -Recurse -ErrorAction SilentlyContinue -Depth 4 | Select-Object FullName -First 5)",
-      "PowerShell(cd \"D:\\\\BGRA\\\\guardia-real-web\"; git add src/app/api/instagram/route.ts src/app/\\(public\\)/galeria/page.tsx; git commit -m \"feat: Instagram feed integration in gallery page\"; git push origin main 2>&1)"
+      "PowerShell(cd \"D:\\\\BGRA\\\\guardia-real-web\"; git add src/app/api/instagram/route.ts src/app/\\(public\\)/galeria/page.tsx; git commit -m \"feat: Instagram feed integration in gallery page\"; git push origin main 2>&1)",
+      "Bash(npx tsc *)",
+      "Bash(npm --version)",
+      "Bash(git add *)"
     ]
   }
 }

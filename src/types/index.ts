@@ -100,6 +100,29 @@ export interface Document {
   createdAt: Date
 }
 
+export interface IngresoRequest {
+  id: string
+  // datos personales
+  nombreCompleto: string
+  identificacion: string
+  email: string
+  telefono: string
+  // datos musicales
+  instrumentoInteres: string
+  nivelExperiencia: 'ninguna' | 'basica' | 'intermedia' | 'avanzada'
+  experienciaPrevia: boolean
+  // datos logísticos
+  fechaNacimiento: string
+  barrio: string
+  ciudad: string
+  disponibilidad: string
+  comoSeEntero: string
+  mensaje?: string
+  // estado
+  status: 'nuevo' | 'contactado' | 'aceptado' | 'rechazado'
+  createdAt: Date
+}
+
 // ── Nav links ──────────────────────────────────────────────────────
 export interface NavLink {
   label: string
