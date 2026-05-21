@@ -54,9 +54,10 @@ function LoginContent() {
       await loginWithGoogle()
       toast.success('¡Bienvenido!')
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error desconocido'
-      if (!msg.includes('popup-closed')) {
-        toast.error('Error al iniciar sesión con Google')
+      const code = (err as { code?: string })?.code ?? ''
+      const msg  = err instanceof Error ? err.message : 'Error desconocido'
+      if (!code.includes('popup-closed') && !msg.includes('popup-closed')) {
+        toast.error(`Error Google: ${code || msg}`, { duration: 10000 })
       }
     } finally {
       setLoadingGoogle(false)
