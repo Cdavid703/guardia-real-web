@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { error } = await resend.emails.send({
-      from:    'Guardia Real Web <noreply@guardiareal.co>',
+      from:    'Guardia Real Web <onboarding@resend.dev>',
       to:      [TO],
       replyTo: email,
       subject: `Nueva cotización — ${name} | ${eventType}`,
