@@ -1,35 +1,40 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth }   from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContext'
 import DashboardSidebar from '@/components/dashboard/Sidebar'
 import DashboardTopbar  from '@/components/dashboard/Topbar'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth()
-  const router = useRouter()
-  const [waitedEnough, setWaitedEnough] = useState(false)
 
-  useEffect(() => {
-    const t = setTimeout(() => setWaitedEnough(true), 3000)
-    return () => clearTimeout(t)
-  }, [])
-
-  useEffect(() => {
-    if (!loading && waitedEnough) {
-      if (!user) { router.replace('/login'); return }
-      if (profile?.role === 'pending') { router.replace('/pending'); return }
-    }
-  }, [user, profile, loading, waitedEnough, router])
-
-  if (loading || !profile) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-hero flex flex-col items-center justify-center gap-4">
         <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
-        <div className="text-white text-xs opacity-60">
-          loading: {String(loading)} · user: {user ? 'sí' : 'no'} · profile: {profile ? profile.role : 'null'}
-        </div>
+        <div className="text-white text-xs opacity-60">Cargando sesión...</div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex flex-col items-center justify-center gap-4 text-white p-6">
+        <p>No autenticado.</p>
+        <p className="text-xs opacity-60">user=null, profile={profile ? profile.role : 'null'}</p>
+        <a href="/login" className="underline">Ir a login</a>
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex flex-col items-center justify-center gap-4 text-white p-6">
+        <p>Perfil no se pudo cargar.</p>
+        <p className="text-xs opacity-60">UID: {user.uid}</p>
+        <p className="text-xs opacity-60">Email: {user.email}</p>
+        <p className="text-xs opacity-80 max-w-md text-center">
+          Esto probablemente indica que las reglas de Firestore están bloqueando la lectura, o tu documento no existe en la colección <code>users</code>.
+        </p>
       </div>
     )
   }
