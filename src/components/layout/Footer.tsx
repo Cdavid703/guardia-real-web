@@ -47,6 +47,7 @@ export default function Footer() {
               { href: '/',          label: 'Inicio' },
               { href: '/nosotros',  label: 'Quiénes somos' },
               { href: '/servicios', label: 'Servicios' },
+              { href: '/eventos',   label: 'Eventos' },
               { href: '/galeria',   label: 'Galería' },
               { href: '/noticias',  label: 'Noticias' },
               { href: '/contacto',  label: 'Contacto' },

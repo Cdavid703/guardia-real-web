@@ -23,15 +23,22 @@ export default function DirectorPage() {
       router.replace('/dashboard')
     }
   }, [profile, router])
-  const [eventData, setEventData] = useState({ title: '', date: '', startTime: '', location: '', type: 'ensayo' })
+  const [eventData, setEventData] = useState({
+    title: '', date: '', startTime: '', endTime: '', location: '', type: 'ensayo',
+    description: '', isPublic: false,
+  })
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await createEvent({ ...eventData, visibleTo: ['admin', 'director', 'integrante'], createdBy: profile?.uid })
-      toast.success('Evento creado correctamente')
+      await createEvent({
+        ...eventData,
+        visibleTo: ['admin', 'director', 'integrante'],
+        createdBy: profile?.uid,
+      })
+      toast.success(eventData.isPublic ? 'Evento creado y publicado en el sitio web' : 'Evento creado correctamente')
       setShowEventForm(false)
-      setEventData({ title: '', date: '', startTime: '', location: '', type: 'ensayo' })
+      setEventData({ title: '', date: '', startTime: '', endTime: '', location: '', type: 'ensayo', description: '', isPublic: false })
     } catch {
       toast.error('Error al crear el evento')
     }
@@ -71,16 +78,49 @@ export default function DirectorPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-dark mb-1.5">Hora de inicio</label>
-              <input type="time" value={eventData.startTime} onChange={e => setEventData({...eventData, startTime: e.target.value})} className="input" />
-            </div>
-            <div>
               <label className="block text-sm font-semibold text-dark mb-1.5">Fecha *</label>
               <input type="date" value={eventData.date} onChange={e => setEventData({...eventData, date: e.target.value})} className="input" required />
             </div>
             <div>
+              <label className="block text-sm font-semibold text-dark mb-1.5">Hora de inicio</label>
+              <input type="time" value={eventData.startTime} onChange={e => setEventData({...eventData, startTime: e.target.value})} className="input" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-dark mb-1.5">Hora de fin</label>
+              <input type="time" value={eventData.endTime} onChange={e => setEventData({...eventData, endTime: e.target.value})} className="input" />
+            </div>
+            <div className="sm:col-span-2">
               <label className="block text-sm font-semibold text-dark mb-1.5">Lugar *</label>
               <input value={eventData.location} onChange={e => setEventData({...eventData, location: e.target.value})} className="input" placeholder="Sede, dirección..." required />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-semibold text-dark mb-1.5">
+                Descripción <span className="text-gray-400 font-normal">(visible en el sitio público si es evento público)</span>
+              </label>
+              <textarea
+                value={eventData.description}
+                onChange={e => setEventData({...eventData, description: e.target.value})}
+                className="input resize-none"
+                rows={3}
+                placeholder="Cuéntale al público en qué consiste este evento..."
+              />
+            </div>
+            <div className="sm:col-span-2 border-t border-gray-100 pt-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={eventData.isPublic}
+                  onChange={e => setEventData({...eventData, isPublic: e.target.checked})}
+                  className="w-5 h-5 mt-0.5 accent-royal cursor-pointer"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-dark">Hacer público este evento</p>
+                  <p className="text-xs text-gray-500">
+                    Si lo marcas, el evento aparecerá en la página <code>/eventos</code> del sitio y en la sección de próximos eventos del home.
+                    Los ensayos internos generalmente se dejan sin marcar.
+                  </p>
+                </div>
+              </label>
             </div>
             <div className="sm:col-span-2 flex gap-3">
               <button type="submit" className="btn btn-primary btn-md">Programar evento</button>

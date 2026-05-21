@@ -213,6 +213,35 @@ export async function createEvent(data: Record<string, unknown>) {
   })
 }
 
+/**
+ * Eventos públicos próximos (para la web pública).
+ * Filtra los que tienen isPublic === true y fecha >= hoy.
+ */
+export async function getPublicUpcomingEvents(limitCount = 12) {
+  const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+  const q = query(
+    collection(db, 'events'),
+    where('isPublic', '==', true),
+    where('date', '>=', today),
+    orderBy('date', 'asc'),
+    limit(limitCount),
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map(d => {
+    const data = d.data()
+    return {
+      id:          d.id,
+      title:       (data.title       as string) ?? '',
+      date:        (data.date        as string) ?? '',
+      startTime:   (data.startTime   as string) ?? '',
+      endTime:     (data.endTime     as string) ?? '',
+      location:    (data.location    as string) ?? '',
+      type:        (data.type        as string) ?? 'evento',
+      description: (data.description as string) ?? '',
+    }
+  })
+}
+
 // ── Firestore: Ingreso requests ───────────────────────────────────
 export async function createIngresoRequest(data: Record<string, unknown>) {
   return addDoc(collection(db, 'ingresos'), {
