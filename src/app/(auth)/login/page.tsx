@@ -72,9 +72,10 @@ function LoginContent() {
       toast.success('¡Bienvenido!')
       window.location.href = '/dashboard'
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error desconocido'
-      if (!msg.includes('popup-closed')) {
-        toast.error('Error al iniciar sesión con Microsoft')
+      const code = (err as { code?: string })?.code ?? ''
+      const msg  = err instanceof Error ? err.message : 'Error desconocido'
+      if (!code.includes('popup-closed') && !msg.includes('popup-closed')) {
+        toast.error(`Error Microsoft: ${code || msg}`, { duration: 10000 })
       }
     } finally {
       setLoadingMicrosoft(false)
