@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     try {
       const u = await signInWithGoogle()
+      setUser(u)
       await loadProfile(u)
     } finally {
       setLoading(false)
@@ -75,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     try {
       const u = await signInWithMicrosoft()
+      setUser(u)
       await loadProfile(u)
     } finally {
       setLoading(false)
