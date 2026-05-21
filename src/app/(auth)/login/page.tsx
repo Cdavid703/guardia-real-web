@@ -53,6 +53,7 @@ function LoginContent() {
     try {
       await loginWithGoogle()
       toast.success('¡Bienvenido!')
+      router.replace(callbackUrl)
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code ?? ''
       const msg  = err instanceof Error ? err.message : 'Error desconocido'
@@ -69,6 +70,7 @@ function LoginContent() {
     try {
       await loginWithMicrosoft()
       toast.success('¡Bienvenido!')
+      router.replace(callbackUrl)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error desconocido'
       if (!msg.includes('popup-closed')) {
