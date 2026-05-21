@@ -11,6 +11,7 @@ const config: Config = {
     extend: {
       colors: {
         // Paleta Guardia Real de Antioquia
+        dark:       '#111827',
         navy:       '#1B2E6E',
         royal:      '#1B75BB',
         sky:        '#5AB8E5',

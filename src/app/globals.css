@@ -63,7 +63,7 @@
     @apply inline-flex items-center justify-center gap-2
            font-sans font-semibold tracking-wider no-underline
            cursor-pointer border-2 border-transparent rounded-md
-           transition-all duration-250 whitespace-nowrap select-none;
+           transition-all duration-300 whitespace-nowrap select-none;
   }
   .btn-sm  { @apply px-4 py-2 text-xs; }
   .btn-md  { @apply px-6 py-3 text-sm; }
