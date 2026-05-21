@@ -6,13 +6,22 @@ interface PageBannerProps {
   title:    string
   subtitle?: string
   alt?:     string
+  /** Posición del objeto. Default: 'center 25%'. Ejemplos: 'center top', 'center 40%' */
+  objectPosition?: string
 }
 
 /**
  * Hero banner para páginas internas.
  * Imagen de fondo con overlay oscuro y texto centrado al estilo del sitio.
  */
-export default function PageBanner({ image, eyebrow, title, subtitle, alt }: PageBannerProps) {
+export default function PageBanner({
+  image,
+  eyebrow,
+  title,
+  subtitle,
+  alt,
+  objectPosition = 'center 25%',
+}: PageBannerProps) {
   return (
     <section className="relative h-[420px] md:h-[520px] w-full overflow-hidden">
       {/* Background image */}
@@ -23,7 +32,7 @@ export default function PageBanner({ image, eyebrow, title, subtitle, alt }: Pag
         priority
         sizes="100vw"
         className="object-cover absolute inset-0"
-        style={{ objectPosition: 'center 25%' }}
+        style={{ objectPosition }}
       />
 
       {/* Overlay sutil para legibilidad del texto, sin tapar la foto */}
