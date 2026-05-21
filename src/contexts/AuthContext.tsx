@@ -15,6 +15,7 @@ import {
   getUserProfile,
   signInWithGoogle,
   signInWithMicrosoft,
+  signInWithEmail,
   signOutUser,
 } from '@/lib/firebase'
 import type { UserProfile } from '@/types'
@@ -26,6 +27,7 @@ interface AuthContextType {
   loading:     boolean
   loginWithGoogle:    () => Promise<void>
   loginWithMicrosoft: () => Promise<void>
+  loginWithEmail:     (email: string, password: string) => Promise<void>
   logout:             () => Promise<void>
   refreshProfile:     () => Promise<void>
 }
@@ -83,6 +85,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const loginWithEmail = async (email: string, password: string) => {
+    setLoading(true)
+    try {
+      const u = await signInWithEmail(email, password)
+      setUser(u)
+      await loadProfile(u)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const logout = async () => {
     await signOutUser()
     setUser(null)
@@ -96,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, profile, loading,
-      loginWithGoogle, loginWithMicrosoft, logout, refreshProfile,
+      loginWithGoogle, loginWithMicrosoft, loginWithEmail, logout, refreshProfile,
     }}>
       {children}
     </AuthContext.Provider>

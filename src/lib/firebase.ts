@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   type User,
@@ -65,6 +66,12 @@ export async function signInWithGoogle(): Promise<User> {
 
 export async function signInWithMicrosoft(): Promise<User> {
   const result = await signInWithPopup(auth, microsoftProvider)
+  await ensureUserProfile(result.user)
+  return result.user
+}
+
+export async function signInWithEmail(email: string, password: string): Promise<User> {
+  const result = await signInWithEmailAndPassword(auth, email, password)
   await ensureUserProfile(result.user)
   return result.user
 }

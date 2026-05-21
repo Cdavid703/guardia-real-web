@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Mail, Lock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getRoleDashboard } from '@/lib/utils'
 
@@ -35,8 +35,11 @@ function MicrosoftIcon() {
 function LoginContent() {
   const [loadingGoogle,    setLoadingGoogle]    = useState(false)
   const [loadingMicrosoft, setLoadingMicrosoft] = useState(false)
+  const [loadingEmail,     setLoadingEmail]     = useState(false)
+  const [email,            setEmail]            = useState('')
+  const [password,         setPassword]         = useState('')
 
-  const { loginWithGoogle, loginWithMicrosoft, user, profile } = useAuth()
+  const { loginWithGoogle, loginWithMicrosoft, loginWithEmail, user, profile } = useAuth()
   const router       = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl  = searchParams.get('callbackUrl') || '/dashboard'
@@ -62,6 +65,33 @@ function LoginContent() {
       }
     } finally {
       setLoadingGoogle(false)
+    }
+  }
+
+  const handleEmail = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email || !password) {
+      toast.error('Ingresa correo y contraseña')
+      return
+    }
+    setLoadingEmail(true)
+    try {
+      await loginWithEmail(email, password)
+      toast.success('¡Bienvenido!')
+      window.location.href = '/dashboard'
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code ?? ''
+      let msg = 'Error al iniciar sesión'
+      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+        msg = 'Correo o contraseña incorrectos'
+      } else if (code === 'auth/too-many-requests') {
+        msg = 'Demasiados intentos. Espera unos minutos.'
+      } else if (code) {
+        msg = `Error: ${code}`
+      }
+      toast.error(msg, { duration: 8000 })
+    } finally {
+      setLoadingEmail(false)
     }
   }
 
@@ -124,7 +154,7 @@ function LoginContent() {
             {/* Google */}
             <button
               onClick={handleGoogle}
-              disabled={loadingGoogle || loadingMicrosoft}
+              disabled={loadingGoogle || loadingMicrosoft || loadingEmail}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-lg text-sm font-semibold text-dark bg-white hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loadingGoogle ? (
@@ -138,7 +168,7 @@ function LoginContent() {
             {/* Microsoft */}
             <button
               onClick={handleMicrosoft}
-              disabled={loadingGoogle || loadingMicrosoft}
+              disabled={loadingGoogle || loadingMicrosoft || loadingEmail}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-lg text-sm font-semibold text-dark bg-white hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loadingMicrosoft ? (
@@ -149,6 +179,49 @@ function LoginContent() {
               {loadingMicrosoft ? 'Conectando...' : 'Continuar con Microsoft'}
             </button>
           </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400 uppercase tracking-wider">o</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          {/* Email + password form */}
+          <form onSubmit={handleEmail} className="space-y-3">
+            <div className="relative">
+              <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="email"
+                placeholder="Correo electrónico"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                disabled={loadingEmail}
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg text-sm text-dark placeholder-gray-400 focus:outline-none focus:border-royal disabled:opacity-50"
+              />
+            </div>
+            <div className="relative">
+              <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="password"
+                placeholder="Contraseña"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                disabled={loadingEmail}
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg text-sm text-dark placeholder-gray-400 focus:outline-none focus:border-royal disabled:opacity-50"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loadingGoogle || loadingMicrosoft || loadingEmail}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-navy hover:bg-navy/90 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingEmail && (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              )}
+              {loadingEmail ? 'Conectando...' : 'Iniciar sesión con correo'}
+            </button>
+          </form>
 
           {/* Info box */}
           <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex gap-3">
