@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Send, Music, User, Calendar, MapPin, ChevronDown } from 'lucide-react'
+import Image from 'next/image'
 import { createIngresoRequest } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -115,8 +116,8 @@ export default function IngresosPage() {
     return (
       <div className="min-h-screen bg-[#F5F7FA] flex items-center justify-center px-4">
         <div className="card p-12 text-center max-w-md w-full">
-          <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-4">
-            <span className="text-4xl">🎺</span>
+          <div className="flex justify-center mb-4">
+            <Image src="/images/escudo.png" alt="Guardia Real" width={72} height={72} className="object-contain drop-shadow-lg" />
           </div>
           <h3 className="font-display text-navy text-2xl font-bold uppercase tracking-wider mb-2">
             ¡Solicitud enviada!
@@ -139,7 +140,20 @@ export default function IngresosPage() {
   return (
     <div className="min-h-screen bg-[#F5F7FA]">
       {/* Header */}
-      <div className="bg-gradient-hero py-20 text-white text-center">
+      <div className="relative bg-gradient-hero py-20 text-white text-center overflow-hidden">
+        {/* Escudo */}
+        <div className="flex justify-center mb-5">
+          <div className="w-24 h-24 md:w-32 md:h-32 relative drop-shadow-2xl">
+            <Image
+              src="/images/escudo.png"
+              alt="Escudo Guardia Real de Antioquia"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+        </div>
+
         <p className="section-label mb-3">Únete a la familia</p>
         <h1 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-wider mb-4">
           Solicitud de ingreso
@@ -148,6 +162,17 @@ export default function IngresosPage() {
         <p className="font-serif italic text-gray-300 text-lg">
           Corporación Musical Guardia Real de Antioquia
         </p>
+
+        {/* Mascota — decorativa lado derecho en desktop */}
+        <div className="absolute right-0 bottom-0 hidden lg:block select-none">
+          <Image
+            src="/images/mascota.png"
+            alt="Mascota Guardia Real de Antioquia"
+            width={260}
+            height={260}
+            className="object-contain drop-shadow-2xl opacity-80 hover:opacity-100 transition-opacity duration-300"
+          />
+        </div>
       </div>
 
       <div className="section-container py-16">
