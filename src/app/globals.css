@@ -60,7 +60,7 @@
 @layer components {
   /* Botones */
   .btn {
-    @apply inline-flex items-center justify-content-center gap-2
+    @apply inline-flex items-center justify-center gap-2
            font-sans font-semibold tracking-wider no-underline
            cursor-pointer border-2 border-transparent rounded-md
            transition-all duration-250 whitespace-nowrap select-none;

@@ -6,7 +6,7 @@ const PROTECTED_PREFIXES = ['/dashboard']
 // Rutas solo para no-autenticados
 const AUTH_ONLY_ROUTES = ['/login']
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // El token de sesión de Firebase se guarda en cookie tras el login
