@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, Clock, CheckCircle, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react'
+import { Users, Clock, CheckCircle, ClipboardList, ChevronDown, ChevronUp, Newspaper, ArrowRight } from 'lucide-react'
 import { getAllUsers, updateUserRole, getIngresoRequests } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -9,6 +9,7 @@ import { cn, getRoleLabel, getRoleBadgeColor, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { UserProfile, UserRole, IngresoRequest } from '@/types'
 import Image from 'next/image'
+import Link from 'next/link'
 
 const ROLES: { value: UserRole; label: string }[] = [
   { value: 'admin',      label: 'Administrador' },
@@ -110,7 +111,7 @@ export default function AdminPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {stats.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="card p-5">
             <div className="flex items-center justify-between mb-2">
@@ -120,6 +121,25 @@ export default function AdminPage() {
             <p className={`text-3xl font-bold font-display ${color}`}>{value}</p>
           </div>
         ))}
+      </div>
+
+      {/* Quick links */}
+      <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Link
+          href="/dashboard/admin/noticias"
+          className="card p-4 flex items-center justify-between hover:border-royal transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-royal/10 flex items-center justify-center group-hover:bg-royal group-hover:text-white transition-colors">
+              <Newspaper size={18} className="text-royal group-hover:text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-dark">Gestionar noticias</p>
+              <p className="text-xs text-gray-400">Crear, editar y publicar</p>
+            </div>
+          </div>
+          <ArrowRight size={16} className="text-gray-300 group-hover:text-royal transition-colors" />
+        </Link>
       </div>
 
       {/* Filters */}

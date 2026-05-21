@@ -32,7 +32,8 @@
       "Bash(rm src/app/page.tsx)",
       "Bash(git commit -m 'fix: move home page into \\(public\\) group so WhatsApp float button shows on home *)",
       "Bash(git commit -m 'tweak: shift hero photo position higher to show subject in portrait photo *)",
-      "Bash(git commit -m 'feat: phase 1 — Microsoft hidden, donation page, privacy/terms, SEO *)"
+      "Bash(git commit -m 'feat: phase 1 — Microsoft hidden, donation page, privacy/terms, SEO *)",
+      "Bash(git commit -m 'feat: phase 3 — full news management system *)"
     ]
   }
 }

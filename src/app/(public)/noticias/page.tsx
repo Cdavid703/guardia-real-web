@@ -1,42 +1,24 @@
-import type { Metadata } from 'next'
-import { Calendar, Tag, ArrowRight } from 'lucide-react'
-import Link from 'next/link'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { Calendar, Tag, Newspaper } from 'lucide-react'
+import Image from 'next/image'
+import { getPublishedNews, type NewsItem } from '@/lib/firebase'
+import { formatDate } from '@/lib/utils'
 import PageBanner from '@/components/layout/PageBanner'
 
-export const metadata: Metadata = {
-  title: 'Noticias',
-  description: 'Últimas noticias y novedades de la Corporación Musical Guardia Real de Antioquia',
-}
-
-// Mock data — en producción esto viene de Firestore via Server Component
-const MOCK_NEWS = [
-  {
-    id: '1', slug: 'desfile-silleteros-2025',
-    title: 'Participamos en el Desfile de Silleteros 2025',
-    excerpt: 'La Guardia Real de Antioquia fue parte de la apertura del tradicional Desfile de Silleteros como operador oficial de las Fusiones de Bandas.',
-    date: '2025-08-10',
-    tags: ['Desfile', 'Feria de las Flores'],
-    image: null,
-  },
-  {
-    id: '2', slug: 'primer-puesto-concurso-2024',
-    title: 'Primer puesto en Concurso de Bandas Medellín',
-    excerpt: 'Excelente presentación en el Concurso de Bandas Feria de las Flores, donde obtuvimos el primer puesto en la categoría show.',
-    date: '2024-08-08',
-    tags: ['Concurso', 'Premio'],
-    image: null,
-  },
-  {
-    id: '3', slug: 'carnaval-barranquilla-2023',
-    title: 'Batalla de Flores — Carnaval de Barranquilla 2023',
-    excerpt: 'Representamos a Medellín y Antioquia en el desfile más importante del Carnaval de Barranquilla con una presentación llena de color y energía.',
-    date: '2023-02-21',
-    tags: ['Carnaval', 'Barranquilla'],
-    image: null,
-  },
-]
-
 export default function NoticiasPage() {
+  const [news,    setNews]    = useState<NewsItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [openId,  setOpenId]  = useState<string | null>(null)
+
+  useEffect(() => {
+    getPublishedNews(20)
+      .then(setNews)
+      .catch(() => setNews([]))
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <div>
       <PageBanner
@@ -47,44 +29,87 @@ export default function NoticiasPage() {
       />
 
       <div className="section-container py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {MOCK_NEWS.map(({ id, slug, title, excerpt, date, tags }) => (
-            <article key={id} className="card overflow-hidden flex flex-col">
-              {/* Placeholder image */}
-              <div className="h-48 bg-gradient-primary flex items-center justify-center">
-                <p className="font-display text-white/20 text-4xl font-bold uppercase tracking-wider">GRA</p>
-              </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="w-8 h-8 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
+          </div>
+        ) : news.length === 0 ? (
+          <div className="text-center py-16 text-gray-400 max-w-md mx-auto">
+            <Newspaper size={36} className="mx-auto mb-4 opacity-30" />
+            <h3 className="font-serif text-navy text-lg font-bold mb-2">Aún no hay noticias publicadas</h3>
+            <p className="text-sm">
+              Vuelve pronto. Mientras tanto, síguenos en Instagram para no perderte nada.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {news.map(n => {
+              const isOpen = openId === n.id
+              return (
+                <article key={n.id} className="card overflow-hidden flex flex-col">
+                  {/* Image or placeholder */}
+                  {n.image ? (
+                    <div className="relative h-48 bg-gray-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={n.image} alt={n.title} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="h-48 bg-gradient-primary flex items-center justify-center">
+                      <Image
+                        src="/images/escudo.png"
+                        alt="Guardia Real"
+                        width={80}
+                        height={80}
+                        className="object-contain opacity-30"
+                      />
+                    </div>
+                  )}
 
-              <div className="p-6 flex flex-col flex-1">
-                {/* Tags */}
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {tags.map(tag => (
-                    <span key={tag} className="badge bg-navy/10 text-navy text-[10px]">
-                      <Tag size={9} /> {tag}
-                    </span>
-                  ))}
-                </div>
+                  <div className="p-6 flex flex-col flex-1">
+                    {/* Tags */}
+                    {n.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {n.tags.slice(0, 3).map(tag => (
+                          <span key={tag} className="badge bg-navy/10 text-navy text-[10px]">
+                            <Tag size={9} /> {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
-                {/* Title */}
-                <h2 className="font-serif font-bold text-navy text-lg leading-tight mb-2">{title}</h2>
+                    <h2 className="font-serif font-bold text-navy text-lg leading-tight mb-2">{n.title}</h2>
+                    <p className="text-gray-500 text-sm leading-relaxed flex-1 mb-4">{n.excerpt}</p>
 
-                {/* Excerpt */}
-                <p className="text-gray-500 text-sm leading-relaxed flex-1 mb-4">{excerpt}</p>
+                    {/* Expanded content */}
+                    {isOpen && n.content && (
+                      <div className="mb-4 pb-4 border-t border-gray-100 pt-4">
+                        <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                          {n.content}
+                        </p>
+                      </div>
+                    )}
 
-                {/* Footer */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                    <Calendar size={12} />
-                    {new Date(date).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
-                  </span>
-                  <Link href={`/noticias/${slug}`} className="flex items-center gap-1 text-xs font-semibold text-royal hover:text-navy transition-colors">
-                    Leer más <ArrowRight size={12} />
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+                    {/* Footer */}
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                      <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                        <Calendar size={12} />
+                        {formatDate(n.publishedAt, { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                      {n.content && (
+                        <button
+                          onClick={() => setOpenId(isOpen ? null : n.id)}
+                          className="text-xs font-semibold text-royal hover:text-navy transition-colors"
+                        >
+                          {isOpen ? 'Cerrar' : 'Leer más →'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )

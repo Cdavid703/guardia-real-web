@@ -151,24 +151,69 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 }
 
 // ── Firestore: News ───────────────────────────────────────────────
-export async function getPublishedNews(limitCount = 10) {
+export interface NewsItem {
+  id:          string
+  title:       string
+  slug:        string
+  excerpt:     string
+  content:     string
+  tags:        string[]
+  image?:      string
+  published:   boolean
+  publishedAt: Date
+  updatedAt:   Date
+  author?:     string
+}
+
+function newsFromDoc(id: string, data: Record<string, unknown>): NewsItem {
+  return {
+    id,
+    title:       (data.title       as string) ?? '',
+    slug:        (data.slug        as string) ?? '',
+    excerpt:     (data.excerpt     as string) ?? '',
+    content:     (data.content     as string) ?? '',
+    tags:        (data.tags        as string[]) ?? [],
+    image:       (data.image       as string) ?? undefined,
+    published:   (data.published   as boolean) ?? false,
+    publishedAt: (data.publishedAt as Timestamp)?.toDate() ?? new Date(),
+    updatedAt:   (data.updatedAt   as Timestamp)?.toDate() ?? new Date(),
+    author:      (data.author      as string) ?? undefined,
+  }
+}
+
+export async function getPublishedNews(limitCount = 10): Promise<NewsItem[]> {
   const q = query(
     collection(db, 'news'),
     where('published', '==', true),
     orderBy('publishedAt', 'desc'),
-    limit(limitCount)
+    limit(limitCount),
   )
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  return snap.docs.map(d => newsFromDoc(d.id, d.data()))
+}
+
+export async function getAllNews(): Promise<NewsItem[]> {
+  const snap = await getDocs(query(collection(db, 'news'), orderBy('updatedAt', 'desc')))
+  return snap.docs.map(d => newsFromDoc(d.id, d.data()))
 }
 
 export async function createNews(data: Record<string, unknown>) {
   return addDoc(collection(db, 'news'), {
     ...data,
-    published:   false,
     publishedAt: serverTimestamp(),
     updatedAt:   serverTimestamp(),
   })
+}
+
+export async function updateNews(id: string, data: Record<string, unknown>) {
+  return updateDoc(doc(db, 'news', id), {
+    ...data,
+    updatedAt: serverTimestamp(),
+  })
+}
+
+export async function deleteNews(id: string) {
+  return deleteDoc(doc(db, 'news', id))
 }
 
 // ── Firestore: Quote requests ─────────────────────────────────────
