@@ -123,7 +123,7 @@ function LoginContent() {
             {/* Google */}
             <button
               onClick={handleGoogle}
-              disabled={loadingGoogle || loadingMicrosoft || loadingEmail}
+              disabled={loadingGoogle || loadingEmail}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-lg text-sm font-semibold text-dark bg-white hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loadingGoogle ? (
@@ -172,7 +172,7 @@ function LoginContent() {
             </div>
             <button
               type="submit"
-              disabled={loadingGoogle || loadingMicrosoft || loadingEmail}
+              disabled={loadingGoogle || loadingEmail}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-navy hover:bg-navy/90 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loadingEmail && (

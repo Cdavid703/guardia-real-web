@@ -34,7 +34,8 @@
       "Bash(git commit -m 'tweak: shift hero photo position higher to show subject in portrait photo *)",
       "Bash(git commit -m 'feat: phase 1 — Microsoft hidden, donation page, privacy/terms, SEO *)",
       "Bash(git commit -m 'feat: phase 3 — full news management system *)",
-      "Bash(git commit -m 'feat: phase 4 — editable ingreso status with notes and contact shortcuts *)"
+      "Bash(git commit -m 'feat: phase 4 — editable ingreso status with notes and contact shortcuts *)",
+      "Bash(git commit -m 'fix: remove leftover loadingMicrosoft references that broke build *)"
     ]
   }
 }
