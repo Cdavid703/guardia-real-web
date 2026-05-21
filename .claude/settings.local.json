@@ -8,7 +8,9 @@
       "PowerShell(cd \"D:\\\\BGRA\\\\guardia-real-web\"; git add src/app/api/instagram/route.ts src/app/\\(public\\)/galeria/page.tsx; git commit -m \"feat: Instagram feed integration in gallery page\"; git push origin main 2>&1)",
       "Bash(npx tsc *)",
       "Bash(npm --version)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

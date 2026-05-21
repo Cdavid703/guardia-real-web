@@ -17,26 +17,26 @@ const INSTRUMENTOS = [
   'Saxofón tenor',
   'Saxofón barítono',
   'Trompeta',
-  'Corno',
+  'Melófono',
   'Trombón',
   'Eufonio / Bombardino',
-  'Tuba / Sousafón',
-  'Lira / Metalófono',
-  'Redoblante / Caja',
+  'Tuba de marcha',
+  'Redoblante',
   'Bombo',
   'Platillos',
+  'Multitenor',
   'Percusión (múltiple)',
+  'Percusión latina',
   'Color guard / Banderas',
-  'Bastonera / Majorette',
   'Drum major / Bastonero',
   'Otro',
 ]
 
 const DISPONIBILIDAD = [
-  'Fines de semana',
-  'Fines de semana y algunos entre semana',
-  'Disponibilidad completa',
-  'Solo eventos especiales',
+  'Martes, jueves (6:30–9:00 pm) y domingos (1:00–6:00 pm) — horario completo',
+  'Solo martes y jueves (6:30–9:00 pm)',
+  'Solo domingos (1:00–6:00 pm)',
+  'Disponibilidad limitada / a convenir',
 ]
 
 const COMO_SE_ENTERO = [
@@ -44,24 +44,26 @@ const COMO_SE_ENTERO = [
   'Referido por un integrante',
   'Evento o presentación en vivo',
   'Facebook',
+  'Página web',
   'Búsqueda en internet',
   'Otro',
 ]
 
 const schema = z.object({
-  nombreCompleto:     z.string().min(2, 'Mínimo 2 caracteres'),
-  identificacion:     z.string().min(5, 'Identificación inválida'),
-  email:              z.string().email('Email inválido'),
-  telefono:           z.string().min(7, 'Número inválido'),
-  instrumentoInteres: z.string().min(1, 'Selecciona un instrumento'),
-  experienciaPrevia:  z.boolean(),
-  nivelExperiencia:   z.enum(['ninguna', 'basica', 'intermedia', 'avanzada']),
-  fechaNacimiento:    z.string().min(1, 'Indica tu fecha de nacimiento'),
-  barrio:             z.string().min(2, 'Indica tu barrio'),
-  ciudad:             z.string().min(2, 'Indica tu ciudad'),
-  disponibilidad:     z.string().min(1, 'Selecciona tu disponibilidad'),
-  comoSeEntero:       z.string().min(1, 'Cuéntanos cómo nos conociste'),
-  mensaje:            z.string().optional(),
+  nombreCompleto:          z.string().min(2, 'Mínimo 2 caracteres'),
+  identificacion:          z.string().min(5, 'Identificación inválida'),
+  email:                   z.string().email('Email inválido'),
+  telefono:                z.string().min(7, 'Número inválido'),
+  instrumentoInteres:      z.string().min(1, 'Selecciona un instrumento'),
+  experienciaPrevia:       z.boolean(),
+  instrumentosExperiencia: z.string().optional(),
+  nivelExperiencia:        z.enum(['ninguna', 'basica', 'intermedia', 'avanzada']),
+  fechaNacimiento:         z.string().min(1, 'Indica tu fecha de nacimiento'),
+  barrio:                  z.string().min(2, 'Indica tu barrio'),
+  ciudad:                  z.string().min(2, 'Indica tu ciudad'),
+  disponibilidad:          z.string().min(1, 'Selecciona tu disponibilidad'),
+  comoSeEntero:            z.string().min(1, 'Cuéntanos cómo nos conociste'),
+  mensaje:                 z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -85,7 +87,6 @@ export default function IngresosPage() {
 
   const experienciaPrevia = watch('experienciaPrevia')
 
-  // Pre-fill with auth data
   useEffect(() => {
     if (profile) {
       setValue('nombreCompleto', profile.displayName ?? '')
@@ -141,19 +142,20 @@ export default function IngresosPage() {
     <div className="min-h-screen bg-[#F5F7FA]">
       {/* Header */}
       <div className="relative bg-gradient-hero py-20 text-white text-center overflow-hidden">
-        {/* Escudo */}
-        <div className="flex justify-center mb-5">
-          <div className="w-24 h-24 md:w-32 md:h-32 relative drop-shadow-2xl">
-            <Image
-              src="/images/escudo.png"
-              alt="Escudo Guardia Real de Antioquia"
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
+
+        {/* Escudo — izquierda en desktop */}
+        <div className="absolute left-6 lg:left-10 top-1/2 -translate-y-1/2 hidden lg:block select-none">
+          <Image
+            src="/images/escudo.png"
+            alt="Escudo Guardia Real de Antioquia"
+            width={180}
+            height={180}
+            className="object-contain drop-shadow-2xl opacity-90 hover:opacity-100 transition-opacity duration-300"
+            priority
+          />
         </div>
 
+        {/* Texto central */}
         <p className="section-label mb-3">Únete a la familia</p>
         <h1 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-wider mb-4">
           Solicitud de ingreso
@@ -163,7 +165,7 @@ export default function IngresosPage() {
           Corporación Musical Guardia Real de Antioquia
         </p>
 
-        {/* Mascota — decorativa lado derecho en desktop */}
+        {/* Mascota — derecha en desktop */}
         <div className="absolute right-0 bottom-0 hidden lg:block select-none">
           <Image
             src="/images/mascota.png"
@@ -184,7 +186,7 @@ export default function IngresosPage() {
               <h3 className="font-serif font-bold text-navy text-lg mb-4">¿Cómo funciona?</h3>
               <div className="space-y-4">
                 {[
-                  { icon: '1', title: 'Completa el formulario',   desc: 'Llena todos los datos personales y musicales.' },
+                  { icon: '1', title: 'Completa el formulario',    desc: 'Llena todos los datos personales y musicales.' },
                   { icon: '2', title: 'Revisión por la directiva', desc: 'La junta y el director revisan tu solicitud.' },
                   { icon: '3', title: 'Te contactamos',            desc: 'Te llamamos para coordinar una audición o entrevista.' },
                   { icon: '4', title: '¡Bienvenido!',              desc: 'Si eres seleccionado, recibirás acceso al portal interno.' },
@@ -205,14 +207,23 @@ export default function IngresosPage() {
             <div className="card p-6 bg-gradient-hero text-white">
               <div className="flex gap-2 items-center mb-3">
                 <Music size={16} className="text-gold" />
-                <span className="text-sm font-semibold">Requisitos generales</span>
+                <span className="text-sm font-semibold">Horario de ensayos</span>
               </div>
-              <ul className="text-gray-300 text-xs space-y-1.5 leading-relaxed">
-                <li>• Edad mínima: 12 años</li>
-                <li>• Compromiso con ensayos regulares</li>
-                <li>• Disponibilidad para presentaciones</li>
-                <li>• No se requiere experiencia previa</li>
+              <ul className="text-gray-300 text-xs space-y-2 leading-relaxed">
+                <li>
+                  <span className="text-gold font-semibold">Martes</span> — Vientos<br />
+                  <span className="text-gray-400">6:30 pm – 9:00 pm</span>
+                </li>
+                <li>
+                  <span className="text-gold font-semibold">Jueves</span> — Ensayo general<br />
+                  <span className="text-gray-400">6:30 pm – 9:00 pm</span>
+                </li>
+                <li>
+                  <span className="text-gold font-semibold">Domingo</span> — Ensayo general<br />
+                  <span className="text-gray-400">1:00 pm – 6:00 pm</span>
+                </li>
               </ul>
+              <p className="text-gray-500 text-xs mt-3">• Edad mínima: 12 años<br />• No se requiere experiencia previa</p>
             </div>
           </div>
 
@@ -220,9 +231,7 @@ export default function IngresosPage() {
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit(onSubmit)} className="card p-8 space-y-6">
               <div>
-                <h3 className="font-serif font-bold text-navy text-xl mb-1">
-                  Datos personales
-                </h3>
+                <h3 className="font-serif font-bold text-navy text-xl mb-1">Datos personales</h3>
                 <div className="h-0.5 w-12 bg-gold rounded" />
               </div>
 
@@ -237,9 +246,7 @@ export default function IngresosPage() {
                   {errors.nombreCompleto && <p className="text-red-500 text-xs mt-1">{errors.nombreCompleto.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-dark mb-1.5">
-                    Número de identificación *
-                  </label>
+                  <label className="block text-sm font-semibold text-dark mb-1.5">Número de identificación *</label>
                   <input {...register('identificacion')} className="input" placeholder="CC, TI, CE..." />
                   {errors.identificacion && <p className="text-red-500 text-xs mt-1">{errors.identificacion.message}</p>}
                 </div>
@@ -248,16 +255,12 @@ export default function IngresosPage() {
               {/* Email + Teléfono */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-dark mb-1.5">
-                    Correo electrónico *
-                  </label>
+                  <label className="block text-sm font-semibold text-dark mb-1.5">Correo electrónico *</label>
                   <input {...register('email')} type="email" className="input" placeholder="tu@correo.com" />
                   {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-dark mb-1.5">
-                    Teléfono / WhatsApp *
-                  </label>
+                  <label className="block text-sm font-semibold text-dark mb-1.5">Teléfono / WhatsApp *</label>
                   <input {...register('telefono')} type="tel" className="input" placeholder="300 000 0000" />
                   {errors.telefono && <p className="text-red-500 text-xs mt-1">{errors.telefono.message}</p>}
                 </div>
@@ -290,9 +293,7 @@ export default function IngresosPage() {
 
               {/* Divider */}
               <div className="pt-2 border-t border-gray-100">
-                <h3 className="font-serif font-bold text-navy text-xl mb-1">
-                  Datos musicales
-                </h3>
+                <h3 className="font-serif font-bold text-navy text-xl mb-1">Datos musicales</h3>
                 <div className="h-0.5 w-12 bg-gold rounded" />
               </div>
 
@@ -313,9 +314,7 @@ export default function IngresosPage() {
                   {errors.instrumentoInteres && <p className="text-red-500 text-xs mt-1">{errors.instrumentoInteres.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-dark mb-1.5">
-                    Disponibilidad *
-                  </label>
+                  <label className="block text-sm font-semibold text-dark mb-1.5">Disponibilidad *</label>
                   <div className="relative">
                     <select {...register('disponibilidad')} className="input appearance-none pr-8">
                       <option value="">Selecciona tu disponibilidad</option>
@@ -353,29 +352,39 @@ export default function IngresosPage() {
                 </div>
               </div>
 
-              {/* Nivel de experiencia — condicional */}
+              {/* Detalle de experiencia — condicional */}
               {experienciaPrevia && (
-                <div>
-                  <label className="block text-sm font-semibold text-dark mb-2">
-                    Nivel de experiencia *
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                      { value: 'basica',     label: 'Básica',     desc: 'Menos de 1 año' },
-                      { value: 'intermedia', label: 'Intermedia', desc: '1 a 3 años' },
-                      { value: 'avanzada',   label: 'Avanzada',   desc: 'Más de 3 años' },
-                    ].map(({ value, label, desc }) => (
-                      <label
-                        key={value}
-                        className="flex flex-col items-center gap-1 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-royal transition-colors has-[:checked]:border-royal has-[:checked]:bg-royal/5"
-                      >
-                        <input {...register('nivelExperiencia')} type="radio" value={value} className="sr-only" />
-                        <span className="text-sm font-semibold">{label}</span>
-                        <span className="text-xs text-gray-400 text-center">{desc}</span>
-                      </label>
-                    ))}
+                <div className="space-y-4 pl-4 border-l-2 border-gold/40">
+                  <div>
+                    <label className="block text-sm font-semibold text-dark mb-1.5">
+                      ¿En qué instrumento(s) y/o banda(s) tienes experiencia?
+                    </label>
+                    <input
+                      {...register('instrumentosExperiencia')}
+                      className="input"
+                      placeholder="Ej. Trompeta en Banda de Bello, 3 años"
+                    />
                   </div>
-                  {errors.nivelExperiencia && <p className="text-red-500 text-xs mt-1">{errors.nivelExperiencia.message}</p>}
+                  <div>
+                    <label className="block text-sm font-semibold text-dark mb-2">Nivel de experiencia *</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { value: 'basica',     label: 'Básica',     desc: 'Menos de 1 año' },
+                        { value: 'intermedia', label: 'Intermedia', desc: '1 a 3 años' },
+                        { value: 'avanzada',   label: 'Avanzada',   desc: 'Más de 3 años' },
+                      ].map(({ value, label, desc }) => (
+                        <label
+                          key={value}
+                          className="flex flex-col items-center gap-1 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-royal transition-colors has-[:checked]:border-royal has-[:checked]:bg-royal/5"
+                        >
+                          <input {...register('nivelExperiencia')} type="radio" value={value} className="sr-only" />
+                          <span className="text-sm font-semibold">{label}</span>
+                          <span className="text-xs text-gray-400 text-center">{desc}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {errors.nivelExperiencia && <p className="text-red-500 text-xs mt-1">{errors.nivelExperiencia.message}</p>}
+                  </div>
                 </div>
               )}
 

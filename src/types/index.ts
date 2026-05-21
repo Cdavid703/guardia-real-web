@@ -108,9 +108,10 @@ export interface IngresoRequest {
   email: string
   telefono: string
   // datos musicales
-  instrumentoInteres: string
-  nivelExperiencia: 'ninguna' | 'basica' | 'intermedia' | 'avanzada'
-  experienciaPrevia: boolean
+  instrumentoInteres:      string
+  experienciaPrevia:       boolean
+  instrumentosExperiencia?: string
+  nivelExperiencia:        'ninguna' | 'basica' | 'intermedia' | 'avanzada'
   // datos logísticos
   fechaNacimiento: string
   barrio: string

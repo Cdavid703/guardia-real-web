@@ -43,8 +43,11 @@ export async function POST(req: NextRequest) {
                 ['Barrio',               d.barrio],
                 ['Ciudad',               d.ciudad],
                 ['Instrumento de interés', d.instrumentoInteres],
-                ['Experiencia previa',   d.experienciaPrevia ? 'Sí' : 'No'],
-                ['Nivel de experiencia', NIVEL[d.nivelExperiencia] || d.nivelExperiencia],
+                ['Experiencia previa',        d.experienciaPrevia ? 'Sí' : 'No'],
+                ...(d.experienciaPrevia && d.instrumentosExperiencia
+                  ? [['Instrumento(s) / Banda(s)', d.instrumentosExperiencia]] as [string, string][]
+                  : []),
+                ['Nivel de experiencia',      NIVEL[d.nivelExperiencia] || d.nivelExperiencia],
                 ['Disponibilidad',       d.disponibilidad],
                 ['¿Cómo se enteró?',     d.comoSeEntero],
               ].map(([label, value]) => `
