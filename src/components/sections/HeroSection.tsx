@@ -94,13 +94,13 @@ export default function HeroSection() {
       </div>
 
       {/* Mascota — decorativa lado derecho en desktop */}
-      <div className="absolute right-0 bottom-0 hidden lg:block pointer-events-none select-none">
+      <div className="absolute right-0 bottom-0 hidden lg:block select-none">
         <Image
           src="/images/mascota.png"
           alt="Mascota Guardia Real de Antioquia"
           width={420}
           height={420}
-          className="object-contain drop-shadow-2xl"
+          className="object-contain drop-shadow-2xl opacity-80 hover:opacity-100 transition-opacity duration-300"
           priority
         />
       </div>

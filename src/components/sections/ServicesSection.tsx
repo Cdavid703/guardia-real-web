@@ -86,13 +86,13 @@ export default function ServicesSection() {
 
         {/* Bottom CTA */}
         <div className="relative bg-gradient-hero rounded-2xl p-10 text-white overflow-hidden text-center">
-          <div className="absolute right-0 bottom-0 hidden md:block pointer-events-none select-none opacity-90">
+          <div className="absolute right-0 bottom-0 hidden md:block select-none">
             <Image
               src="/images/mascota.png"
               alt="Mascota Guardia Real"
               width={180}
               height={180}
-              className="object-contain"
+              className="object-contain opacity-80 hover:opacity-100 transition-opacity duration-300"
             />
           </div>
           <div className="relative z-10">

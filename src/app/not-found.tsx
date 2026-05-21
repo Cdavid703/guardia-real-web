@@ -11,7 +11,7 @@ export default function NotFound() {
             alt="Mascota Guardia Real"
             width={200}
             height={200}
-            className="object-contain drop-shadow-2xl"
+            className="object-contain drop-shadow-2xl opacity-80 hover:opacity-100 transition-opacity duration-300"
             priority
           />
         </div>
