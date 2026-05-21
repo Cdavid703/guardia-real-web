@@ -7,7 +7,6 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { Send, Music, User, Calendar, MapPin, ChevronDown } from 'lucide-react'
 import Image from 'next/image'
-import { createIngresoRequest } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 
 const INSTRUMENTOS = [
@@ -97,12 +96,12 @@ export default function IngresosPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
-      await createIngresoRequest({ ...data, userId: user?.uid ?? null })
-      fetch('/api/ingresos', {
+      const res = await fetch('/api/ingresos', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(data),
-      }).catch(() => {})
+        body:    JSON.stringify({ ...data, userId: user?.uid ?? null }),
+      })
+      if (!res.ok) throw new Error('Server error')
       setSent(true)
       reset()
       toast.success('¡Solicitud enviada! Te contactaremos pronto.')
