@@ -6,7 +6,7 @@ import { ChevronDown, Play } from 'lucide-react'
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-hero">
+    <section className="relative flex items-center justify-center overflow-hidden bg-gradient-hero">
       {/* Radial glow */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -19,10 +19,10 @@ export default function HeroSection() {
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-gold/40 to-transparent" />
       <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-royal/40 to-transparent" />
 
-      <div className="section-container relative z-10 text-center py-32">
+      <div className="section-container relative z-10 text-center pt-24 pb-16">
         {/* Escudo */}
-        <div className="flex justify-center mb-8 animate-fade-in">
-          <div className="w-36 h-36 md:w-44 md:h-44 relative drop-shadow-2xl">
+        <div className="flex justify-center mb-5 animate-fade-in">
+          <div className="w-28 h-28 md:w-36 md:h-36 relative drop-shadow-2xl">
             <Image
               src="/images/escudo.png"
               alt="Escudo Guardia Real de Antioquia"
@@ -34,7 +34,7 @@ export default function HeroSection() {
         </div>
 
         {/* Label */}
-        <p className="section-label mb-6 animate-fade-in">
+        <p className="section-label mb-4 animate-fade-in">
           Medellín, Colombia · Desde 1983 · Categoría Show
         </p>
 
@@ -77,7 +77,7 @@ export default function HeroSection() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-20 animate-fade-up"
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-10 animate-fade-up"
           style={{ animationDelay: '400ms' }}>
           {[
             { value: '42+',  label: 'Años de historia' },
