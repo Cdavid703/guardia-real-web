@@ -6,7 +6,7 @@ import { ChevronDown, Play } from 'lucide-react'
 
 export default function HeroSection() {
   return (
-    <section className="relative flex items-center justify-center overflow-hidden min-h-screen bg-navy">
+    <section className="relative flex items-center justify-center overflow-hidden min-h-screen">
       {/* Background photo */}
       <Image
         src="/images/banners/banner-home.jpg"
@@ -14,7 +14,7 @@ export default function HeroSection() {
         fill
         priority
         sizes="100vw"
-        className="object-cover -z-10"
+        className="object-cover absolute inset-0"
         style={{ objectPosition: 'center 25%' }}
       />
 
