@@ -12,6 +12,7 @@ export function getRoleDashboard(role: UserRole): string {
     director:   '/dashboard/director',
     integrante: '/dashboard/integrante',
     junta:      '/dashboard/junta',
+    visitante:  '/dashboard/visitante',
     pending:    '/pending',
   }
   return map[role] ?? '/pending'
@@ -23,6 +24,7 @@ export function getRoleLabel(role: UserRole): string {
     director:   'Director Musical',
     integrante: 'Integrante',
     junta:      'Junta Directiva',
+    visitante:  'Visitante',
     pending:    'Pendiente de aprobación',
   }
   return labels[role] ?? 'Desconocido'
@@ -34,6 +36,7 @@ export function getRoleBadgeColor(role: UserRole): string {
     director:   'bg-purple-100 text-purple-700',
     integrante: 'bg-blue-100 text-blue-700',
     junta:      'bg-amber-100 text-amber-700',
+    visitante:  'bg-green-100 text-green-700',
     pending:    'bg-gray-100 text-gray-600',
   }
   return colors[role] ?? 'bg-gray-100 text-gray-600'

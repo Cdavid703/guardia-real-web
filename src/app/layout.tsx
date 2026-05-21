@@ -31,6 +31,10 @@ export const metadata: Metadata = {
     template: '%s | Guardia Real de Antioquia',
     default:  'Corporación Musical Guardia Real de Antioquia',
   },
+  icons: {
+    icon:  '/images/escudo.png',
+    apple: '/images/escudo.png',
+  },
   description:
     'Banda Show con más de 42 años de trayectoria en Medellín. ' +
     'Disciplina, progreso y honor. Contrataciones y presentaciones.',

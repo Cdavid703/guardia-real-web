@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { ChevronDown, Play } from 'lucide-react'
 
 export default function HeroSection() {
@@ -19,6 +20,19 @@ export default function HeroSection() {
       <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-royal/40 to-transparent" />
 
       <div className="section-container relative z-10 text-center py-32">
+        {/* Escudo */}
+        <div className="flex justify-center mb-8 animate-fade-in">
+          <div className="w-36 h-36 md:w-44 md:h-44 relative drop-shadow-2xl">
+            <Image
+              src="/images/escudo.png"
+              alt="Escudo Guardia Real de Antioquia"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+        </div>
+
         {/* Label */}
         <p className="section-label mb-6 animate-fade-in">
           Medellín, Colombia · Desde 1983 · Categoría Show

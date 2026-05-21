@@ -2,7 +2,7 @@
 // GUARDIA REAL DE ANTIOQUIA — Tipos globales
 // ──────────────────────────────────────────────────────────────────
 
-export type UserRole = 'admin' | 'director' | 'integrante' | 'junta' | 'pending'
+export type UserRole = 'admin' | 'director' | 'integrante' | 'junta' | 'visitante' | 'pending'
 
 export interface UserProfile {
   uid: string
