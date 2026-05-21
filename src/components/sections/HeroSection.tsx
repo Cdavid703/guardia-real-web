@@ -6,12 +6,25 @@ import { ChevronDown, Play } from 'lucide-react'
 
 export default function HeroSection() {
   return (
-    <section className="relative flex items-center justify-center overflow-hidden bg-gradient-hero">
+    <section className="relative flex items-center justify-center overflow-hidden">
+      {/* Background photo */}
+      <Image
+        src="/images/banners/banner-home.jpg"
+        alt="Guardia Real de Antioquia"
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-center -z-10"
+      />
+
+      {/* Dark overlay para legibilidad */}
+      <div className="absolute inset-0 bg-gradient-to-b from-navy/90 via-navy/75 to-navy/95" />
+
       {/* Radial glow */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(circle at 65% 35%, rgba(242,193,0,0.07) 0%, transparent 60%)',
+          background: 'radial-gradient(circle at 65% 35%, rgba(242,193,0,0.10) 0%, transparent 60%)',
         }}
       />
 

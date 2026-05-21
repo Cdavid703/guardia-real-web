@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Calendar, Tag, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import PageBanner from '@/components/layout/PageBanner'
 
 export const metadata: Metadata = {
   title: 'Noticias',
@@ -38,14 +39,12 @@ const MOCK_NEWS = [
 export default function NoticiasPage() {
   return (
     <div>
-      {/* Hero */}
-      <div className="bg-gradient-hero py-20 text-white text-center">
-        <p className="section-label mb-3">Actualidad</p>
-        <h1 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-wider mb-4">
-          Noticias
-        </h1>
-        <div className="divider-gold max-w-xs mx-auto" />
-      </div>
+      <PageBanner
+        image="/images/banners/banner-noticias.jpg"
+        eyebrow="Actualidad"
+        title="Noticias"
+        subtitle="Lo último de la Guardia Real de Antioquia"
+      />
 
       <div className="section-container py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

@@ -22,7 +22,8 @@
       "Bash(rm src/proxy.ts)",
       "Bash(git commit -m 'fix: remove proxy middleware that blocked dashboard access *)",
       "Bash(git commit -m 'debug: show actual Firebase error code on Microsoft login failure *)",
-      "Bash(git commit -m 'feat: add email/password login for users without Google/Microsoft SSO *)"
+      "Bash(git commit -m 'feat: add email/password login for users without Google/Microsoft SSO *)",
+      "Bash(git commit -m 'feat: add photo banners to all public pages *)"
     ]
   }
 }

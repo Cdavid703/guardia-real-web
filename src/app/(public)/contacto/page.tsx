@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { Send, Phone, Mail, MapPin, Clock } from 'lucide-react'
 import { createQuoteRequest } from '@/lib/firebase'
+import PageBanner from '@/components/layout/PageBanner'
 
 const schema = z.object({
   name:         z.string().min(2, 'Mínimo 2 caracteres'),
@@ -57,17 +58,12 @@ export default function ContactoPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F7FA]">
-      {/* Header */}
-      <div className="bg-gradient-hero py-20 text-white text-center">
-        <p className="section-label mb-3">Estamos disponibles</p>
-        <h1 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-wider mb-4">
-          Contáctanos
-        </h1>
-        <div className="divider-gold max-w-xs mx-auto mb-4" />
-        <p className="font-serif italic text-gray-300 text-lg">
-          Solicita tu cotización gratuita — respuesta en menos de 24 horas
-        </p>
-      </div>
+      <PageBanner
+        image="/images/banners/banner-contacto.jpg"
+        eyebrow="Estamos disponibles"
+        title="Contáctanos"
+        subtitle="Solicita tu cotización gratuita — respuesta en menos de 24 horas"
+      />
 
       <div className="section-container py-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">

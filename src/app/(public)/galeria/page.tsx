@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Instagram, ExternalLink, Loader2 } from 'lucide-react'
+import PageBanner from '@/components/layout/PageBanner'
 
 interface InstaPost {
   id:            string
@@ -34,18 +35,20 @@ export default function GaleriaPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="bg-gradient-hero py-20 text-white text-center">
-        <p className="section-label mb-3">Nuestro trabajo</p>
-        <h1 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-wider mb-4">
-          Galería
-        </h1>
-        <div className="divider-gold max-w-xs mx-auto mb-4" />
+      <PageBanner
+        image="/images/banners/banner-galeria.jpg"
+        eyebrow="Nuestro trabajo"
+        title="Galería"
+        subtitle="Momentos en escena, conciertos y presentaciones"
+      />
+
+      {/* Instagram link */}
+      <div className="bg-navy/95 py-3 text-center">
         <a
           href="https://www.instagram.com/bandashowguardiareal"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-gold transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-gray-200 hover:text-gold transition-colors"
         >
           <Instagram size={16} />
           @bandashowguardiareal

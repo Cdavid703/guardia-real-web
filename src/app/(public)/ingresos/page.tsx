@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { Send, Music, User, Calendar, MapPin, ChevronDown } from 'lucide-react'
 import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
+import PageBanner from '@/components/layout/PageBanner'
 
 const INSTRUMENTOS = [
   'Clarinete',
@@ -139,42 +140,12 @@ export default function IngresosPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F7FA]">
-      {/* Header */}
-      <div className="relative bg-gradient-hero py-20 text-white text-center overflow-hidden">
-
-        {/* Escudo — izquierda en desktop */}
-        <div className="absolute left-6 lg:left-10 top-1/2 -translate-y-1/2 hidden lg:block select-none">
-          <Image
-            src="/images/escudo.png"
-            alt="Escudo Guardia Real de Antioquia"
-            width={180}
-            height={180}
-            className="object-contain drop-shadow-2xl opacity-90 hover:opacity-100 transition-opacity duration-300"
-            priority
-          />
-        </div>
-
-        {/* Texto central */}
-        <p className="section-label mb-3">Únete a la familia</p>
-        <h1 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-wider mb-4">
-          Solicitud de ingreso
-        </h1>
-        <div className="divider-gold max-w-xs mx-auto mb-4" />
-        <p className="font-serif italic text-gray-300 text-lg">
-          Corporación Musical Guardia Real de Antioquia
-        </p>
-
-        {/* Mascota — derecha en desktop */}
-        <div className="absolute right-0 bottom-0 hidden lg:block select-none">
-          <Image
-            src="/images/mascota.png"
-            alt="Mascota Guardia Real de Antioquia"
-            width={260}
-            height={260}
-            className="object-contain drop-shadow-2xl opacity-80 hover:opacity-100 transition-opacity duration-300"
-          />
-        </div>
-      </div>
+      <PageBanner
+        image="/images/banners/banner-ingresos.jpg"
+        eyebrow="Únete a la familia"
+        title="Solicitud de ingreso"
+        subtitle="Corporación Musical Guardia Real de Antioquia"
+      />
 
       <div className="section-container py-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">

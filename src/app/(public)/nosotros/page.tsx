@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Award, Music2, Users, MapPin } from 'lucide-react'
+import PageBanner from '@/components/layout/PageBanner'
 
 export const metadata: Metadata = {
   title: 'Quiénes somos',
@@ -25,17 +26,12 @@ const ACHIEVEMENTS = [
 export default function NosotrosPage() {
   return (
     <div>
-      {/* Hero */}
-      <div className="bg-gradient-hero py-24 text-white text-center">
-        <p className="section-label mb-3">Nuestra historia</p>
-        <h1 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-wider mb-4">
-          Quiénes somos
-        </h1>
-        <div className="divider-gold max-w-xs mx-auto mb-4" />
-        <p className="font-serif italic text-gray-300 text-lg max-w-xl mx-auto">
-          &ldquo;Disciplina, progreso y honor&rdquo;
-        </p>
-      </div>
+      <PageBanner
+        image="/images/banners/banner-nosotros.jpg"
+        eyebrow="Nuestra historia"
+        title="Quiénes somos"
+        subtitle='"Disciplina, progreso y honor"'
+      />
 
       {/* Intro */}
       <section className="py-16 bg-white">
