@@ -310,6 +310,24 @@ export async function getIngresoRequests() {
   })
 }
 
+/**
+ * Actualiza el estado y notas de una solicitud de ingreso.
+ * Solo staff (admin/director/junta) puede hacerlo según las reglas de Firestore.
+ */
+export async function updateIngresoStatus(
+  id: string,
+  status: 'nuevo' | 'contactado' | 'aceptado' | 'rechazado',
+  notes?: string,
+  updatedBy?: string,
+) {
+  return updateDoc(doc(db, 'ingresos', id), {
+    status,
+    ...(notes !== undefined && { notes }),
+    ...(updatedBy && { lastUpdatedBy: updatedBy }),
+    updatedAt: serverTimestamp(),
+  })
+}
+
 // ── Firestore: Gallery ────────────────────────────────────────────
 export async function getGalleryItems(limitCount = 20) {
   const snap = await getDocs(

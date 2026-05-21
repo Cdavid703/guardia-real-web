@@ -121,6 +121,9 @@ export interface IngresoRequest {
   mensaje?: string
   // estado
   status: 'nuevo' | 'contactado' | 'aceptado' | 'rechazado'
+  notes?: string
+  lastUpdatedBy?: string
+  updatedAt?: Date
   createdAt: Date
 }
 

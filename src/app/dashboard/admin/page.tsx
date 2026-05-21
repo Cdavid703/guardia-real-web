@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Users, Clock, CheckCircle, ClipboardList, ChevronDown, ChevronUp, Newspaper, ArrowRight } from 'lucide-react'
-import { getAllUsers, updateUserRole, getIngresoRequests } from '@/lib/firebase'
+import { getAllUsers, updateUserRole, getIngresoRequests, updateIngresoStatus } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { cn, getRoleLabel, getRoleBadgeColor, formatDate } from '@/lib/utils'
@@ -76,6 +76,28 @@ export default function AdminPage() {
       toast.error('Error al cargar solicitudes de ingreso')
     } finally {
       setIngLoading(false)
+    }
+  }
+
+  const handleIngresoStatusChange = async (id: string, newStatus: 'nuevo' | 'contactado' | 'aceptado' | 'rechazado') => {
+    try {
+      await updateIngresoStatus(id, newStatus, undefined, profile?.uid)
+      setIngresos(prev => prev.map(i => i.id === id ? { ...i, status: newStatus } : i))
+      toast.success(`Estado actualizado a "${INGRESO_STATUS_LABELS[newStatus]}"`)
+    } catch {
+      toast.error('Error al actualizar el estado')
+    }
+  }
+
+  const handleIngresoNotesChange = async (id: string, notes: string) => {
+    try {
+      const ing = ingresos.find(i => i.id === id)
+      if (!ing) return
+      await updateIngresoStatus(id, ing.status, notes, profile?.uid)
+      setIngresos(prev => prev.map(i => i.id === id ? { ...i, notes } : i))
+      toast.success('Nota guardada')
+    } catch {
+      toast.error('Error al guardar la nota')
     }
   }
 
@@ -226,29 +248,102 @@ export default function AdminPage() {
                   </div>
 
                   {expanded === ing.id && (
-                    <div className="mt-4 ml-12 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                      {[
-                        ['Email',              ing.email],
-                        ['Teléfono',           ing.telefono],
-                        ['Identificación',     ing.identificacion],
-                        ['Fecha nacimiento',   ing.fechaNacimiento],
-                        ['Barrio / Ciudad',    `${ing.barrio}, ${ing.ciudad}`],
-                        ['Instrumento',        ing.instrumentoInteres],
-                        ['Experiencia',        ing.experienciaPrevia ? `Sí — ${ing.nivelExperiencia}` : 'No'],
-                        ['Disponibilidad',     ing.disponibilidad],
-                        ['Cómo se enteró',     ing.comoSeEntero],
-                      ].map(([label, value]) => (
-                        <div key={label}>
-                          <p className="font-bold text-gray-400 uppercase tracking-wider mb-0.5">{label}</p>
-                          <p className="text-dark">{value}</p>
+                    <div className="mt-4 ml-12 space-y-4">
+                      {/* Datos del aspirante */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                        {[
+                          ['Email',              ing.email],
+                          ['Teléfono',           ing.telefono],
+                          ['Identificación',     ing.identificacion],
+                          ['Fecha nacimiento',   ing.fechaNacimiento],
+                          ['Barrio / Ciudad',    `${ing.barrio}, ${ing.ciudad}`],
+                          ['Instrumento',        ing.instrumentoInteres],
+                          ['Experiencia',        ing.experienciaPrevia ? `Sí — ${ing.nivelExperiencia}` : 'No'],
+                          ['Disponibilidad',     ing.disponibilidad],
+                          ['Cómo se enteró',     ing.comoSeEntero],
+                        ].map(([label, value]) => (
+                          <div key={label}>
+                            <p className="font-bold text-gray-400 uppercase tracking-wider mb-0.5">{label}</p>
+                            <p className="text-dark break-words">{value}</p>
+                          </div>
+                        ))}
+                        {ing.mensaje && (
+                          <div className="col-span-full">
+                            <p className="font-bold text-gray-400 uppercase tracking-wider mb-0.5">Mensaje</p>
+                            <p className="text-dark italic">{ing.mensaje}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Acciones rápidas de contacto */}
+                      <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
+                        <a
+                          href={`https://wa.me/57${ing.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${ing.nombreCompleto.split(' ')[0]}, te escribo de la Corporación Musical Guardia Real de Antioquia sobre tu solicitud de ingreso.`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366] hover:bg-[#1ebd5a] text-white text-xs font-semibold rounded-lg transition-colors"
+                        >
+                          WhatsApp
+                        </a>
+                        <a
+                          href={`tel:+57${ing.telefono.replace(/\D/g, '')}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-navy hover:bg-navy/90 text-white text-xs font-semibold rounded-lg transition-colors"
+                        >
+                          Llamar
+                        </a>
+                        <a
+                          href={`mailto:${ing.email}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition-colors"
+                        >
+                          Email
+                        </a>
+                      </div>
+
+                      {/* Cambio de estado */}
+                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                        <p className="font-bold text-gray-400 uppercase tracking-wider text-[10px] mb-2">
+                          Cambiar estado
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {(['nuevo', 'contactado', 'aceptado', 'rechazado'] as const).map(s => (
+                            <button
+                              key={s}
+                              onClick={() => handleIngresoStatusChange(ing.id, s)}
+                              disabled={ing.status === s}
+                              className={cn(
+                                'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors',
+                                ing.status === s
+                                  ? `${INGRESO_STATUS_COLORS[s]} cursor-default ring-2 ring-offset-1 ring-navy/30`
+                                  : 'bg-white text-gray-600 border border-gray-200 hover:border-navy hover:text-navy'
+                              )}
+                            >
+                              {INGRESO_STATUS_LABELS[s]}
+                            </button>
+                          ))}
                         </div>
-                      ))}
-                      {ing.mensaje && (
-                        <div className="col-span-full">
-                          <p className="font-bold text-gray-400 uppercase tracking-wider mb-0.5">Mensaje</p>
-                          <p className="text-dark italic">{ing.mensaje}</p>
-                        </div>
-                      )}
+                      </div>
+
+                      {/* Notas internas */}
+                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                        <p className="font-bold text-gray-400 uppercase tracking-wider text-[10px] mb-2">
+                          Notas internas
+                        </p>
+                        <textarea
+                          defaultValue={ing.notes ?? ''}
+                          onBlur={e => {
+                            const newNotes = e.target.value.trim()
+                            if (newNotes !== (ing.notes ?? '')) {
+                              handleIngresoNotesChange(ing.id, newNotes)
+                            }
+                          }}
+                          rows={2}
+                          placeholder="Ej. Llamado el 5 de mayo, no contestó. Audición agendada para el 10 de mayo..."
+                          className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-royal focus:ring-1 focus:ring-royal/20 resize-none"
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1">
+                          Las notas se guardan automáticamente cuando sales del campo.
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
