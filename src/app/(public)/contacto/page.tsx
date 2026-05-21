@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Send, Phone, Mail, MapPin, Clock } from 'lucide-react'
+import { Send, Phone, Mail, MapPin, Clock, MessageCircle } from 'lucide-react'
 import { createQuoteRequest } from '@/lib/firebase'
 import PageBanner from '@/components/layout/PageBanner'
 
@@ -71,21 +71,52 @@ export default function ContactoPage() {
           {/* Info sidebar */}
           <div className="space-y-6">
             <div className="card p-6">
-              <h3 className="font-serif font-bold text-navy text-lg mb-4">Información de contacto</h3>
-              <div className="space-y-4">
+              <h3 className="font-serif font-bold text-navy text-lg mb-4">Contacto directo</h3>
+
+              {/* Personas con WhatsApp + Llamar */}
+              <div className="space-y-4 mb-6">
                 {[
-                  { icon: Phone, title: 'Dairo Villada',     detail: '319 773 5052', href: 'tel:+573197735052' },
-                  { icon: Phone, title: 'Sebastian Álvarez', detail: '310 509 4658', href: 'tel:+573105094658' },
-                  { icon: Mail,  title: 'Email',              detail: 'bandashowguardiareal\n@outlook.com', href: 'mailto:bandashowguardiareal@outlook.com' },
-                  { icon: MapPin,title: 'Ubicación',          detail: 'Cra. 48 #73–36\nCampo Valdés, Medellín', href: '#' },
+                  { name: 'Dairo Villada',     role: 'Coordinación general',  phone: '573197735052', display: '319 773 5052' },
+                  { name: 'Sebastián Álvarez', role: 'Logística y eventos',   phone: '573105094658', display: '310 509 4658' },
+                ].map(c => (
+                  <div key={c.phone} className="border border-gray-100 rounded-lg p-3 bg-gray-50/50">
+                    <p className="text-sm font-semibold text-dark">{c.name}</p>
+                    <p className="text-xs text-gray-500 mb-2">{c.role} · {c.display}</p>
+                    <div className="flex gap-2">
+                      <a
+                        href={`https://wa.me/${c.phone}?text=${encodeURIComponent('Hola, me interesa contratar a la Guardia Real de Antioquia.')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-[#25D366] hover:bg-[#1ebd5a] rounded-lg text-white text-xs font-semibold transition-colors"
+                      >
+                        <MessageCircle size={14} />
+                        WhatsApp
+                      </a>
+                      <a
+                        href={`tel:+${c.phone}`}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-navy hover:bg-navy/90 rounded-lg text-white text-xs font-semibold transition-colors"
+                      >
+                        <Phone size={14} />
+                        Llamar
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Email + ubicación */}
+              <div className="space-y-3 pt-4 border-t border-gray-100">
+                {[
+                  { icon: Mail,  title: 'Email',     detail: 'bandashowguardiareal@outlook.com', href: 'mailto:bandashowguardiareal@outlook.com' },
+                  { icon: MapPin,title: 'Ubicación', detail: 'Cra. 48 #73–36\nCampo Valdés, Medellín', href: '#' },
                 ].map(({ icon: Icon, title, detail, href }) => (
                   <a key={title} href={href} className="flex gap-3 group">
-                    <div className="w-9 h-9 rounded-lg bg-navy/10 flex items-center justify-center shrink-0 group-hover:bg-navy group-hover:text-white transition-all">
+                    <div className="w-9 h-9 rounded-lg bg-navy/10 flex items-center justify-center shrink-0 group-hover:bg-navy transition-all">
                       <Icon size={16} className="text-navy group-hover:text-white" />
                     </div>
                     <div>
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{title}</p>
-                      <p className="text-sm text-dark whitespace-pre-line">{detail}</p>
+                      <p className="text-sm text-dark whitespace-pre-line break-all">{detail}</p>
                     </div>
                   </a>
                 ))}

@@ -27,7 +27,8 @@
       "Bash(cp \"D:/BGRA/fotos/IMG-20260405-WA0074.jpg\" \"D:/BGRA/guardia-real-web/public/images/banners/banner-home.jpg\")",
       "Bash(git commit -m 'chore: update home banner photo *)",
       "Bash(git commit -m 'fix: lighten banner overlays so photos are clearly visible *)",
-      "Bash(git commit -m 'fix: remove bg-navy that was hiding hero photo *)"
+      "Bash(git commit -m 'fix: remove bg-navy that was hiding hero photo *)",
+      "Bash(git commit -m 'feat: WhatsApp float button, direct contact buttons, accordion navigation *)"
     ]
   }
 }

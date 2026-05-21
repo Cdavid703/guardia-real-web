@@ -14,7 +14,7 @@ interface PageBannerProps {
  */
 export default function PageBanner({ image, eyebrow, title, subtitle, alt }: PageBannerProps) {
   return (
-    <section className="relative h-[340px] md:h-[420px] w-full overflow-hidden">
+    <section className="relative h-[420px] md:h-[520px] w-full overflow-hidden">
       {/* Background image */}
       <Image
         src={image}
@@ -22,11 +22,12 @@ export default function PageBanner({ image, eyebrow, title, subtitle, alt }: Pag
         fill
         priority
         sizes="100vw"
-        className="object-cover object-center"
+        className="object-cover absolute inset-0"
+        style={{ objectPosition: 'center 25%' }}
       />
 
       {/* Overlay sutil para legibilidad del texto, sin tapar la foto */}
-      <div className="absolute inset-0 bg-gradient-to-b from-navy/50 via-navy/30 to-navy/70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-navy/45 via-navy/25 to-navy/75" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_30%,_rgba(11,18,40,0.5)_100%)]" />
 
       {/* Content */}
