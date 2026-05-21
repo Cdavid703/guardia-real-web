@@ -25,9 +25,9 @@ export default function PageBanner({ image, eyebrow, title, subtitle, alt }: Pag
         className="object-cover object-center"
       />
 
-      {/* Dark gradient overlay para legibilidad */}
-      <div className="absolute inset-0 bg-gradient-to-b from-navy/85 via-navy/70 to-navy/90" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_rgba(11,18,40,0.55)_100%)]" />
+      {/* Overlay sutil para legibilidad del texto, sin tapar la foto */}
+      <div className="absolute inset-0 bg-gradient-to-b from-navy/50 via-navy/30 to-navy/70" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_30%,_rgba(11,18,40,0.5)_100%)]" />
 
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6">

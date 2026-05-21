@@ -17,8 +17,9 @@ export default function HeroSection() {
         className="object-cover object-center -z-10"
       />
 
-      {/* Dark overlay para legibilidad */}
-      <div className="absolute inset-0 bg-gradient-to-b from-navy/90 via-navy/75 to-navy/95" />
+      {/* Overlay sutil — deja ver la foto pero mantiene legibilidad del texto */}
+      <div className="absolute inset-0 bg-gradient-to-b from-navy/55 via-navy/35 to-navy/80" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_20%,_rgba(11,18,40,0.55)_100%)]" />
 
       {/* Radial glow */}
       <div

@@ -23,7 +23,10 @@
       "Bash(git commit -m 'fix: remove proxy middleware that blocked dashboard access *)",
       "Bash(git commit -m 'debug: show actual Firebase error code on Microsoft login failure *)",
       "Bash(git commit -m 'feat: add email/password login for users without Google/Microsoft SSO *)",
-      "Bash(git commit -m 'feat: add photo banners to all public pages *)"
+      "Bash(git commit -m 'feat: add photo banners to all public pages *)",
+      "Bash(cp \"D:/BGRA/fotos/IMG-20260405-WA0074.jpg\" \"D:/BGRA/guardia-real-web/public/images/banners/banner-home.jpg\")",
+      "Bash(git commit -m 'chore: update home banner photo *)",
+      "Bash(git commit -m 'fix: lighten banner overlays so photos are clearly visible *)"
     ]
   }
 }
