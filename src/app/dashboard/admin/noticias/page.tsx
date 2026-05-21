@@ -9,6 +9,16 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getAllNews, createNews, updateNews, deleteNews, type NewsItem } from '@/lib/firebase'
 import { slugify, formatDate, cn } from '@/lib/utils'
 
+type Audience = 'public' | 'integrante' | 'director' | 'junta' | 'admin'
+
+const AUDIENCE_OPTIONS: { value: Audience; label: string; desc: string }[] = [
+  { value: 'public',     label: 'Público general',  desc: 'Visible para cualquier visitante del sitio web' },
+  { value: 'integrante', label: 'Integrantes',      desc: 'Solo músicos activos de la banda' },
+  { value: 'director',   label: 'Directores',       desc: 'Solo el equipo de dirección musical' },
+  { value: 'junta',      label: 'Junta directiva',  desc: 'Solo miembros de la junta' },
+  { value: 'admin',      label: 'Administradores',  desc: 'Solo administradores del sitio' },
+]
+
 interface FormState {
   id:        string | null
   title:     string
@@ -17,6 +27,7 @@ interface FormState {
   tags:      string
   image:     string
   published: boolean
+  visibleTo: Audience[]
 }
 
 const EMPTY_FORM: FormState = {
@@ -27,6 +38,7 @@ const EMPTY_FORM: FormState = {
   tags:      '',
   image:     '',
   published: false,
+  visibleTo: ['public'],
 }
 
 export default function AdminNoticiasPage() {
@@ -72,8 +84,17 @@ export default function AdminNoticiasPage() {
       tags:      n.tags.join(', '),
       image:     n.image ?? '',
       published: n.published,
+      visibleTo: (n.visibleTo && n.visibleTo.length > 0 ? n.visibleTo : ['public']) as Audience[],
     })
     setShowForm(true)
+  }
+
+  const toggleAudience = (value: Audience) => {
+    setForm(prev => {
+      const has = prev.visibleTo.includes(value)
+      const next = has ? prev.visibleTo.filter(a => a !== value) : [...prev.visibleTo, value]
+      return { ...prev, visibleTo: next.length === 0 ? ['public'] : next }
+    })
   }
 
   const cancelForm = () => {
@@ -97,6 +118,7 @@ export default function AdminNoticiasPage() {
         tags:      form.tags.split(',').map(t => t.trim()).filter(Boolean),
         image:     form.image.trim() || null,
         published: form.published,
+        visibleTo: form.visibleTo,
         author:    profile?.uid ?? null,
       }
       if (form.id) {
@@ -230,6 +252,42 @@ export default function AdminNoticiasPage() {
             </div>
 
             <div className="border-t border-gray-100 pt-4">
+              <p className="text-sm font-semibold text-dark mb-1">¿Quién puede ver esta noticia?</p>
+              <p className="text-xs text-gray-500 mb-3">
+                Selecciona uno o varios. Si marcas <strong>&ldquo;Público general&rdquo;</strong> aparece
+                en el sitio público. Si solo marcas roles internos, solo los integrantes con ese rol
+                la verán al iniciar sesión.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {AUDIENCE_OPTIONS.map(opt => {
+                  const checked = form.visibleTo.includes(opt.value)
+                  return (
+                    <label
+                      key={opt.value}
+                      className={cn(
+                        'flex items-start gap-2 p-3 border-2 rounded-lg cursor-pointer transition-colors',
+                        checked
+                          ? 'border-royal bg-royal/5'
+                          : 'border-gray-200 hover:border-gray-300'
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleAudience(opt.value)}
+                        className="w-4 h-4 mt-0.5 accent-royal cursor-pointer shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-dark">{opt.label}</p>
+                        <p className="text-[11px] text-gray-500 leading-snug">{opt.desc}</p>
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -240,7 +298,7 @@ export default function AdminNoticiasPage() {
                 <div>
                   <p className="text-sm font-semibold text-dark">Publicar inmediatamente</p>
                   <p className="text-xs text-gray-500">
-                    Si lo desmarcas, la noticia queda como borrador y no aparece en el sitio público.
+                    Si lo desmarcas, la noticia queda como borrador y no se muestra a nadie.
                   </p>
                 </div>
               </label>
@@ -277,13 +335,20 @@ export default function AdminNoticiasPage() {
             {news.map(n => (
               <div key={n.id} className="p-5 flex items-start gap-4 hover:bg-gray-50/50 transition-colors">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className={cn(
                       'badge text-[10px]',
                       n.published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                     )}>
                       {n.published ? 'Publicada' : 'Borrador'}
                     </span>
+                    {(n.visibleTo ?? ['public']).includes('public') ? (
+                      <span className="badge bg-gold/15 text-gold text-[10px]">🌐 Pública</span>
+                    ) : (
+                      <span className="badge bg-purple-100 text-purple-700 text-[10px]">
+                        🔒 Solo: {(n.visibleTo ?? []).join(', ')}
+                      </span>
+                    )}
                     {n.tags.slice(0, 3).map(t => (
                       <span key={t} className="badge bg-navy/10 text-navy text-[10px]">{t}</span>
                     ))}

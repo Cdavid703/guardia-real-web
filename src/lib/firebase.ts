@@ -160,6 +160,7 @@ export interface NewsItem {
   tags:        string[]
   image?:      string
   published:   boolean
+  visibleTo:   string[]   // ['public'] o roles específicos: ['integrante', 'director', ...]
   publishedAt: Date
   updatedAt:   Date
   author?:     string
@@ -175,16 +176,38 @@ function newsFromDoc(id: string, data: Record<string, unknown>): NewsItem {
     tags:        (data.tags        as string[]) ?? [],
     image:       (data.image       as string) ?? undefined,
     published:   (data.published   as boolean) ?? false,
+    visibleTo:   (data.visibleTo   as string[]) ?? ['public'],  // default público para retrocompatibilidad
     publishedAt: (data.publishedAt as Timestamp)?.toDate() ?? new Date(),
     updatedAt:   (data.updatedAt   as Timestamp)?.toDate() ?? new Date(),
     author:      (data.author      as string) ?? undefined,
   }
 }
 
+/**
+ * Noticias publicadas y visibles para el público general (sin login).
+ * Solo retorna las que tienen 'public' en su array visibleTo.
+ */
 export async function getPublishedNews(limitCount = 10): Promise<NewsItem[]> {
   const q = query(
     collection(db, 'news'),
-    where('published', '==', true),
+    where('published',  '==', true),
+    where('visibleTo', 'array-contains', 'public'),
+    orderBy('publishedAt', 'desc'),
+    limit(limitCount),
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map(d => newsFromDoc(d.id, d.data()))
+}
+
+/**
+ * Noticias visibles para un rol específico (usuario autenticado).
+ * Retorna las que tienen 'public' o el rol del usuario en visibleTo.
+ */
+export async function getNewsForRole(role: string, limitCount = 20): Promise<NewsItem[]> {
+  const q = query(
+    collection(db, 'news'),
+    where('published',  '==', true),
+    where('visibleTo', 'array-contains-any', ['public', role]),
     orderBy('publishedAt', 'desc'),
     limit(limitCount),
   )
