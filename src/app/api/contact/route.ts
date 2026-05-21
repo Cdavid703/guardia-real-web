@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-const TO     = process.env.CONTACT_EMAIL_TO ?? 'bandashowguardiareal@outlook.com'
+const TO = process.env.CONTACT_EMAIL_TO ?? 'bandashowguardiareal@outlook.com'
 
 export async function POST(req: NextRequest) {
+  if (!process.env.RESEND_API_KEY) {
+    return NextResponse.json({ ok: true, skipped: 'no email key' })
+  }
+  const resend = new Resend(process.env.RESEND_API_KEY)
   try {
     const body = await req.json()
     const { name, email, phone, organization, eventType, eventDate, eventLocation, attendees, serviceType, message } = body
