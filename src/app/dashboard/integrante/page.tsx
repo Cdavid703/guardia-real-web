@@ -1,11 +1,20 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 import { Calendar, Music, Bell, User } from 'lucide-react'
 import Image from 'next/image'
 
 export default function IntegrantePage() {
   const { profile } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (profile && profile.role !== 'integrante' && profile.role !== 'admin') {
+      router.replace('/dashboard')
+    }
+  }, [profile, router])
 
   return (
     <div>

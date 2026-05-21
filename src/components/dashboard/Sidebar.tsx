@@ -24,7 +24,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/admin/quotes',  label: 'Cotizaciones',  icon: MessageSquare,   roles: ['admin'] },
   { href: '/dashboard/director',    label: 'Repertorio',      icon: Music,           roles: ['admin','director'] },
   { href: '/dashboard/director/events', label: 'Ensayos',     icon: Calendar,        roles: ['admin','director'] },
-  { href: '/dashboard/integrante',  label: 'Mi perfil',       icon: Settings,        roles: ['integrante'] },
+  { href: '/dashboard/integrante',  label: 'Portal integrante', icon: Settings,      roles: ['admin','integrante'] },
   { href: '/dashboard/junta',       label: 'Documentos',      icon: FileText,        roles: ['admin','junta'] },
 ]
 

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Music, Plus, Calendar, BookOpen, Upload } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 import { createEvent } from '@/lib/firebase'
 import { toast } from 'sonner'
 
@@ -14,7 +15,14 @@ const MOCK_REPERTOIRE = [
 
 export default function DirectorPage() {
   const { profile } = useAuth()
+  const router = useRouter()
   const [showEventForm, setShowEventForm] = useState(false)
+
+  useEffect(() => {
+    if (profile && profile.role !== 'director' && profile.role !== 'admin') {
+      router.replace('/dashboard')
+    }
+  }, [profile, router])
   const [eventData, setEventData] = useState({ title: '', date: '', startTime: '', location: '', type: 'ensayo' })
 
   const handleCreateEvent = async (e: React.FormEvent) => {
