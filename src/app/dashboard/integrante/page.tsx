@@ -1,0 +1,102 @@
+'use client'
+
+import { useAuth } from '@/contexts/AuthContext'
+import { Calendar, Music, Bell, User } from 'lucide-react'
+import Image from 'next/image'
+
+export default function IntegrantePage() {
+  const { profile } = useAuth()
+
+  return (
+    <div>
+      <div className="mb-8">
+        <h1 className="font-display text-navy text-2xl font-bold uppercase tracking-wider">
+          Mi portal
+        </h1>
+        <p className="text-gray-400 text-sm mt-1">
+          Tu espacio personal como integrante de la Guardia Real
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Profile card */}
+        <div className="card p-6 text-center">
+          {profile?.photoURL ? (
+            <Image src={profile.photoURL} alt={profile.displayName} width={64} height={64}
+              className="rounded-full mx-auto mb-3 border-2 border-gold" />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-navy mx-auto mb-3 flex items-center justify-center text-white text-2xl font-bold border-2 border-gold">
+              {profile?.displayName[0]?.toUpperCase()}
+            </div>
+          )}
+          <h3 className="font-serif font-bold text-navy text-lg">{profile?.displayName}</h3>
+          <p className="text-sm text-gray-400 mb-1">{profile?.email}</p>
+          <span className="badge bg-blue-100 text-blue-700">Integrante</span>
+          {profile?.instrument && (
+            <p className="text-sm text-gray-600 mt-3 flex items-center justify-center gap-1">
+              <Music size={13} /> {profile.instrument}
+            </p>
+          )}
+          <button className="btn btn-outline btn-sm mt-4 w-full">
+            <User size={14} /> Editar perfil
+          </button>
+        </div>
+
+        {/* Schedule */}
+        <div className="card p-6">
+          <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2 mb-4">
+            <Calendar size={18} className="text-royal" /> Próximos ensayos
+          </h3>
+          <div className="text-center py-8 text-gray-400">
+            <Calendar size={28} className="mx-auto mb-2 opacity-30" />
+            <p className="text-sm">No hay ensayos programados próximamente</p>
+            <p className="text-xs mt-1">El director publicará el cronograma aquí</p>
+          </div>
+        </div>
+
+        {/* Notifications */}
+        <div className="card p-6">
+          <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2 mb-4">
+            <Bell size={18} className="text-royal" /> Noticias internas
+          </h3>
+          <div className="text-center py-8 text-gray-400">
+            <Bell size={28} className="mx-auto mb-2 opacity-30" />
+            <p className="text-sm">No hay noticias internas nuevas</p>
+          </div>
+        </div>
+
+        {/* Repertoire for integrante */}
+        <div className="card p-6 md:col-span-2">
+          <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2 mb-4">
+            <Music size={18} className="text-royal" /> Repertorio de la banda
+          </h3>
+          <p className="text-sm text-gray-500 leading-relaxed">
+            Las partituras y el repertorio activo aparecerán aquí una vez que el Director Musical las publique.
+            Podrás descargar archivos de partitura directamente desde este panel.
+          </p>
+          <div className="mt-4 p-3 bg-gradient-primary rounded-lg text-white text-sm">
+            <p className="font-semibold mb-0.5">¿Necesitas algo?</p>
+            <p className="text-blue-100 text-xs">Contacta al director musical directamente en los ensayos o por los canales de comunicación de la corporación.</p>
+          </div>
+        </div>
+
+        {/* Quick info */}
+        <div className="card p-6">
+          <h3 className="font-serif font-bold text-navy text-lg mb-4">Información rápida</h3>
+          <div className="space-y-3 text-sm">
+            {[
+              { label: 'Sede de ensayos', value: 'Cra. 48 #73–36, Campo Valdés' },
+              { label: 'Contacto director', value: '319 773 5052' },
+              { label: 'Email corporación', value: 'bandashowguardiareal\n@outlook.com' },
+            ].map(({ label, value }) => (
+              <div key={label} className="border-b border-gray-100 pb-2">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{label}</p>
+                <p className="text-dark whitespace-pre-line">{value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
