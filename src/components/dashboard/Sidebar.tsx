@@ -44,7 +44,7 @@ export default function DashboardSidebar({ role }: { role: UserRole }) {
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col bg-navy border-r border-white/10 transition-all duration-250 shrink-0',
+        'hidden md:flex flex-col bg-navy border-r border-white/10 transition-all duration-300 shrink-0',
         collapsed ? 'w-16' : 'w-60'
       )}
     >

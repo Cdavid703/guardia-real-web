@@ -42,7 +42,7 @@ export default function Navbar() {
   return (
     <header
       className={cn(
-        'fixed top-0 left-0 right-0 z-[200] transition-all duration-250',
+        'fixed top-0 left-0 right-0 z-[200] transition-all duration-300',
         scrolled
           ? 'bg-navy shadow-lg border-b-2 border-gold'
           : 'bg-navy/95 backdrop-blur-sm border-b-2 border-gold/60'
