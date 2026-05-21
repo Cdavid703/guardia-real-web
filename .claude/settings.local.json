@@ -30,7 +30,8 @@
       "Bash(git commit -m 'fix: remove bg-navy that was hiding hero photo *)",
       "Bash(git commit -m 'feat: WhatsApp float button, direct contact buttons, accordion navigation *)",
       "Bash(rm src/app/page.tsx)",
-      "Bash(git commit -m 'fix: move home page into \\(public\\) group so WhatsApp float button shows on home *)"
+      "Bash(git commit -m 'fix: move home page into \\(public\\) group so WhatsApp float button shows on home *)",
+      "Bash(git commit -m 'tweak: shift hero photo position higher to show subject in portrait photo *)"
     ]
   }
 }

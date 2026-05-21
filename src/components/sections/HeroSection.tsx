@@ -15,7 +15,7 @@ export default function HeroSection() {
         priority
         sizes="100vw"
         className="object-cover absolute inset-0"
-        style={{ objectPosition: 'center 25%' }}
+        style={{ objectPosition: 'center 15%' }}
       />
 
       {/* Overlay sutil — deja ver la foto pero mantiene legibilidad del texto */}
