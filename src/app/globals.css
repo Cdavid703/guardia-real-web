@@ -100,7 +100,7 @@
   /* Cards */
   .card {
     @apply bg-white border border-gray-200 rounded-lg shadow-sm
-           transition-all duration-250
+           transition-all duration-300
            hover:shadow-lg hover:-translate-y-0.5;
   }
 
