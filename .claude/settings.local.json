@@ -10,7 +10,17 @@
       "Bash(npm --version)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell(Select-String -Path \"D:\\\\BGRA\\\\guardia-real-web\\\\.env.local\" -Pattern \"^[A-Z_]+\" | ForEach-Object { \\($_.Line -split \"=\"\\)[0] })",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(git commit -m 'fix: move ingreso form submission to server-side API route *)",
+      "Bash(git commit -m 'fix: redirect to dashboard immediately after successful login *)",
+      "Bash(git commit -m 'fix: set user state immediately after login to prevent dashboard redirect race condition *)",
+      "Bash(git commit -m 'fix: use window.location.href for post-login redirect *)",
+      "Bash(git commit -m 'debug: add diagnostic state info to dashboard layout and delay login redirect *)",
+      "Bash(git commit -m 'debug: replace redirects with visible diagnostic messages *)",
+      "Bash(rm src/proxy.ts)",
+      "Bash(git commit -m 'fix: remove proxy middleware that blocked dashboard access *)"
     ]
   }
 }
