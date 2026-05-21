@@ -27,6 +27,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.guardiarealdeantioquia.com'),
   title: {
     template: '%s | Guardia Real de Antioquia',
     default:  'Corporación Musical Guardia Real de Antioquia',
@@ -41,14 +42,37 @@ export const metadata: Metadata = {
   keywords: [
     'Guardia Real de Antioquia', 'banda show', 'banda marcial', 'Medellín',
     'contratación banda', 'desfile', 'exhibición musical', 'Colombia',
+    'banda de marcha', 'corporación musical', 'Campo Valdés', 'Antioquia',
   ],
   authors: [{ name: 'Corporación Musical Guardia Real de Antioquia' }],
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     type:        'website',
     locale:      'es_CO',
     siteName:    'Guardia Real de Antioquia',
+    url:         'https://www.guardiarealdeantioquia.com',
     title:       'Corporación Musical Guardia Real de Antioquia',
     description: 'Banda Show con más de 42 años — Disciplina, progreso y honor',
+    images: [
+      {
+        url:    '/images/escudo.png',
+        width:  512,
+        height: 512,
+        alt:    'Escudo Guardia Real de Antioquia',
+      },
+    ],
+  },
+  twitter: {
+    card:        'summary_large_image',
+    title:       'Guardia Real de Antioquia',
+    description: 'Banda Show con más de 42 años — Disciplina, progreso y honor',
+    images:      ['/images/escudo.png'],
+  },
+  robots: {
+    index:  true,
+    follow: true,
   },
 }
 

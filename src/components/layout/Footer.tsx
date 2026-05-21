@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Phone, Mail, Instagram, Facebook, Youtube } from 'lucide-react'
+import { MapPin, Phone, Mail, Instagram, Facebook, Youtube, Heart } from 'lucide-react'
 
 export default function Footer() {
   const year = new Date().getFullYear()
@@ -120,9 +120,16 @@ export default function Footer() {
           </div>
           <Link
             href="/contacto"
-            className="btn btn-gold btn-sm w-full justify-center"
+            className="btn btn-gold btn-sm w-full justify-center mb-2"
           >
             Solicitar cotización
+          </Link>
+          <Link
+            href="/donar"
+            className="btn btn-outline-white btn-sm w-full justify-center"
+          >
+            <Heart size={14} />
+            Apóyanos
           </Link>
         </div>
       </div>
@@ -131,9 +138,11 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="section-container py-4 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-gray-600">
           <span>© {year} Corporación Musical Guardia Real de Antioquia. Todos los derechos reservados.</span>
-          <Link href="/login" className="hover:text-gold transition-colors">
-            Acceso integrantes
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/privacidad" className="hover:text-gold transition-colors">Privacidad</Link>
+            <Link href="/terminos" className="hover:text-gold transition-colors">Términos</Link>
+            <Link href="/login" className="hover:text-gold transition-colors">Acceso integrantes</Link>
+          </div>
         </div>
       </div>
     </footer>

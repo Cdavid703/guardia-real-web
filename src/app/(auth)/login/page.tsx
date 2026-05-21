@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -21,28 +21,14 @@ function GoogleIcon() {
   )
 }
 
-function MicrosoftIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
-      <path d="M11.4 2H2v9.4h9.4V2z" fill="#F25022"/>
-      <path d="M22 2h-9.4v9.4H22V2z" fill="#7FBA00"/>
-      <path d="M11.4 12.6H2V22h9.4v-9.4z" fill="#00A4EF"/>
-      <path d="M22 12.6h-9.4V22H22v-9.4z" fill="#FFB900"/>
-    </svg>
-  )
-}
-
 function LoginContent() {
   const [loadingGoogle,    setLoadingGoogle]    = useState(false)
-  const [loadingMicrosoft, setLoadingMicrosoft] = useState(false)
   const [loadingEmail,     setLoadingEmail]     = useState(false)
   const [email,            setEmail]            = useState('')
   const [password,         setPassword]         = useState('')
 
-  const { loginWithGoogle, loginWithMicrosoft, loginWithEmail, user, profile } = useAuth()
+  const { loginWithGoogle, loginWithEmail, user, profile } = useAuth()
   const router       = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl  = searchParams.get('callbackUrl') || '/dashboard'
 
   // Redirect if already logged in
   useEffect(() => {
@@ -92,23 +78,6 @@ function LoginContent() {
       toast.error(msg, { duration: 8000 })
     } finally {
       setLoadingEmail(false)
-    }
-  }
-
-  const handleMicrosoft = async () => {
-    setLoadingMicrosoft(true)
-    try {
-      await loginWithMicrosoft()
-      toast.success('¡Bienvenido!')
-      window.location.href = '/dashboard'
-    } catch (err: unknown) {
-      const code = (err as { code?: string })?.code ?? ''
-      const msg  = err instanceof Error ? err.message : 'Error desconocido'
-      if (!code.includes('popup-closed') && !msg.includes('popup-closed')) {
-        toast.error(`Error Microsoft: ${code || msg}`, { duration: 10000 })
-      }
-    } finally {
-      setLoadingMicrosoft(false)
     }
   }
 
@@ -165,19 +134,9 @@ function LoginContent() {
               {loadingGoogle ? 'Conectando...' : 'Continuar con Google'}
             </button>
 
-            {/* Microsoft */}
-            <button
-              onClick={handleMicrosoft}
-              disabled={loadingGoogle || loadingMicrosoft || loadingEmail}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-lg text-sm font-semibold text-dark bg-white hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loadingMicrosoft ? (
-                <div className="w-5 h-5 border-2 border-gray-300 border-t-navy rounded-full animate-spin" />
-              ) : (
-                <MicrosoftIcon />
-              )}
-              {loadingMicrosoft ? 'Conectando...' : 'Continuar con Microsoft'}
-            </button>
+            {/* Microsoft — deshabilitado hasta tener Azure AD configurado.
+                 Las funciones handleMicrosoft / loginWithMicrosoft se mantienen
+                 para no romper imports; el botón está oculto. */}
           </div>
 
           {/* Divider */}
