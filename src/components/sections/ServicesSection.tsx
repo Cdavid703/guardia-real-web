@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { MapPin, Route, CheckCircle } from 'lucide-react'
 
 const SERVICES = [
@@ -84,16 +85,27 @@ export default function ServicesSection() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="text-center bg-gradient-hero rounded-2xl p-10 text-white">
-          <h3 className="font-display text-2xl font-bold uppercase tracking-wider mb-2">
-            ¿Tienes un evento especial?
-          </h3>
-          <p className="font-serif italic text-gold text-lg mb-6">
-            Cuéntanos y diseñamos la presentación perfecta para ti
-          </p>
-          <Link href="/contacto" className="btn btn-gold btn-xl">
-            Solicitar cotización gratuita
-          </Link>
+        <div className="relative bg-gradient-hero rounded-2xl p-10 text-white overflow-hidden text-center">
+          <div className="absolute right-0 bottom-0 hidden md:block pointer-events-none select-none opacity-90">
+            <Image
+              src="/images/mascota.png"
+              alt="Mascota Guardia Real"
+              width={180}
+              height={180}
+              className="object-contain"
+            />
+          </div>
+          <div className="relative z-10">
+            <h3 className="font-display text-2xl font-bold uppercase tracking-wider mb-2">
+              ¿Tienes un evento especial?
+            </h3>
+            <p className="font-serif italic text-gold text-lg mb-6">
+              Cuéntanos y diseñamos la presentación perfecta para ti
+            </p>
+            <Link href="/contacto" className="btn btn-gold btn-xl">
+              Solicitar cotización gratuita
+            </Link>
+          </div>
         </div>
       </div>
     </section>

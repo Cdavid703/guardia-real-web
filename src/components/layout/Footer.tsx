@@ -26,10 +26,17 @@ export default function Footer() {
           <p className="font-serif italic text-gold text-sm mb-4">
             &ldquo;Disciplina, progreso y honor&rdquo;
           </p>
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-gray-500 leading-relaxed mb-4">
             Corporación Musical Guardia Real de Antioquia.<br/>
             Más de 42 años formando músicos y transformando vidas.
           </p>
+          <Image
+            src="/images/mascota.png"
+            alt="Mascota Guardia Real"
+            width={90}
+            height={90}
+            className="object-contain opacity-80 hover:opacity-100 transition-opacity"
+          />
         </div>
 
         {/* ── Links ── */}
