@@ -125,14 +125,14 @@ function SongCard({
             <span className={cn('text-[10px] font-bold rounded-full px-2 py-0.5', LEVEL_COLORS[song.level as Level])}>
               {song.level as string}
             </span>
-            {song.genre && <span className="badge bg-navy/10 text-navy text-[10px]">{song.genre as string}</span>}
+            {song.genre ? <span className="badge bg-navy/10 text-navy text-[10px]">{song.genre as string}</span> : null}
             <span className="badge bg-gray-100 text-gray-500 text-[10px] flex items-center gap-1">
               <FileText size={8} /> {scores.length} partitura{scores.length !== 1 && 's'}
             </span>
           </div>
           <p className="font-serif font-bold text-navy">{song.title as string}</p>
           <p className="text-xs text-gray-400">
-            {[song.composer, song.arranger && `Arr. ${song.arranger}`, song.transcriber && `Trans. ${song.transcriber}`]
+            {[song.composer, song.arranger ? `Arr. ${String(song.arranger)}` : null, song.transcriber ? `Trans. ${String(song.transcriber)}` : null]
               .filter(Boolean).join(' · ')}
           </p>
         </div>
@@ -172,12 +172,12 @@ function SongCard({
               ))}
             </div>
           )}
-          {song.notes && (
+          {song.notes ? (
             <div className="mt-3 p-3 bg-navy/5 rounded-lg">
               <p className="text-xs font-bold text-navy mb-1">Notas del director</p>
-              <p className="text-xs text-gray-600">{song.notes as string}</p>
+              <p className="text-xs text-gray-600">{String(song.notes)}</p>
             </div>
-          )}
+          ) : null}
           <div className="mt-2 flex items-center gap-1 text-[10px] text-gray-400">
             <Users size={10} /> Visible para: {((song.visibleTo as string[]) ?? []).join(', ')}
           </div>

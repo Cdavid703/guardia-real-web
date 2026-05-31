@@ -446,11 +446,11 @@ export default function AdminEventsPage() {
                           <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
                             <span className="flex items-center gap-1">
                               <Calendar size={11} /> {ev.date as string}
-                              {ev.startTime && ` · ${ev.startTime as string}`}
+                              {ev.startTime ? ` · ${String(ev.startTime)}` : null}
                             </span>
-                            {ev.location && (
-                              <span className="flex items-center gap-1"><MapPin size={11} />{ev.location as string}</span>
-                            )}
+                            {ev.location ? (
+                              <span className="flex items-center gap-1"><MapPin size={11} />{String(ev.location)}</span>
+                            ) : null}
                           </div>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-1.5 shrink-0">

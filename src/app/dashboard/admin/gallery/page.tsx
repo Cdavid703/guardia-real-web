@@ -310,9 +310,9 @@ export default function AdminGalleryPage() {
                   <span className="capitalize">{item.type as string}</span>
                 </div>
                 <p className="text-sm font-semibold text-dark leading-tight line-clamp-1">{item.title as string}</p>
-                {item.description && (
-                  <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{item.description as string}</p>
-                )}
+                {item.description ? (
+                  <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{String(item.description)}</p>
+                ) : null}
               </div>
               {/* Delete button */}
               <button

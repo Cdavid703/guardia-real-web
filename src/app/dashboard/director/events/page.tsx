@@ -170,16 +170,16 @@ export default function EnsayosPage() {
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="text-[10px] font-bold bg-navy/10 text-navy rounded-full px-2 py-0.5">{info.label}</span>
               {isPast && <span className="text-[10px] bg-gray-200 text-gray-500 rounded-full px-2 py-0.5">Pasado</span>}
-              {en.notified && <span className="text-[10px] bg-green-100 text-green-700 rounded-full px-2 py-0.5">✓ Notificado</span>}
+              {en.notified ? <span className="text-[10px] bg-green-100 text-green-700 rounded-full px-2 py-0.5">✓ Notificado</span> : null}
             </div>
             <h3 className="font-serif font-bold text-navy text-sm mb-1">{en.title as string}</h3>
             <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-              <span className="flex items-center gap-1"><Calendar size={11} /> {en.date as string}{en.startTime && ` · ${en.startTime as string}`}</span>
-              {en.location && <span className="flex items-center gap-1"><MapPin size={11} />{en.location as string}</span>}
+              <span className="flex items-center gap-1"><Calendar size={11} /> {en.date as string}{en.startTime ? ` · ${String(en.startTime)}` : null}</span>
+              {en.location ? <span className="flex items-center gap-1"><MapPin size={11} />{String(en.location)}</span> : null}
             </div>
-            {en.objective && (
-              <p className="text-xs text-gray-600 mt-1.5 italic">{en.objective as string}</p>
-            )}
+            {en.objective ? (
+              <p className="text-xs text-gray-600 mt-1.5 italic">{String(en.objective)}</p>
+            ) : null}
           </div>
           <div className="flex gap-1.5 shrink-0">
             {!isPast && (
