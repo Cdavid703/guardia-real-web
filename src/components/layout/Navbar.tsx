@@ -89,6 +89,21 @@ export default function Navbar() {
               </Link>
             </li>
           ))}
+          {user && profile && profile.role !== 'visitante' && profile.role !== 'pending' && (
+            <li>
+              <Link
+                href="/uniformes"
+                className={cn(
+                  'px-3 py-1.5 text-sm font-medium rounded transition-colors duration-150',
+                  pathname === '/uniformes'
+                    ? 'text-gold border-b-2 border-gold'
+                    : 'text-gray-200 hover:text-gold'
+                )}
+              >
+                Uniformes
+              </Link>
+            </li>
+          )}
         </ul>
 
         {/* ── Right side ── */}
@@ -201,6 +216,21 @@ export default function Navbar() {
                 </Link>
               </li>
             ))}
+            {user && profile && profile.role !== 'visitante' && profile.role !== 'pending' && (
+              <li>
+                <Link
+                  href="/uniformes"
+                  className={cn(
+                    'block px-3 py-2.5 text-sm font-medium rounded transition-colors',
+                    pathname === '/uniformes'
+                      ? 'text-gold bg-white/5'
+                      : 'text-gray-200 hover:text-gold hover:bg-white/5'
+                  )}
+                >
+                  Uniformes
+                </Link>
+              </li>
+            )}
             <li className="pt-3 border-t border-white/10 mt-2">
               <Link href="/contacto" className="btn btn-gold btn-md w-full justify-center">
                 Contratar la banda
