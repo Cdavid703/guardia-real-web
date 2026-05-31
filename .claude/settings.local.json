@@ -36,7 +36,11 @@
       "Bash(git commit -m 'feat: phase 3 — full news management system *)",
       "Bash(git commit -m 'feat: phase 4 — editable ingreso status with notes and contact shortcuts *)",
       "Bash(git commit -m 'fix: remove leftover loadingMicrosoft references that broke build *)",
-      "Bash(git commit -m 'feat: role-based news visibility *)"
+      "Bash(git commit -m 'feat: role-based news visibility *)",
+      "Bash(ls /mnt/)",
+      "Read(//mnt/**)",
+      "Bash(git config *)",
+      "PowerShell(Copy-Item \"E:\\\\BGRA\\\\guardia-real-web\\\\public\\\\images\\\\escudo.jpeg\" \"E:\\\\BGRA\\\\guardia-real-web\\\\public\\\\images\\\\escudo.png\" -Force)"
     ]
   }
 }

@@ -127,6 +127,97 @@ export interface IngresoRequest {
   createdAt: Date
 }
 
+// ── Band Events (calendar) ─────────────────────────────────────────
+export interface BandEvent {
+  id: string
+  title: string
+  description?: string
+  type: 'presentacion' | 'concurso' | 'desfile' | 'reunion' | 'otro'
+  date: string // YYYY-MM-DD
+  startTime: string
+  endTime?: string
+  location: string
+  address?: string
+  city?: string
+  image?: string
+  isPublic: boolean
+  visibleTo: string[]
+  createdBy: string
+  createdAt: Date
+  updatedAt?: Date
+  notified?: boolean
+}
+
+// ── Ensayos ────────────────────────────────────────────────────────
+export interface Ensayo {
+  id: string
+  title: string
+  type: 'general' | 'vientos' | 'percusion' | 'colorguard' | 'brass' | 'reunion'
+  date: string // YYYY-MM-DD
+  startTime: string
+  endTime?: string
+  location: string
+  objective?: string
+  notes?: string
+  image?: string
+  visibleTo: string[] // roles
+  createdBy: string
+  createdAt: Date
+  notified?: boolean
+}
+
+// ── Gallery Media ──────────────────────────────────────────────────
+export interface GalleryMedia {
+  id: string
+  type: 'photo' | 'video' | 'instagram' | 'facebook'
+  title: string
+  description?: string
+  url: string
+  thumbnail?: string
+  visibleTo: string[]
+  uploadedBy: string
+  createdAt: Date
+}
+
+// ── Repertoire / Sheet music ───────────────────────────────────────
+export interface ScoreFile {
+  id: string
+  section: 'todos' | 'vientos' | 'percusion' | 'colorguard' | 'brass'
+  label: string
+  url: string
+  filename: string
+}
+
+export interface RepertoireSong {
+  id: string
+  title: string
+  composer?: string
+  arranger?: string
+  transcriber?: string
+  genre: string
+  level: 'basico' | 'intermedio' | 'avanzado'
+  notes?: string
+  scores: ScoreFile[]
+  visibleTo: string[]
+  addedBy: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+// ── Donations ──────────────────────────────────────────────────────
+export interface Donation {
+  id: string
+  nombre: string
+  telefono: string
+  identificacion?: string
+  email: string
+  monto?: string
+  comentarios?: string
+  evidenciaUrl?: string
+  status: 'recibida' | 'verificada' | 'rechazada'
+  createdAt: Date
+}
+
 // ── Nav links ──────────────────────────────────────────────────────
 export interface NavLink {
   label: string

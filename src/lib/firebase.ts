@@ -359,6 +359,145 @@ export async function getGalleryItems(limitCount = 20) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
+// ── Firestore: Events (enhanced) ──────────────────────────────────
+export async function getAllEvents() {
+  const snap = await getDocs(query(collection(db, 'events'), orderBy('date', 'desc')))
+  return snap.docs.map(d => {
+    const data = d.data()
+    return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() }
+  })
+}
+
+export async function updateEvent(id: string, data: Record<string, unknown>) {
+  return updateDoc(doc(db, 'events', id), { ...data, updatedAt: serverTimestamp() })
+}
+
+export async function deleteEvent(id: string) {
+  return deleteDoc(doc(db, 'events', id))
+}
+
+// ── Firestore: Ensayos ─────────────────────────────────────────────
+export async function createEnsayo(data: Record<string, unknown>) {
+  return addDoc(collection(db, 'ensayos'), { ...data, createdAt: serverTimestamp() })
+}
+
+export async function getAllEnsayos() {
+  const snap = await getDocs(query(collection(db, 'ensayos'), orderBy('date', 'desc')))
+  return snap.docs.map(d => {
+    const data = d.data()
+    return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() }
+  })
+}
+
+export async function getEnsayosForRole(role: string) {
+  const q = query(
+    collection(db, 'ensayos'),
+    where('visibleTo', 'array-contains', role),
+    orderBy('date', 'asc')
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map(d => {
+    const data = d.data()
+    return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() }
+  })
+}
+
+export async function updateEnsayo(id: string, data: Record<string, unknown>) {
+  return updateDoc(doc(db, 'ensayos', id), data)
+}
+
+export async function deleteEnsayo(id: string) {
+  return deleteDoc(doc(db, 'ensayos', id))
+}
+
+// ── Firestore: Gallery (enhanced) ─────────────────────────────────
+export async function createGalleryMedia(data: Record<string, unknown>) {
+  return addDoc(collection(db, 'gallery'), { ...data, createdAt: serverTimestamp() })
+}
+
+export async function getAllGalleryMedia(limitCount = 60) {
+  const snap = await getDocs(
+    query(collection(db, 'gallery'), orderBy('createdAt', 'desc'), limit(limitCount))
+  )
+  return snap.docs.map(d => {
+    const data = d.data()
+    return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() }
+  })
+}
+
+export async function getPublicGalleryMedia(limitCount = 40) {
+  const q = query(
+    collection(db, 'gallery'),
+    where('visibleTo', 'array-contains', 'public'),
+    orderBy('createdAt', 'desc'),
+    limit(limitCount)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map(d => {
+    const data = d.data()
+    return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() }
+  })
+}
+
+export async function deleteGalleryMedia(id: string) {
+  return deleteDoc(doc(db, 'gallery', id))
+}
+
+// ── Firestore: Repertoire ──────────────────────────────────────────
+export async function createRepertoireItem(data: Record<string, unknown>) {
+  return addDoc(collection(db, 'repertoire'), {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+}
+
+export async function getAllRepertoireItems() {
+  const snap = await getDocs(query(collection(db, 'repertoire'), orderBy('createdAt', 'desc')))
+  return snap.docs.map(d => {
+    const data = d.data()
+    return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() }
+  })
+}
+
+export async function getRepertoireForRole(role: string) {
+  const q = query(
+    collection(db, 'repertoire'),
+    where('visibleTo', 'array-contains', role),
+    orderBy('createdAt', 'desc')
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map(d => {
+    const data = d.data()
+    return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() }
+  })
+}
+
+export async function updateRepertoireItem(id: string, data: Record<string, unknown>) {
+  return updateDoc(doc(db, 'repertoire', id), { ...data, updatedAt: serverTimestamp() })
+}
+
+export async function deleteRepertoireItem(id: string) {
+  return deleteDoc(doc(db, 'repertoire', id))
+}
+
+// ── Firestore: Donations ──────────────────────────────────────────
+export async function createDonation(data: Record<string, unknown>) {
+  return addDoc(collection(db, 'donations'), {
+    ...data,
+    status: 'recibida',
+    createdAt: serverTimestamp(),
+  })
+}
+
+export async function getAllDonations() {
+  const snap = await getDocs(query(collection(db, 'donations'), orderBy('createdAt', 'desc')))
+  return snap.docs.map(d => {
+    const data = d.data()
+    return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() }
+  })
+}
+
 export {
   app, auth, db, storage,
   onAuthStateChanged,

@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Newspaper, Image as ImageIcon,
   Music, Calendar, FileText, MessageSquare, Settings,
-  ChevronLeft, ChevronRight, LogOut,
+  ChevronLeft, ChevronRight, LogOut, Shirt, ClipboardList,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -17,15 +17,17 @@ import type { UserRole } from '@/types'
 type NavItem = { href: string; label: string; icon: React.ElementType; roles: UserRole[] }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard',            label: 'Panel principal',  icon: LayoutDashboard, roles: ['admin','director','integrante','junta'] },
-  { href: '/dashboard/admin',      label: 'Gestión usuarios', icon: Users,           roles: ['admin'] },
-  { href: '/dashboard/admin/news', label: 'Noticias',         icon: Newspaper,       roles: ['admin'] },
-  { href: '/dashboard/admin/gallery', label: 'Galería',       icon: ImageIcon,       roles: ['admin'] },
-  { href: '/dashboard/admin/quotes',  label: 'Cotizaciones',  icon: MessageSquare,   roles: ['admin'] },
-  { href: '/dashboard/director',    label: 'Repertorio',      icon: Music,           roles: ['admin','director'] },
-  { href: '/dashboard/director/events', label: 'Ensayos',     icon: Calendar,        roles: ['admin','director'] },
-  { href: '/dashboard/integrante',  label: 'Portal integrante', icon: Settings,      roles: ['admin','integrante'] },
-  { href: '/dashboard/junta',       label: 'Documentos',      icon: FileText,        roles: ['admin','junta'] },
+  { href: '/dashboard',                   label: 'Panel principal',   icon: LayoutDashboard, roles: ['admin','director','integrante','junta'] },
+  { href: '/dashboard/admin',             label: 'Gestión usuarios',  icon: Users,           roles: ['admin'] },
+  { href: '/dashboard/admin/noticias',    label: 'Noticias',          icon: Newspaper,       roles: ['admin'] },
+  { href: '/dashboard/admin/events',      label: 'Eventos',           icon: Calendar,        roles: ['admin'] },
+  { href: '/dashboard/admin/gallery',     label: 'Galería',           icon: ImageIcon,       roles: ['admin'] },
+  { href: '/dashboard/admin/quotes',      label: 'Cotizaciones',      icon: MessageSquare,   roles: ['admin'] },
+  { href: '/dashboard/director',          label: 'Repertorio',        icon: Music,           roles: ['admin','director'] },
+  { href: '/dashboard/director/events',   label: 'Ensayos',           icon: ClipboardList,   roles: ['admin','director'] },
+  { href: '/dashboard/uniformes',         label: 'Uniformes',         icon: Shirt,           roles: ['admin','director','integrante','junta'] },
+  { href: '/dashboard/integrante',        label: 'Portal integrante', icon: Settings,        roles: ['admin','integrante'] },
+  { href: '/dashboard/junta',             label: 'Documentos',        icon: FileText,        roles: ['admin','junta'] },
 ]
 
 export default function DashboardSidebar({ role }: { role: UserRole }) {
