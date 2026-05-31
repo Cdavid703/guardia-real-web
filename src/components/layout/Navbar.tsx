@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, X, LogIn, User, LogOut, LayoutDashboard } from 'lucide-react'
+import { Menu, X, LogIn, User, LogOut, LayoutDashboard, Shirt } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getRoleDashboard, getRoleLabel } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -144,6 +144,16 @@ export default function Navbar() {
                     <LayoutDashboard size={15} />
                     Mi panel
                   </Link>
+                  {profile.role !== 'visitante' && profile.role !== 'pending' && (
+                    <Link
+                      href="/uniformes"
+                      onClick={() => setUserMenu(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Shirt size={15} />
+                      Uniformes
+                    </Link>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
