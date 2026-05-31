@@ -56,7 +56,8 @@ function WhatsAppBtn({ phone, name }: { phone: string; name: string }) {
       href={`https://wa.me/57${phone}?text=${msg}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-semibold transition-colors"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-colors"
+      style={{ backgroundColor: '#22c55e' }}
     >
       <MessageCircle size={13} />
       WhatsApp
