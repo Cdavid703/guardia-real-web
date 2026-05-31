@@ -91,9 +91,10 @@ function MiniCalendar({
   const prev = () => { if (month === 0) { setYear(y => y - 1); setMonth(11) } else setMonth(m => m - 1) }
   const next = () => { if (month === 11) { setYear(y => y + 1); setMonth(0) } else setMonth(m => m + 1) }
 
-  const cells = Array.from({ length: firstDay }, () => null).concat(
-    Array.from({ length: daysInMonth }, (_, i) => i + 1)
-  )
+  const cells: (number | null)[] = [
+    ...Array.from({ length: firstDay }, (): null => null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ]
 
   return (
     <div className="card p-4 select-none">
