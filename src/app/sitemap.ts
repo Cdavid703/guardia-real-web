@@ -12,7 +12,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }> = [
     { path: '/',          priority: 1.0, changeFreq: 'weekly'  },
     { path: '/nosotros',  priority: 0.9, changeFreq: 'monthly' },
-    { path: '/servicios', priority: 0.9, changeFreq: 'monthly' },
+    { path: '/servicios',  priority: 0.9, changeFreq: 'monthly' },
+    { path: '/contratar',  priority: 0.9, changeFreq: 'monthly' },
     { path: '/galeria',   priority: 0.7, changeFreq: 'weekly'  },
     { path: '/noticias',  priority: 0.8, changeFreq: 'weekly'  },
     { path: '/eventos',   priority: 0.8, changeFreq: 'weekly'  },

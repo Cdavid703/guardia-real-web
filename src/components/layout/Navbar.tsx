@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: '/',           label: 'Inicio' },
   { href: '/nosotros',   label: 'Nosotros' },
   { href: '/servicios',  label: 'Servicios' },
+  { href: '/contratar',  label: 'Contratantes' },
   { href: '/eventos',    label: 'Eventos' },
   { href: '/galeria',    label: 'Galería' },
   { href: '/noticias',   label: 'Noticias' },
@@ -111,7 +112,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {/* CTA — contratar */}
           <Link
-            href="/contacto"
+            href="/contratar"
             className="hidden md:inline-flex btn btn-gold btn-sm"
           >
             Contratar
@@ -233,7 +234,7 @@ export default function Navbar() {
               </li>
             )}
             <li className="pt-3 border-t border-white/10 mt-2">
-              <Link href="/contacto" className="btn btn-gold btn-md w-full justify-center">
+              <Link href="/contratar" className="btn btn-gold btn-md w-full justify-center">
                 Contratar la banda
               </Link>
             </li>

@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Newspaper, Image as ImageIcon,
   Music, Calendar, FileText, MessageSquare, Settings,
-  ChevronLeft, ChevronRight, LogOut, ClipboardList,
+  ChevronLeft, ChevronRight, LogOut, ClipboardList, Globe,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -17,16 +17,19 @@ import type { UserRole } from '@/types'
 type NavItem = { href: string; label: string; icon: React.ElementType; roles: UserRole[] }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard',                   label: 'Panel principal',   icon: LayoutDashboard, roles: ['admin','director','integrante','junta'] },
+  { href: '/dashboard',                   label: 'Panel principal',   icon: LayoutDashboard, roles: ['admin','director','integrante','junta','cm'] },
   { href: '/dashboard/admin',             label: 'Gestión usuarios',  icon: Users,           roles: ['admin'] },
   { href: '/dashboard/admin/noticias',    label: 'Noticias',          icon: Newspaper,       roles: ['admin'] },
   { href: '/dashboard/admin/events',      label: 'Eventos',           icon: Calendar,        roles: ['admin'] },
-  { href: '/dashboard/admin/gallery',     label: 'Galería',           icon: ImageIcon,       roles: ['admin'] },
+  { href: '/dashboard/admin/gallery',     label: 'Galería (admin)',   icon: ImageIcon,       roles: ['admin'] },
   { href: '/dashboard/admin/quotes',      label: 'Cotizaciones',      icon: MessageSquare,   roles: ['admin'] },
   { href: '/dashboard/director',          label: 'Repertorio',        icon: Music,           roles: ['admin','director'] },
   { href: '/dashboard/director/events',   label: 'Ensayos',           icon: ClipboardList,   roles: ['admin','director'] },
   { href: '/dashboard/integrante',        label: 'Portal integrante', icon: Settings,        roles: ['admin','integrante'] },
   { href: '/dashboard/junta',             label: 'Documentos',        icon: FileText,        roles: ['admin','junta'] },
+  { href: '/dashboard/cm',               label: 'Panel CM',          icon: Globe,           roles: ['cm'] },
+  { href: '/dashboard/cm/noticias',       label: 'Publicar noticias', icon: Newspaper,       roles: ['cm'] },
+  { href: '/dashboard/cm/galeria',        label: 'Galería / Media',   icon: ImageIcon,       roles: ['cm'] },
 ]
 
 export default function DashboardSidebar({ role }: { role: UserRole }) {

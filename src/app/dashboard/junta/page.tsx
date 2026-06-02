@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { FileText, Download, Upload, Plus, AlertCircle, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react'
+import { FileText, Download, Upload, Plus, AlertCircle, ClipboardList, ChevronDown, ChevronUp, Calendar, MapPin } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { getIngresoRequests } from '@/lib/firebase'
+import { getIngresoRequests, getEnsayosForRole } from '@/lib/firebase'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import type { IngresoRequest } from '@/types'
+import type { IngresoRequest, Ensayo } from '@/types'
 
 const MOCK_DOCS = [
   { id: '1', title: 'Estatutos de la corporación',  category: 'estatutos', date: '2024-01-15' },
@@ -34,12 +34,18 @@ const INGRESO_STATUS_LABELS: Record<string, string> = {
   nuevo: 'Nuevo', contactado: 'Contactado', aceptado: 'Aceptado', rechazado: 'Rechazado',
 }
 
+const ENSAYO_EMOJI: Record<string, string> = {
+  general: '🎺', vientos: '🪗', percusion: '🥁',
+  colorguard: '🚩', brass: '📯', reunion: '📋',
+}
+
 export default function JuntaPage() {
   const { profile } = useAuth()
   const router = useRouter()
   const [ingresos,   setIngresos]   = useState<(IngresoRequest & { id: string })[]>([])
   const [ingLoading, setIngLoading] = useState(true)
   const [expanded,   setExpanded]   = useState<string | null>(null)
+  const [ensayos,    setEnsayos]    = useState<Ensayo[]>([])
 
   useEffect(() => {
     if (profile && profile.role !== 'junta' && profile.role !== 'admin') {
@@ -48,10 +54,15 @@ export default function JuntaPage() {
   }, [profile, router])
 
   useEffect(() => {
-    getIngresoRequests()
-      .then(data => setIngresos(data as (IngresoRequest & { id: string })[]))
-      .catch(() => toast.error('Error al cargar solicitudes'))
-      .finally(() => setIngLoading(false))
+    const today = new Date().toISOString().split('T')[0]
+    Promise.all([
+      getIngresoRequests(),
+      getEnsayosForRole('junta'),
+    ]).then(([ing, ens]) => {
+      setIngresos(ing as (IngresoRequest & { id: string })[])
+      setEnsayos((ens as unknown as Ensayo[]).filter(e => e.date >= today))
+    }).catch(() => toast.error('Error al cargar datos'))
+    .finally(() => setIngLoading(false))
   }, [])
 
   return (
@@ -160,6 +171,38 @@ export default function JuntaPage() {
           )}
         </div>
       </div>
+
+      {/* Ensayos y reuniones */}
+      {ensayos.length > 0 && (
+        <div className="mb-8">
+          <h2 className="font-display text-navy text-lg font-bold uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Calendar size={18} />
+            Próximos ensayos / reuniones
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {ensayos.slice(0, 6).map(en => (
+              <div key={en.id} className="card p-4 flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-navy/8 flex items-center justify-center text-xl shrink-0">
+                  {ENSAYO_EMOJI[en.type] ?? '📋'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-serif font-bold text-navy text-sm">{en.title}</p>
+                  <div className="flex flex-wrap gap-2 text-xs text-gray-500 mt-1">
+                    <span className="flex items-center gap-1">
+                      <Calendar size={10} /> {en.date}{en.startTime ? ` · ${en.startTime}` : ''}
+                    </span>
+                    {en.location && (
+                      <span className="flex items-center gap-1">
+                        <MapPin size={10} /> {en.location}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Upload area */}
       <div className="card p-6 mb-6 border border-dashed border-gray-300">

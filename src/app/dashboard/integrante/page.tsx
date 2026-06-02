@@ -1,20 +1,48 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { Calendar, Music, Bell, User } from 'lucide-react'
+import { Calendar, Music, Bell, User, MapPin } from 'lucide-react'
 import Image from 'next/image'
+import { getEnsayosForRole, getNewsForRole, type NewsItem } from '@/lib/firebase'
+import type { Ensayo } from '@/types'
+
+const ENSAYO_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
+  general:    { emoji: '🎺', label: 'Ensayo General' },
+  vientos:    { emoji: '🪗', label: 'Solo Vientos' },
+  percusion:  { emoji: '🥁', label: 'Solo Percusión' },
+  colorguard: { emoji: '🚩', label: 'Solo Color Guard' },
+  brass:      { emoji: '📯', label: 'Solo Brass' },
+  reunion:    { emoji: '📋', label: 'Reunión' },
+}
 
 export default function IntegrantePage() {
   const { profile } = useAuth()
   const router = useRouter()
+
+  const [ensayos,  setEnsayos]  = useState<Ensayo[]>([])
+  const [news,     setNews]     = useState<NewsItem[]>([])
+  const [loading,  setLoading]  = useState(true)
 
   useEffect(() => {
     if (profile && profile.role !== 'integrante' && profile.role !== 'admin') {
       router.replace('/dashboard')
     }
   }, [profile, router])
+
+  useEffect(() => {
+    if (!profile) return
+    const today = new Date().toISOString().split('T')[0]
+    Promise.all([
+      getEnsayosForRole('integrante'),
+      getNewsForRole(profile.role, 5),
+    ]).then(([ens, nws]) => {
+      setEnsayos((ens as unknown as Ensayo[]).filter(e => e.date >= today))
+      setNews(nws.filter(n => !n.visibleTo.includes('public')).slice(0, 4))
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [profile])
 
   return (
     <div>
@@ -51,37 +79,93 @@ export default function IntegrantePage() {
           </button>
         </div>
 
-        {/* Schedule */}
-        <div className="card p-6">
+        {/* Ensayos */}
+        <div className="card p-6 md:col-span-2">
           <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2 mb-4">
             <Calendar size={18} className="text-royal" /> Próximos ensayos
           </h3>
-          <div className="text-center py-8 text-gray-400">
-            <Calendar size={28} className="mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No hay ensayos programados próximamente</p>
-            <p className="text-xs mt-1">El director publicará el cronograma aquí</p>
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-6 h-6 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
+            </div>
+          ) : ensayos.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <Calendar size={28} className="mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No hay ensayos programados próximamente</p>
+              <p className="text-xs mt-1">El director publicará el cronograma aquí</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {ensayos.slice(0, 5).map(en => {
+                const info = ENSAYO_TYPE_INFO[en.type] ?? { emoji: '📋', label: en.type }
+                return (
+                  <div key={en.id}
+                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="w-9 h-9 rounded-xl bg-navy/8 flex items-center justify-center text-lg shrink-0">
+                      {info.emoji}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span className="text-[10px] font-bold bg-navy/10 text-navy rounded-full px-2 py-0.5">
+                          {info.label}
+                        </span>
+                      </div>
+                      <p className="font-serif font-bold text-navy text-sm">{en.title}</p>
+                      <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
+                        <span className="flex items-center gap-1">
+                          <Calendar size={10} /> {en.date}
+                          {en.startTime ? ` · ${en.startTime}` : ''}
+                        </span>
+                        {en.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPin size={10} /> {en.location}
+                          </span>
+                        )}
+                      </div>
+                      {en.objective && (
+                        <p className="text-xs text-gray-600 mt-1 italic">{en.objective}</p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Notifications */}
-        <div className="card p-6">
+        {/* Noticias internas */}
+        <div className="card p-6 md:col-span-2">
           <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2 mb-4">
             <Bell size={18} className="text-royal" /> Noticias internas
           </h3>
-          <div className="text-center py-8 text-gray-400">
-            <Bell size={28} className="mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No hay noticias internas nuevas</p>
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-6 h-6 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
+            </div>
+          ) : news.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <Bell size={28} className="mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No hay noticias internas nuevas</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {news.map(n => (
+                <div key={n.id} className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <p className="font-serif font-bold text-navy text-sm mb-0.5">{n.title}</p>
+                  <p className="text-xs text-gray-500 line-clamp-2">{n.excerpt}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Repertoire for integrante */}
-        <div className="card p-6 md:col-span-2">
+        <div className="card p-6">
           <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2 mb-4">
-            <Music size={18} className="text-royal" /> Repertorio de la banda
+            <Music size={18} className="text-royal" /> Repertorio
           </h3>
           <p className="text-sm text-gray-500 leading-relaxed">
             Las partituras y el repertorio activo aparecerán aquí una vez que el Director Musical las publique.
-            Podrás descargar archivos de partitura directamente desde este panel.
           </p>
           <div className="mt-4 p-3 bg-gradient-primary rounded-lg text-white text-sm">
             <p className="font-semibold mb-0.5">¿Necesitas algo?</p>

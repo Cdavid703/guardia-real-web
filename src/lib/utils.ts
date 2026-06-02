@@ -12,6 +12,7 @@ export function getRoleDashboard(role: UserRole): string {
     director:   '/dashboard/director',
     integrante: '/dashboard/integrante',
     junta:      '/dashboard/junta',
+    cm:         '/dashboard/cm',
     visitante:  '/dashboard/visitante',
     pending:    '/pending',
   }
@@ -24,6 +25,7 @@ export function getRoleLabel(role: UserRole): string {
     director:   'Director Musical',
     integrante: 'Integrante',
     junta:      'Junta Directiva',
+    cm:         'Community Manager',
     visitante:  'Visitante',
     pending:    'Pendiente de aprobación',
   }
@@ -36,10 +38,31 @@ export function getRoleBadgeColor(role: UserRole): string {
     director:   'bg-purple-100 text-purple-700',
     integrante: 'bg-blue-100 text-blue-700',
     junta:      'bg-amber-100 text-amber-700',
+    cm:         'bg-pink-100 text-pink-700',
     visitante:  'bg-green-100 text-green-700',
     pending:    'bg-gray-100 text-gray-600',
   }
   return colors[role] ?? 'bg-gray-100 text-gray-600'
+}
+
+/** Extrae el ID de un enlace de YouTube en cualquier formato */
+export function getYouTubeId(url: string): string | null {
+  const match = url.match(
+    /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+  )
+  return match ? match[1] : null
+}
+
+/** Convierte cualquier URL de YouTube a URL de embed */
+export function getYouTubeEmbedUrl(url: string): string | null {
+  const id = getYouTubeId(url)
+  return id ? `https://www.youtube.com/embed/${id}` : null
+}
+
+/** Thumbnail HQ de un video de YouTube */
+export function getYouTubeThumbnail(url: string): string | null {
+  const id = getYouTubeId(url)
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null
 }
 
 export function formatDate(date: Date | undefined, options?: Intl.DateTimeFormatOptions): string {

@@ -186,17 +186,19 @@ function newsFromDoc(id: string, data: Record<string, unknown>): NewsItem {
 /**
  * Noticias publicadas y visibles para el público general (sin login).
  * Solo retorna las que tienen 'public' en su array visibleTo.
+ * Usa query simple (solo orderBy) para evitar requerir índice compuesto en Firestore.
  */
-export async function getPublishedNews(limitCount = 10): Promise<NewsItem[]> {
+export async function getPublishedNews(limitCount = 20): Promise<NewsItem[]> {
   const q = query(
     collection(db, 'news'),
-    where('published',  '==', true),
-    where('visibleTo', 'array-contains', 'public'),
     orderBy('publishedAt', 'desc'),
-    limit(limitCount),
+    limit(limitCount * 3), // extra para compensar el filtro JS
   )
   const snap = await getDocs(q)
-  return snap.docs.map(d => newsFromDoc(d.id, d.data()))
+  return snap.docs
+    .map(d => newsFromDoc(d.id, d.data()))
+    .filter(n => n.published && n.visibleTo.includes('public'))
+    .slice(0, limitCount)
 }
 
 /**
@@ -206,13 +208,14 @@ export async function getPublishedNews(limitCount = 10): Promise<NewsItem[]> {
 export async function getNewsForRole(role: string, limitCount = 20): Promise<NewsItem[]> {
   const q = query(
     collection(db, 'news'),
-    where('published',  '==', true),
-    where('visibleTo', 'array-contains-any', ['public', role]),
     orderBy('publishedAt', 'desc'),
-    limit(limitCount),
+    limit(limitCount * 3),
   )
   const snap = await getDocs(q)
-  return snap.docs.map(d => newsFromDoc(d.id, d.data()))
+  return snap.docs
+    .map(d => newsFromDoc(d.id, d.data()))
+    .filter(n => n.published && (n.visibleTo.includes('public') || n.visibleTo.includes(role)))
+    .slice(0, limitCount)
 }
 
 export async function getAllNews(): Promise<NewsItem[]> {
@@ -283,31 +286,34 @@ export async function createEvent(data: Record<string, unknown>) {
 
 /**
  * Eventos públicos próximos (para la web pública).
- * Filtra los que tienen isPublic === true y fecha >= hoy.
+ * Usa query simple para evitar requerir índice compuesto en Firestore.
+ * Filtra isPublic === true y fecha >= hoy en JS.
  */
 export async function getPublicUpcomingEvents(limitCount = 12) {
   const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
   const q = query(
     collection(db, 'events'),
-    where('isPublic', '==', true),
-    where('date', '>=', today),
     orderBy('date', 'asc'),
-    limit(limitCount),
+    limit(limitCount * 4),
   )
   const snap = await getDocs(q)
-  return snap.docs.map(d => {
-    const data = d.data()
-    return {
-      id:          d.id,
-      title:       (data.title       as string) ?? '',
-      date:        (data.date        as string) ?? '',
-      startTime:   (data.startTime   as string) ?? '',
-      endTime:     (data.endTime     as string) ?? '',
-      location:    (data.location    as string) ?? '',
-      type:        (data.type        as string) ?? 'evento',
-      description: (data.description as string) ?? '',
-    }
-  })
+  return snap.docs
+    .map(d => {
+      const data = d.data()
+      return {
+        id:          d.id,
+        title:       (data.title       as string) ?? '',
+        date:        (data.date        as string) ?? '',
+        startTime:   (data.startTime   as string) ?? '',
+        endTime:     (data.endTime     as string) ?? '',
+        location:    (data.location    as string) ?? '',
+        type:        (data.type        as string) ?? 'evento',
+        description: (data.description as string) ?? '',
+        isPublic:    (data.isPublic    as boolean) ?? false,
+      }
+    })
+    .filter(ev => ev.isPublic && ev.date >= today)
+    .slice(0, limitCount)
 }
 
 // ── Firestore: Ingreso requests ───────────────────────────────────
@@ -390,16 +396,20 @@ export async function getAllEnsayos() {
 }
 
 export async function getEnsayosForRole(role: string) {
+  // Query simple para evitar índice compuesto; filtra por rol en JS
   const q = query(
     collection(db, 'ensayos'),
-    where('visibleTo', 'array-contains', role),
-    orderBy('date', 'asc')
+    orderBy('date', 'asc'),
+    limit(100),
   )
   const snap = await getDocs(q)
-  return snap.docs.map(d => {
-    const data = d.data()
-    return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() }
-  })
+  type EnsayoRaw = { id: string; visibleTo?: string[]; createdAt: Date; [k: string]: unknown }
+  return snap.docs
+    .map(d => {
+      const data = d.data()
+      return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() } as EnsayoRaw
+    })
+    .filter(e => e.visibleTo ? e.visibleTo.includes(role) : false)
 }
 
 export async function updateEnsayo(id: string, data: Record<string, unknown>) {

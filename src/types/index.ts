@@ -2,7 +2,7 @@
 // GUARDIA REAL DE ANTIOQUIA — Tipos globales
 // ──────────────────────────────────────────────────────────────────
 
-export type UserRole = 'admin' | 'director' | 'integrante' | 'junta' | 'visitante' | 'pending'
+export type UserRole = 'admin' | 'director' | 'integrante' | 'junta' | 'cm' | 'visitante' | 'pending'
 
 export interface UserProfile {
   uid: string
@@ -169,7 +169,7 @@ export interface Ensayo {
 // ── Gallery Media ──────────────────────────────────────────────────
 export interface GalleryMedia {
   id: string
-  type: 'photo' | 'video' | 'instagram' | 'facebook'
+  type: 'photo' | 'video' | 'youtube' | 'instagram' | 'facebook' | 'link'
   title: string
   description?: string
   url: string

@@ -47,10 +47,11 @@ export default function Footer() {
               { href: '/',          label: 'Inicio' },
               { href: '/nosotros',  label: 'Quiénes somos' },
               { href: '/servicios', label: 'Servicios' },
-              { href: '/eventos',   label: 'Eventos' },
-              { href: '/galeria',   label: 'Galería' },
-              { href: '/noticias',  label: 'Noticias' },
-              { href: '/contacto',  label: 'Contacto' },
+              { href: '/eventos',    label: 'Eventos' },
+              { href: '/galeria',    label: 'Galería' },
+              { href: '/noticias',   label: 'Noticias' },
+              { href: '/contratar',  label: 'Contratantes' },
+              { href: '/contacto',   label: 'Contacto' },
             ].map(({ href, label }) => (
               <li key={href}>
                 <Link href={href} className="text-sm hover:text-gold transition-colors">
