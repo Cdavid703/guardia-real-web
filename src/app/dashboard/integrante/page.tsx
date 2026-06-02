@@ -39,7 +39,8 @@ export default function IntegrantePage() {
       getNewsForRole(profile.role, 5),
     ]).then(([ens, nws]) => {
       setEnsayos((ens as unknown as Ensayo[]).filter(e => e.date >= today))
-      setNews(nws.filter(n => !n.visibleTo.includes('public')).slice(0, 4))
+      // Mostrar noticias que incluyan 'integrante' en su audiencia
+      setNews(nws.filter(n => n.visibleTo.includes('integrante')).slice(0, 4))
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [profile])
