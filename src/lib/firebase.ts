@@ -121,6 +121,19 @@ export async function updateUserRole(uid: string, role: UserRole): Promise<void>
   })
 }
 
+export async function updateUserProfile(uid: string, data: {
+  displayName?: string
+  phone?: string
+  instrument?: string
+  joinedYear?: number
+  bio?: string
+}): Promise<void> {
+  await updateDoc(doc(db, 'users', uid), {
+    ...data,
+    updatedAt: serverTimestamp(),
+  })
+}
+
 export async function getPendingUsers(): Promise<UserProfile[]> {
   const q = query(
     collection(db, 'users'),
@@ -216,6 +229,19 @@ export async function getNewsForRole(role: string, limitCount = 20): Promise<New
     .map(d => newsFromDoc(d.id, d.data()))
     .filter(n => n.published && (n.visibleTo.includes('public') || n.visibleTo.includes(role)))
     .slice(0, limitCount)
+}
+
+export async function getNewsBySlug(slug: string): Promise<NewsItem | null> {
+  const q = query(
+    collection(db, 'news'),
+    where('slug', '==', slug),
+    where('published', '==', true),
+    limit(1),
+  )
+  const snap = await getDocs(q)
+  if (snap.empty) return null
+  const d = snap.docs[0]
+  return newsFromDoc(d.id, d.data())
 }
 
 export async function getAllNews(): Promise<NewsItem[]> {

@@ -101,7 +101,7 @@ export default function ContratarPage() {
             </p>
           </div>
           <a
-            href="/brochure.pdf"
+            href="/api/brochure"
             download="Brochure-Guardia-Real-Antioquia.pdf"
             className="btn btn-md bg-near-black text-white hover:bg-navy transition-colors flex items-center gap-2 shrink-0"
           >

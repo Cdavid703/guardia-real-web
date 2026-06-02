@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Plus, Edit2, Trash2, Eye, EyeOff, Newspaper, ArrowLeft } from 'lucide-react'
+import { Plus, Edit2, Trash2, Eye, EyeOff, Newspaper, ArrowLeft, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAllNews, createNews, updateNews, deleteNews, type NewsItem } from '@/lib/firebase'
@@ -102,6 +102,18 @@ export default function AdminNoticiasPage() {
     setForm(EMPTY_FORM)
   }
 
+  const notifyNews = async (newsData: {
+    id: string; title: string; excerpt: string; slug: string; image?: string | null; visibleTo: string[]
+  }) => {
+    try {
+      await fetch('/api/news/notify', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ news: newsData }),
+      })
+    } catch { /* notificación no crítica */ }
+  }
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.title.trim() || !form.excerpt.trim()) {
@@ -110,9 +122,10 @@ export default function AdminNoticiasPage() {
     }
     setSaving(true)
     try {
+      const slug    = slugify(form.title)
       const payload = {
         title:     form.title.trim(),
-        slug:      slugify(form.title),
+        slug,
         excerpt:   form.excerpt.trim(),
         content:   form.content.trim(),
         tags:      form.tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -124,9 +137,26 @@ export default function AdminNoticiasPage() {
       if (form.id) {
         await updateNews(form.id, payload)
         toast.success('Noticia actualizada')
+        // Notificar si se está publicando con audiencia interna
+        if (form.published && form.visibleTo.some(r => r !== 'public')) {
+          await notifyNews({ id: form.id, ...payload, image: payload.image ?? undefined })
+        }
       } else {
-        await createNews(payload)
-        toast.success(form.published ? 'Noticia publicada' : 'Noticia guardada como borrador')
+        const ref = await createNews(payload)
+        if (form.published) {
+          toast.success('Noticia publicada — notificando a miembros...')
+          await notifyNews({
+            id: (ref as { id: string }).id ?? '',
+            title:     payload.title,
+            excerpt:   payload.excerpt,
+            slug:      payload.slug,
+            image:     payload.image ?? undefined,
+            visibleTo: payload.visibleTo,
+          })
+          toast.success('¡Miembros notificados por correo!')
+        } else {
+          toast.success('Noticia guardada como borrador')
+        }
       }
       cancelForm()
       fetchNews()
@@ -140,7 +170,21 @@ export default function AdminNoticiasPage() {
   const togglePublished = async (n: NewsItem) => {
     try {
       await updateNews(n.id, { published: !n.published })
-      toast.success(n.published ? 'Despublicada' : 'Publicada')
+      if (!n.published) {
+        // Se está publicando — notificar si tiene audiencia interna
+        toast.success('Publicada — notificando a miembros...')
+        await notifyNews({
+          id:       n.id,
+          title:    n.title,
+          excerpt:  n.excerpt,
+          slug:     n.slug,
+          image:    n.image,
+          visibleTo: n.visibleTo,
+        })
+        toast.success('¡Miembros notificados!')
+      } else {
+        toast.success('Despublicada')
+      }
       fetchNews()
     } catch {
       toast.error('Error al cambiar el estado')
@@ -360,6 +404,17 @@ export default function AdminNoticiasPage() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                  {n.published && (
+                    <a
+                      href={`/noticias/${n.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-lg hover:bg-green-50 text-gray-500 hover:text-green-600 transition-colors"
+                      title="Ver en el sitio"
+                    >
+                      <ExternalLink size={16} />
+                    </a>
+                  )}
                   <button
                     onClick={() => togglePublished(n)}
                     className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-navy transition-colors"

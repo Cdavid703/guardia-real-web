@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Plus, Edit2, Trash2, Eye, EyeOff, Newspaper, ArrowLeft, Globe } from 'lucide-react'
+import { Plus, Edit2, Trash2, Eye, EyeOff, Newspaper, ArrowLeft, Globe, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAllNews, createNews, updateNews, deleteNews, type NewsItem } from '@/lib/firebase'
@@ -83,15 +83,15 @@ export default function CMNoticiasPage() {
     }
     setSaving(true)
     try {
+      const slug    = slugify(form.title)
       const payload = {
         title:     form.title.trim(),
-        slug:      slugify(form.title),
+        slug,
         excerpt:   form.excerpt.trim(),
         content:   form.content.trim(),
         tags:      form.tags.split(',').map(t => t.trim()).filter(Boolean),
         image:     form.image.trim() || null,
         published: form.published,
-        // Las noticias del CM siempre son públicas (nacionales/internacionales)
         visibleTo: ['public'],
         author:    profile?.uid ?? null,
       }
@@ -99,8 +99,14 @@ export default function CMNoticiasPage() {
         await updateNews(form.id, payload)
         toast.success('Noticia actualizada')
       } else {
-        await createNews(payload)
-        toast.success(form.published ? 'Noticia publicada' : 'Noticia guardada como borrador')
+        const ref = await createNews(payload)
+        if (form.published) {
+          toast.success('Noticia publicada y visible en el sitio ✓')
+          // Las noticias del CM son públicas, no se notifica internamente
+          void ref
+        } else {
+          toast.success('Noticia guardada como borrador')
+        }
       }
       cancelForm()
       fetchNews()
@@ -114,7 +120,7 @@ export default function CMNoticiasPage() {
   const togglePublished = async (n: NewsItem) => {
     try {
       await updateNews(n.id, { published: !n.published })
-      toast.success(n.published ? 'Despublicada' : 'Publicada')
+      toast.success(n.published ? 'Despublicada' : 'Publicada y visible en el sitio ✓')
       fetchNews()
     } catch {
       toast.error('Error al cambiar el estado')
@@ -308,6 +314,13 @@ export default function CMNoticiasPage() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                  {n.published && (
+                    <a href={`/noticias/${n.slug}`} target="_blank" rel="noopener noreferrer"
+                      className="p-2 rounded-lg hover:bg-green-50 text-gray-500 hover:text-green-600 transition-colors"
+                      title="Ver en el sitio">
+                      <ExternalLink size={16} />
+                    </a>
+                  )}
                   <button
                     onClick={() => togglePublished(n)}
                     className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-navy transition-colors"

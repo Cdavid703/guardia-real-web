@@ -14,9 +14,10 @@ export interface UserProfile {
   updatedAt: Date
   // Info adicional del integrante
   instrument?: string
-  phone?: string
+  phone?:      string
   joinedYear?: number
-  active: boolean
+  bio?:        string
+  active:      boolean
 }
 
 export interface NewsArticle {
