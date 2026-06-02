@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Newspaper, Image as ImageIcon,
   Music, Calendar, FileText, MessageSquare, Settings,
-  ChevronLeft, ChevronRight, LogOut, ClipboardList, Globe,
+  ChevronLeft, ChevronRight, LogOut, ClipboardList, Globe, X,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -32,7 +32,12 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/cm/galeria',        label: 'Galería / Media',   icon: ImageIcon,       roles: ['cm'] },
 ]
 
-export default function DashboardSidebar({ role }: { role: UserRole }) {
+interface Props {
+  role:     UserRole
+  onClose?: () => void
+}
+
+export default function DashboardSidebar({ role, onClose }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const pathname  = usePathname()
   const { logout } = useAuth()
@@ -45,21 +50,35 @@ export default function DashboardSidebar({ role }: { role: UserRole }) {
     router.push('/')
   }
 
+  const handleNavClick = () => {
+    // Cierra el drawer en móvil al navegar
+    onClose?.()
+  }
+
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col bg-navy border-r border-white/10 transition-all duration-300 shrink-0',
-        collapsed ? 'w-16' : 'w-60'
+        'flex flex-col bg-navy border-r border-white/10 transition-all duration-300 shrink-0 h-full min-h-screen',
+        collapsed ? 'w-16' : 'w-64'
       )}
     >
-      {/* Logo */}
+      {/* Logo + botón cerrar en móvil */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10 shrink-0">
         <Image src="/images/escudo.png" alt="GRA" width={32} height={32} className="shrink-0" />
         {!collapsed && (
-          <div className="overflow-hidden">
+          <div className="flex-1 overflow-hidden">
             <p className="font-display text-white text-xs font-bold tracking-wider uppercase truncate">Guardia Real</p>
             <p className="text-sky text-[9px] tracking-wider uppercase">{getRoleLabel(role)}</p>
           </div>
+        )}
+        {/* X solo en móvil */}
+        {onClose && !collapsed && (
+          <button
+            onClick={onClose}
+            className="md:hidden w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-gray-300 hover:text-white shrink-0"
+          >
+            <X size={15} />
+          </button>
         )}
       </div>
 
@@ -72,6 +91,7 @@ export default function DashboardSidebar({ role }: { role: UserRole }) {
               <li key={href}>
                 <Link
                   href={href}
+                  onClick={handleNavClick}
                   title={collapsed ? label : undefined}
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
@@ -92,7 +112,7 @@ export default function DashboardSidebar({ role }: { role: UserRole }) {
         </ul>
       </nav>
 
-      {/* Collapse toggle + logout */}
+      {/* Logout + colapsar (colapsar solo en desktop) */}
       <div className="p-2 border-t border-white/10 space-y-1">
         <button
           onClick={handleLogout}
@@ -104,7 +124,7 @@ export default function DashboardSidebar({ role }: { role: UserRole }) {
         </button>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+          className="hidden md:flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           {!collapsed && 'Minimizar'}

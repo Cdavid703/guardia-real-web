@@ -1,11 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardSidebar from '@/components/dashboard/Sidebar'
 import DashboardTopbar  from '@/components/dashboard/Topbar'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth()
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   if (loading) {
     return (
@@ -20,7 +22,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div className="min-h-screen bg-gradient-hero flex flex-col items-center justify-center gap-4 text-white p-6">
         <p>No autenticado.</p>
-        <p className="text-xs opacity-60">user=null, profile={profile ? profile.role : 'null'}</p>
         <a href="/login" className="underline">Ir a login</a>
       </div>
     )
@@ -31,20 +32,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="min-h-screen bg-gradient-hero flex flex-col items-center justify-center gap-4 text-white p-6">
         <p>Perfil no se pudo cargar.</p>
         <p className="text-xs opacity-60">UID: {user.uid}</p>
-        <p className="text-xs opacity-60">Email: {user.email}</p>
-        <p className="text-xs opacity-80 max-w-md text-center">
-          Esto probablemente indica que las reglas de Firestore están bloqueando la lectura, o tu documento no existe en la colección <code>users</code>.
-        </p>
       </div>
     )
   }
 
   return (
     <div className="flex min-h-screen bg-[#F5F7FA]">
-      <DashboardSidebar role={profile.role} />
+      {/* Overlay móvil */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — drawer en móvil, fijo en desktop */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 transition-transform duration-300 md:static md:translate-x-0 md:z-auto
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <DashboardSidebar role={profile.role} onClose={() => setMobileOpen(false)} />
+      </div>
+
       <div className="flex-1 flex flex-col min-w-0">
-        <DashboardTopbar profile={profile} />
-        <main className="flex-1 p-6 md:p-8 overflow-auto">
+        <DashboardTopbar
+          profile={profile}
+          onMenuOpen={() => setMobileOpen(true)}
+        />
+        <main className="flex-1 p-4 md:p-8 overflow-auto">
           {children}
         </main>
       </div>
