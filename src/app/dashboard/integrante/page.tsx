@@ -59,7 +59,7 @@ export default function IntegrantePage() {
     const today = new Date().toISOString().split('T')[0]
     Promise.all([
       getEnsayosForRole('integrante'),
-      getNewsForRole(profile.role, 5),
+      getNewsForRole('integrante', 5),
     ]).then(([ens, nws]) => {
       setEnsayos((ens as unknown as Ensayo[]).filter(e => e.date >= today))
       setNews(nws.filter(n => n.visibleTo.includes('integrante')).slice(0, 4))
@@ -106,6 +106,12 @@ export default function IntegrantePage() {
 
   return (
     <div>
+      {profile?.role === 'admin' && (
+        <div className="mb-4 flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+          <span className="text-base">👁️</span>
+          <span>Estás viendo la vista tal como la ve un <strong>integrante</strong>. Los datos son reales.</span>
+        </div>
+      )}
       <div className="mb-8">
         <h1 className="font-display text-navy text-2xl font-bold uppercase tracking-wider">Mi portal</h1>
         <p className="text-gray-400 text-sm mt-1">Tu espacio personal como integrante de la Guardia Real</p>
