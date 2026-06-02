@@ -122,13 +122,31 @@ export default function EnsayosPage() {
         visibleTo: form.visibleTo,
         createdBy: profile?.uid ?? '',
       }
-      if (form.id) { await updateEnsayo(form.id, payload); toast.success('Ensayo actualizado') }
-      else         { await createEnsayo(payload);          toast.success('Ensayo programado') }
+      if (form.id) {
+        await updateEnsayo(form.id, payload)
+        toast.success('Ensayo actualizado')
+      } else {
+        const docRef = await createEnsayo(payload)
+        toast.success('Ensayo programado')
+        toast.info('Notificando a integrantes...')
+        fetch('/api/ensayos/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ensayo: { ...payload, id: docRef.id } }),
+        }).then(r => {
+          if (r.ok) toast.success('¡Notificados!')
+        }).catch(() => {})
+      }
       setShowForm(false)
       setForm(EMPTY)
       fetchEnsayos()
-    } catch { toast.error('Error al guardar') }
-    finally { setSaving(false) }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('createEnsayo error:', err)
+      toast.error(`Error al guardar: ${msg.slice(0, 80)}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleDelete = async (en: Record<string, unknown>) => {

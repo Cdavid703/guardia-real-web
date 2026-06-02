@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Plus, Edit2, Trash2, Eye, EyeOff, Newspaper, ArrowLeft, Globe, ExternalLink } from 'lucide-react'
+import { Plus, Edit2, Trash2, Eye, EyeOff, Newspaper, ArrowLeft, Globe, ExternalLink, Upload, X } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { getAllNews, createNews, updateNews, deleteNews, type NewsItem } from '@/lib/firebase'
+import { getAllNews, createNews, updateNews, deleteNews, storage, type NewsItem } from '@/lib/firebase'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { slugify, formatDate, cn } from '@/lib/utils'
 
 interface FormState {
@@ -26,11 +28,13 @@ const EMPTY_FORM: FormState = {
 export default function CMNoticiasPage() {
   const { profile } = useAuth()
   const router = useRouter()
-  const [news,     setNews]     = useState<NewsItem[]>([])
-  const [loading,  setLoading]  = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [form,     setForm]     = useState<FormState>(EMPTY_FORM)
-  const [saving,   setSaving]   = useState(false)
+  const [news,      setNews]      = useState<NewsItem[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [showForm,  setShowForm]  = useState(false)
+  const [form,      setForm]      = useState<FormState>(EMPTY_FORM)
+  const [saving,    setSaving]    = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (profile && profile.role !== 'cm' && profile.role !== 'admin') {
@@ -74,6 +78,23 @@ export default function CMNoticiasPage() {
   }
 
   const cancelForm = () => { setShowForm(false); setForm(EMPTY_FORM) }
+
+  const handleImageUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) { toast.error('Solo se permiten imágenes'); return }
+    setUploading(true)
+    try {
+      const path      = `news/${Date.now()}_${file.name.replace(/\s/g, '_')}`
+      const storageRef = ref(storage, path)
+      await uploadBytes(storageRef, file)
+      const url = await getDownloadURL(storageRef)
+      setForm(prev => ({ ...prev, image: url }))
+      toast.success('Imagen subida correctamente')
+    } catch {
+      toast.error('Error al subir la imagen')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -213,37 +234,86 @@ export default function CMNoticiasPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-dark mb-1.5">
-                  Tags <span className="text-gray-400 font-normal">(separados por coma)</span>
-                </label>
-                <input
-                  value={form.tags}
-                  onChange={e => setForm({ ...form, tags: e.target.value })}
-                  className="input"
-                  placeholder="Colombia, Internacional, Festival, 2026"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-dark mb-1.5">
-                  Imagen de portada <span className="text-gray-400 font-normal">(URL)</span>
-                </label>
-                <input
-                  value={form.image}
-                  onChange={e => setForm({ ...form, image: e.target.value })}
-                  className="input"
-                  placeholder="https://..."
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-semibold text-dark mb-1.5">
+                Tags <span className="text-gray-400 font-normal">(separados por coma)</span>
+              </label>
+              <input
+                value={form.tags}
+                onChange={e => setForm({ ...form, tags: e.target.value })}
+                className="input"
+                placeholder="Colombia, Internacional, Festival, 2026"
+              />
             </div>
 
-            {form.image && (
-              <div className="relative h-40 rounded-xl overflow-hidden bg-gray-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={form.image} alt="preview" className="w-full h-full object-cover" />
-              </div>
-            )}
+            {/* Imagen — upload o URL */}
+            <div>
+              <label className="block text-sm font-semibold text-dark mb-2">
+                Imagen de portada <span className="text-gray-400 font-normal">(opcional)</span>
+              </label>
+
+              {form.image ? (
+                <div className="relative rounded-xl overflow-hidden bg-gray-100 mb-2">
+                  <Image
+                    src={form.image}
+                    alt="preview"
+                    width={800}
+                    height={300}
+                    className="w-full h-48 object-cover"
+                    unoptimized
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, image: '' })}
+                    className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Upload desde computador */}
+                  <div
+                    onClick={() => !uploading && fileRef.current?.click()}
+                    className={cn(
+                      'border-2 border-dashed border-gray-200 rounded-xl p-5 text-center cursor-pointer transition-colors',
+                      uploading ? 'opacity-60 cursor-not-allowed' : 'hover:border-pink-300'
+                    )}
+                  >
+                    {uploading ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-5 h-5 border-2 border-pink-400/30 border-t-pink-400 rounded-full animate-spin" />
+                        <p className="text-xs text-gray-500">Subiendo imagen...</p>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload size={22} className="mx-auto text-gray-300 mb-2" />
+                        <p className="text-sm font-medium text-gray-600">Subir desde tu computador</p>
+                        <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WebP</p>
+                      </>
+                    )}
+                  </div>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+                  />
+
+                  {/* URL directa */}
+                  <div className="flex flex-col justify-center gap-1.5">
+                    <p className="text-xs text-gray-500 font-medium">O pega un enlace de imagen:</p>
+                    <input
+                      value={form.image}
+                      onChange={e => setForm({ ...form, image: e.target.value })}
+                      className="input text-sm"
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="border-t border-gray-100 pt-4">
               <label className="flex items-start gap-3 cursor-pointer">
