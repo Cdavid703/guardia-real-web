@@ -17,8 +17,8 @@ import { cn } from '@/lib/utils'
 import type { ScoreFile } from '@/types'
 
 // ── Types ──────────────────────────────────────────────────────────
-type Level   = 'basico' | 'intermedio' | 'avanzado'
-type Section = 'todos' | 'vientos' | 'percusion' | 'colorguard' | 'brass'
+type Level    = 'basico' | 'intermedio' | 'avanzado'
+type Section  = string
 type Audience = 'integrante' | 'director' | 'junta' | 'admin'
 
 interface SongForm {
@@ -39,13 +39,67 @@ const EMPTY_SONG: SongForm = {
   visibleTo: ['integrante', 'director', 'admin'],
 }
 
-const SECTIONS: { value: Section; label: string; emoji: string }[] = [
-  { value: 'todos',      label: 'Todos / General',  emoji: '🎼' },
-  { value: 'vientos',    label: 'Vientos',          emoji: '🎺' },
-  { value: 'percusion',  label: 'Percusión',        emoji: '🥁' },
-  { value: 'colorguard', label: 'Color Guard',      emoji: '🚩' },
-  { value: 'brass',      label: 'Brass',            emoji: '📯' },
+// ── Instrumentos por grupo ─────────────────────────────────────────
+interface SectionItem { value: string; label: string; emoji: string }
+
+const SECTION_GROUPS: { group: string; emoji: string; items: SectionItem[] }[] = [
+  {
+    group: 'Partitura General',
+    emoji: '🎼',
+    items: [
+      { value: 'todos', label: 'General / Todos', emoji: '🎼' },
+    ],
+  },
+  {
+    group: 'Vientos Madera',
+    emoji: '🪗',
+    items: [
+      { value: 'flauta-1',         label: 'Flauta Traversa 1',  emoji: '🎵' },
+      { value: 'flauta-2',         label: 'Flauta Traversa 2',  emoji: '🎵' },
+      { value: 'piccolo',          label: 'Piccolo',            emoji: '🎵' },
+      { value: 'clarinete-1',      label: 'Clarinete 1',        emoji: '🎵' },
+      { value: 'clarinete-2',      label: 'Clarinete 2',        emoji: '🎵' },
+      { value: 'clarinete-3',      label: 'Clarinete 3 Bb',     emoji: '🎵' },
+      { value: 'saxofon-alto-1',   label: 'Saxofón Alto 1',     emoji: '🎷' },
+      { value: 'saxofon-alto-2',   label: 'Saxofón Alto 2',     emoji: '🎷' },
+      { value: 'saxofon-tenor-1',  label: 'Saxofón Tenor 1',    emoji: '🎷' },
+      { value: 'saxofon-tenor-2',  label: 'Saxofón Tenor 2',    emoji: '🎷' },
+      { value: 'saxofon-baritono', label: 'Saxofón Barítono',   emoji: '🎷' },
+    ],
+  },
+  {
+    group: 'Vientos Metal',
+    emoji: '🎺',
+    items: [
+      { value: 'trompeta-1',  label: 'Trompeta Bb 1', emoji: '🎺' },
+      { value: 'trompeta-2',  label: 'Trompeta 2',    emoji: '🎺' },
+      { value: 'trompeta-3',  label: 'Trompeta 3',    emoji: '🎺' },
+      { value: 'trombon-1',   label: 'Trombón 1',     emoji: '🎺' },
+      { value: 'trombon-2',   label: 'Trombón 2',     emoji: '🎺' },
+      { value: 'trombon-3',   label: 'Trombón 3',     emoji: '🎺' },
+      { value: 'tuba-bb',     label: 'Tuba Bb',       emoji: '🎺' },
+      { value: 'tuba-c',      label: 'Tuba C',        emoji: '🎺' },
+      { value: 'melofono-1',  label: 'Melofono 1',    emoji: '🎺' },
+      { value: 'melofono-2',  label: 'Melofono 2',    emoji: '🎺' },
+    ],
+  },
+  {
+    group: 'Percusión',
+    emoji: '🥁',
+    items: [
+      { value: 'platillos',   label: 'Platillos',   emoji: '🥁' },
+      { value: 'bombo',       label: 'Bombo',       emoji: '🥁' },
+      { value: 'multitenor',  label: 'Multitenor',  emoji: '🥁' },
+      { value: 'redoblante',  label: 'Redoblante',  emoji: '🥁' },
+      { value: 'timbal',      label: 'Timbal',      emoji: '🥁' },
+      { value: 'conga',       label: 'Conga',       emoji: '🥁' },
+      { value: 'guiro',       label: 'Güiro',       emoji: '🥁' },
+    ],
+  },
 ]
+
+// Tabla plana para búsqueda rápida por value
+const ALL_SECTIONS: SectionItem[] = SECTION_GROUPS.flatMap(g => g.items)
 
 const AUDIENCE_OPTIONS: { value: Audience; label: string }[] = [
   { value: 'integrante', label: 'Integrantes' },
@@ -62,47 +116,90 @@ const LEVEL_COLORS: Record<Level, string> = {
 
 // ── Score upload row ───────────────────────────────────────────────
 function ScoreUploadRow({
-  section, onUploaded,
-}: { section: Section; onUploaded: (score: Omit<ScoreFile, 'id'>) => void }) {
-  const fileRef    = useRef<HTMLInputElement>(null)
+  item, onUploaded,
+}: { item: SectionItem; onUploaded: (score: Omit<ScoreFile, 'id'>) => void }) {
+  const fileRef     = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
 
   const handleFile = async (file: File) => {
     setUploading(true)
     try {
-      const path     = `repertoire/${Date.now()}_${section}_${file.name.replace(/\s/g, '_')}`
+      const path       = `repertoire/${Date.now()}_${item.value}_${file.name.replace(/\s/g, '_')}`
       const storageRef = ref(storage, path)
       await uploadBytes(storageRef, file)
       const url = await getDownloadURL(storageRef)
-      const info = SECTIONS.find(s => s.value === section)!
-      onUploaded({ section, label: `${info.emoji} ${info.label}`, url, filename: file.name })
-      toast.success(`Partitura de ${info.label} subida`)
-    } catch { toast.error('Error al subir — verifica las reglas de Firebase Storage') }
+      onUploaded({ section: item.value, label: `${item.emoji} ${item.label}`, url, filename: file.name })
+      toast.success(`Partitura de ${item.label} subida`)
+    } catch { toast.error('Error al subir') }
     finally { setUploading(false) }
   }
 
-  const info = SECTIONS.find(s => s.value === section)!
-
   return (
     <div className="flex items-center gap-3 p-2.5 rounded-lg border border-dashed border-gray-200 hover:border-royal transition-colors">
-      <span className="text-base">{info.emoji}</span>
-      <span className="text-sm font-medium text-gray-600 flex-1">{info.label}</span>
+      <span className="text-sm">{item.emoji}</span>
+      <span className="text-sm font-medium text-gray-600 flex-1">{item.label}</span>
       <button
         type="button"
         disabled={uploading}
         onClick={() => fileRef.current?.click()}
-        className="flex items-center gap-1.5 text-xs text-royal hover:text-navy font-semibold disabled:opacity-50"
+        className="flex items-center gap-1.5 text-xs text-royal hover:text-navy font-semibold disabled:opacity-50 shrink-0"
       >
         {uploading ? (
           <span className="flex items-center gap-1">
             <div className="w-3 h-3 border border-royal/30 border-t-royal rounded-full animate-spin" /> Subiendo...
           </span>
         ) : (
-          <><Upload size={12} /> Subir PDF</>
+          <><Upload size={12} /> Subir</>
         )}
       </button>
       <input ref={fileRef} type="file" accept=".pdf,.xml,.mxl,.musicxml" className="hidden"
         onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+    </div>
+  )
+}
+
+// ── Score group (colapsable) ───────────────────────────────────────
+function ScoreGroupUpload({
+  group, uploadedSections, onUploaded,
+}: {
+  group: typeof SECTION_GROUPS[number]
+  uploadedSections: string[]
+  onUploaded: (score: Omit<ScoreFile, 'id'>) => void
+}) {
+  const [open, setOpen] = useState(group.group === 'Partitura General')
+  const uploadedCount   = group.items.filter(i => uploadedSections.includes(i.value)).length
+
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+      >
+        <span className="text-lg">{group.emoji}</span>
+        <span className="font-semibold text-dark text-sm flex-1">{group.group}</span>
+        {uploadedCount > 0 && (
+          <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full">
+            {uploadedCount}/{group.items.length} subidas
+          </span>
+        )}
+        <ChevronDown size={15} className={cn('text-gray-400 transition-transform shrink-0', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div className="p-3 space-y-2 bg-white">
+          {group.items.map(item => {
+            const uploaded = uploadedSections.includes(item.value)
+            return (
+              <div key={item.value} className={cn(uploaded && 'opacity-60')}>
+                <ScoreUploadRow item={item} onUploaded={onUploaded} />
+                {uploaded && (
+                  <p className="text-[10px] text-green-600 ml-8 mt-0.5">✓ Ya subida</p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -159,7 +256,7 @@ function SongCard({
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Partituras disponibles</p>
               {scores.map((s: ScoreFile, i: number) => (
                 <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                  <span className="text-sm">{SECTIONS.find(x => x.value === s.section)?.emoji ?? '🎼'}</span>
+                  <span className="text-sm">{ALL_SECTIONS.find(x => x.value === s.section)?.emoji ?? '🎼'}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-dark truncate">{s.label}</p>
                     <p className="text-[10px] text-gray-400 truncate">{s.filename}</p>
@@ -347,13 +444,18 @@ export default function DirectorPage() {
 
             {/* Sheet music upload */}
             <div className="border-t border-gray-100 pt-4">
-              <p className="text-sm font-semibold text-dark mb-1">Partituras</p>
-              <p className="text-xs text-gray-500 mb-3">
-                Sube las partituras por sección. Formatos: PDF, MusicXML. Los integrantes solo verán la de su sección.
+              <p className="text-sm font-semibold text-dark mb-1">Partituras por instrumento</p>
+              <p className="text-xs text-gray-500 mb-4">
+                Sube el PDF de cada instrumento. Los integrantes solo verán la partitura de su instrumento.
               </p>
-              <div className="space-y-2 mb-4">
-                {SECTIONS.map(s => (
-                  <ScoreUploadRow key={s.value} section={s.value} onUploaded={addScore} />
+              <div className="space-y-3 mb-4">
+                {SECTION_GROUPS.map(group => (
+                  <ScoreGroupUpload
+                    key={group.group}
+                    group={group}
+                    uploadedSections={scores.map(s => s.section)}
+                    onUploaded={addScore}
+                  />
                 ))}
               </div>
 
@@ -363,7 +465,7 @@ export default function DirectorPage() {
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Partituras cargadas:</p>
                   {scores.map((s, i) => (
                     <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                      <span>{SECTIONS.find(x => x.value === s.section)?.emoji}</span>
+                      <span>{ALL_SECTIONS.find((x: SectionItem) => x.value === s.section)?.emoji ?? '🎼'}</span>
                       <span className="text-xs font-medium text-dark flex-1 truncate">{s.label} — {s.filename}</span>
                       <button type="button" onClick={() => delScore(i)}
                         className="text-red-400 hover:text-red-600 transition-colors">

@@ -183,7 +183,7 @@ export interface GalleryMedia {
 // ── Repertoire / Sheet music ───────────────────────────────────────
 export interface ScoreFile {
   id: string
-  section: 'todos' | 'vientos' | 'percusion' | 'colorguard' | 'brass'
+  section: string
   label: string
   url: string
   filename: string
