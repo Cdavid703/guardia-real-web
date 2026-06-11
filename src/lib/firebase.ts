@@ -27,6 +27,7 @@ import {
   addDoc,
   deleteDoc,
   serverTimestamp,
+  deleteField,
   Timestamp,
 } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
@@ -127,9 +128,12 @@ export async function updateUserProfile(uid: string, data: {
   instrument?: string
   joinedYear?: number
   bio?: string
+  requestedRole?: UserRole | null
 }): Promise<void> {
+  const { requestedRole, ...rest } = data
   await updateDoc(doc(db, 'users', uid), {
-    ...data,
+    ...rest,
+    ...(requestedRole === null ? { requestedRole: deleteField() } : requestedRole ? { requestedRole } : {}),
     updatedAt: serverTimestamp(),
   })
 }
@@ -465,14 +469,15 @@ export async function getPublicGalleryMedia(limitCount = 40) {
   const q = query(
     collection(db, 'gallery'),
     where('visibleTo', 'array-contains', 'public'),
-    orderBy('createdAt', 'desc'),
     limit(limitCount)
   )
   const snap = await getDocs(q)
-  return snap.docs.map(d => {
-    const data = d.data()
-    return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() }
-  })
+  return snap.docs
+    .map(d => {
+      const data = d.data()
+      return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() }
+    })
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 }
 
 export async function deleteGalleryMedia(id: string) {

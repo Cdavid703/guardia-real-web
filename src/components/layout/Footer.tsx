@@ -50,8 +50,8 @@ export default function Footer() {
               { href: '/eventos',    label: 'Eventos' },
               { href: '/galeria',    label: 'Galería' },
               { href: '/noticias',   label: 'Noticias' },
-              { href: '/contratar',  label: 'Contratantes' },
-              { href: '/contacto',   label: 'Contacto' },
+              { href: '/servicios?tab=contratantes', label: 'Contratantes' },
+              { href: '/servicios?tab=contacto',     label: 'Contacto' },
             ].map(({ href, label }) => (
               <li key={href}>
                 <Link href={href} className="text-sm hover:text-gold transition-colors">
@@ -121,7 +121,7 @@ export default function Footer() {
             </a>
           </div>
           <Link
-            href="/contacto"
+            href="/servicios?tab=contacto"
             className="btn btn-gold btn-sm w-full justify-center mb-2"
           >
             Solicitar cotización

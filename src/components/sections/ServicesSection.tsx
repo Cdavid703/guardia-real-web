@@ -76,7 +76,7 @@ export default function ServicesSection() {
                     </li>
                   ))}
                 </ul>
-                <Link href={`/contacto?servicio=${encodeURIComponent(title)}`} className="btn btn-primary btn-md w-full justify-center">
+                <Link href={`/servicios?tab=contacto`} className="btn btn-primary btn-md w-full justify-center">
                   {cta}
                 </Link>
               </div>
@@ -102,7 +102,7 @@ export default function ServicesSection() {
             <p className="font-serif italic text-gold text-lg mb-6">
               Cuéntanos y diseñamos la presentación perfecta para ti
             </p>
-            <Link href="/contacto" className="btn btn-gold btn-xl">
+            <Link href="/servicios?tab=contacto" className="btn btn-gold btn-xl">
               Solicitar cotización gratuita
             </Link>
           </div>

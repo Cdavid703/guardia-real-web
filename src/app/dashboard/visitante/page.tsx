@@ -10,7 +10,7 @@ const PUBLIC_LINKS = [
   { href: '/nosotros',  icon: Music,      label: 'Nosotros',          desc: 'Historia y trayectoria de la Guardia Real' },
   { href: '/servicios', icon: Music,      label: 'Servicios',         desc: 'Exhibiciones, desfiles y contrataciones' },
   { href: '/galeria',   icon: ImageIcon,  label: 'Galería',           desc: 'Fotos y momentos de la banda' },
-  { href: '/contacto',  icon: Phone,      label: 'Contacto',          desc: 'Solicitar cotización o información' },
+  { href: '/servicios?tab=contacto', icon: Phone, label: 'Contacto',  desc: 'Solicitar cotización o información' },
 ]
 
 export default function VisitantePage() {

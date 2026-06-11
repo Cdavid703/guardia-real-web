@@ -1,24 +1,57 @@
-import type { Metadata } from 'next'
-import ServicesSection from '@/components/sections/ServicesSection'
-import ContactCTASection from '@/components/sections/ContactCTASection'
+'use client'
+
+import { Suspense, useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { Music2, Briefcase, Mail } from 'lucide-react'
 import PageBanner from '@/components/layout/PageBanner'
+import Tabs from '@/components/ui/Tabs'
+import ServiciosTab from './ServiciosTab'
+import ContratantesTab from './ContratantesTab'
+import ContactoTab from './ContactoTab'
 
-export const metadata: Metadata = {
-  title: 'Servicios',
-  description: 'Servicios de la Banda Show Guardia Real de Antioquia: exhibición de campo y show de recorrido.',
-}
+const TABS = [
+  { id: 'servicios',    label: 'Servicios',    icon: Music2 },
+  { id: 'contratantes', label: 'Contratantes', icon: Briefcase },
+  { id: 'contacto',     label: 'Contacto',     icon: Mail },
+]
 
-export default function ServiciosPage() {
+function ServiciosContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const initial = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState(
+    TABS.some(t => t.id === initial) ? (initial as string) : 'servicios'
+  )
+
+  const handleChange = (id: string) => {
+    setActiveTab(id)
+    router.replace(`/servicios?tab=${id}`, { scroll: false })
+  }
+
   return (
     <div>
       <PageBanner
         image="/images/banners/banner-servicios.jpg"
         eyebrow="Lo que ofrecemos"
-        title="Nuestros servicios"
-        subtitle="Llevamos la música y la cultura a tu evento con 42 años de experiencia"
+        title="Servicios y Contratación"
+        subtitle="Conoce nuestros servicios, cómo contratarnos y solicita tu cotización"
       />
-      <ServicesSection />
-      <ContactCTASection />
+      <section className="py-16 bg-[#F5F7FA]">
+        <div className="section-container">
+          <Tabs tabs={TABS} activeTab={activeTab} onChange={handleChange} className="mb-12" />
+          {activeTab === 'servicios'    && <ServiciosTab onNavigate={handleChange} />}
+          {activeTab === 'contratantes' && <ContratantesTab onNavigate={handleChange} />}
+          {activeTab === 'contacto'     && <ContactoTab />}
+        </div>
+      </section>
     </div>
+  )
+}
+
+export default function ServiciosPage() {
+  return (
+    <Suspense fallback={null}>
+      <ServiciosContent />
+    </Suspense>
   )
 }

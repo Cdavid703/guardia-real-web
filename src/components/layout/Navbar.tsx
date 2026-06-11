@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, X, LogIn, User, LogOut, LayoutDashboard, Shirt } from 'lucide-react'
+import { Menu, X, LogIn, User, LogOut, LayoutDashboard } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getRoleDashboard, getRoleLabel } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -13,13 +13,11 @@ const NAV_LINKS = [
   { href: '/',           label: 'Inicio' },
   { href: '/nosotros',   label: 'Nosotros' },
   { href: '/servicios',  label: 'Servicios' },
-  { href: '/contratar',  label: 'Contratantes' },
   { href: '/eventos',    label: 'Eventos' },
   { href: '/galeria',    label: 'Galería' },
   { href: '/noticias',   label: 'Noticias' },
   { href: '/ingresos',   label: 'Ingresos' },
   { href: '/donar',      label: 'Donar' },
-  { href: '/contacto',   label: 'Contacto' },
 ]
 
 export default function Navbar() {
@@ -91,28 +89,13 @@ export default function Navbar() {
               </Link>
             </li>
           ))}
-          {user && profile && profile.role !== 'visitante' && profile.role !== 'pending' && (
-            <li>
-              <Link
-                href="/uniformes"
-                className={cn(
-                  'px-3 py-1.5 text-sm font-medium rounded transition-colors duration-150',
-                  pathname === '/uniformes'
-                    ? 'text-gold border-b-2 border-gold'
-                    : 'text-gray-200 hover:text-gold'
-                )}
-              >
-                Uniformes
-              </Link>
-            </li>
-          )}
         </ul>
 
         {/* ── Right side ── */}
         <div className="flex items-center gap-3">
           {/* CTA — contratar */}
           <Link
-            href="/contratar"
+            href="/servicios?tab=contratantes"
             className="hidden md:inline-flex btn btn-gold btn-sm"
           >
             Contratar
@@ -161,16 +144,6 @@ export default function Navbar() {
                     <LayoutDashboard size={15} />
                     Mi panel
                   </Link>
-                  {profile.role !== 'visitante' && profile.role !== 'pending' && (
-                    <Link
-                      href="/uniformes"
-                      onClick={() => setUserMenu(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <Shirt size={15} />
-                      Uniformes
-                    </Link>
-                  )}
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -218,23 +191,8 @@ export default function Navbar() {
                 </Link>
               </li>
             ))}
-            {user && profile && profile.role !== 'visitante' && profile.role !== 'pending' && (
-              <li>
-                <Link
-                  href="/uniformes"
-                  className={cn(
-                    'block px-3 py-2.5 text-sm font-medium rounded transition-colors',
-                    pathname === '/uniformes'
-                      ? 'text-gold bg-white/5'
-                      : 'text-gray-200 hover:text-gold hover:bg-white/5'
-                  )}
-                >
-                  Uniformes
-                </Link>
-              </li>
-            )}
             <li className="pt-3 border-t border-white/10 mt-2">
-              <Link href="/contratar" className="btn btn-gold btn-md w-full justify-center">
+              <Link href="/servicios?tab=contratantes" className="btn btn-gold btn-md w-full justify-center">
                 Contratar la banda
               </Link>
             </li>

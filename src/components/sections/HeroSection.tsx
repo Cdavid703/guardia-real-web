@@ -82,7 +82,7 @@ export default function HeroSection() {
         {/* CTA buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up"
           style={{ animationDelay: '300ms' }}>
-          <Link href="/contacto" className="btn btn-gold btn-xl">
+          <Link href="/servicios?tab=contratantes" className="btn btn-gold btn-xl">
             Contratar la banda
           </Link>
           <Link href="/nosotros" className="btn btn-outline-white btn-xl">

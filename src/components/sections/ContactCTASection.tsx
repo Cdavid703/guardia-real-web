@@ -48,7 +48,7 @@ export default function ContactCTASection() {
               Solicita tu cotización gratuita y recibe respuesta en menos de 24 horas.
               Adaptamos cada presentación a tu evento.
             </p>
-            <Link href="/contacto" className="btn btn-gold btn-xl w-full justify-center mb-4">
+            <Link href="/servicios?tab=contacto" className="btn btn-gold btn-xl w-full justify-center mb-4">
               Solicitar cotización
             </Link>
             <Link href="/servicios" className="btn btn-outline-white btn-md w-full justify-center">

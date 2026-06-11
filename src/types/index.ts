@@ -10,6 +10,8 @@ export interface UserProfile {
   displayName: string
   photoURL?: string
   role: UserRole
+  // Rol solicitado por el usuario, pendiente de aprobación por administración
+  requestedRole?: UserRole
   createdAt: Date
   updatedAt: Date
   // Info adicional del integrante

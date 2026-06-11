@@ -60,7 +60,7 @@ export default function GaleriaPage() {
   // Videos de YouTube y fotos propias visibles al público
   const youtubeItems = media.filter(m => m.type === 'youtube')
   const photoItems   = media.filter(m => m.type === 'photo')
-  const linkItems    = media.filter(m => m.type !== 'youtube' && m.type !== 'photo' && m.type !== 'instagram')
+  const linkItems    = media.filter(m => m.type !== 'youtube' && m.type !== 'photo')
 
   const hasOwnContent = youtubeItems.length > 0 || photoItems.length > 0
 
@@ -263,7 +263,9 @@ export default function GaleriaPage() {
                     <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-royal/40 hover:shadow-sm transition-all group">
                       <div className="w-10 h-10 rounded-xl bg-navy/8 flex items-center justify-center shrink-0">
-                        <LinkIcon size={16} className="text-royal" />
+                        {item.type === 'instagram'
+                          ? <Instagram size={16} className="text-royal" />
+                          : <LinkIcon size={16} className="text-royal" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-navy text-sm group-hover:text-royal transition-colors truncate">{item.title}</p>

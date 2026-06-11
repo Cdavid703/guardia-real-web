@@ -29,7 +29,7 @@ export default function NotFound() {
           <Link href="/" className="btn btn-gold btn-lg">
             Volver al inicio
           </Link>
-          <Link href="/contacto" className="btn btn-outline-white btn-lg">
+          <Link href="/servicios?tab=contacto" className="btn btn-outline-white btn-lg">
             Contactarnos
           </Link>
         </div>

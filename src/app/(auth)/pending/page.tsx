@@ -1,16 +1,28 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter }  from 'next/navigation'
 import { useAuth }    from '@/contexts/AuthContext'
-import { getRoleDashboard } from '@/lib/utils'
-import { Clock, LogOut, Mail, Phone } from 'lucide-react'
+import { getRoleDashboard, getRoleLabel, cn } from '@/lib/utils'
+import { updateUserRole, updateUserProfile } from '@/lib/firebase'
+import { Clock, LogOut, Mail, Phone, CheckCircle2 } from 'lucide-react'
+import { toast } from 'sonner'
 import Image from 'next/image'
 import Link  from 'next/link'
+import type { UserRole } from '@/types'
+
+const SELF_SERVICE_ROLES: { value: UserRole; label: string; desc: string }[] = [
+  { value: 'visitante',  label: 'Visitante',         desc: 'Acceso inmediato como visitante del portal' },
+  { value: 'integrante', label: 'Integrante',        desc: 'Soy músico, bailarín o artista de la banda' },
+  { value: 'junta',      label: 'Junta Directiva',   desc: 'Hago parte de la junta directiva' },
+  { value: 'director',   label: 'Director Musical',  desc: 'Soy director musical de la corporación' },
+  { value: 'cm',         label: 'Community Manager', desc: 'Gestiono redes sociales y contenido' },
+]
 
 export default function PendingPage() {
-  const { user, profile, logout, loading } = useAuth()
+  const { user, profile, logout, loading, refreshProfile } = useAuth()
   const router = useRouter()
+  const [submitting, setSubmitting] = useState<UserRole | null>(null)
 
   useEffect(() => {
     if (!loading) {
@@ -26,6 +38,27 @@ export default function PendingPage() {
     router.push('/')
   }
 
+  const handleChooseRole = async (role: UserRole) => {
+    if (!profile) return
+    setSubmitting(role)
+    try {
+      if (role === 'visitante') {
+        await updateUserRole(profile.uid, 'visitante')
+        await refreshProfile?.()
+        toast.success('¡Listo! Ya tienes acceso como visitante.')
+        router.replace('/dashboard/visitante')
+      } else {
+        await updateUserProfile(profile.uid, { requestedRole: role })
+        await refreshProfile?.()
+        toast.success('Solicitud enviada. Quedará pendiente de aprobación.')
+      }
+    } catch {
+      toast.error('Ocurrió un error. Intenta de nuevo.')
+    } finally {
+      setSubmitting(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
@@ -34,8 +67,10 @@ export default function PendingPage() {
     )
   }
 
+  const requestedRole = profile?.requestedRole
+
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-hero flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full text-center">
         {/* Logo */}
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 border border-white/20 mb-6">
@@ -58,28 +93,46 @@ export default function PendingPage() {
           <p className="text-gray-600 text-sm leading-relaxed mb-6">
             Tu cuenta ha sido registrada exitosamente con el correo{' '}
             <strong className="text-navy">{profile?.email}</strong>.
-            Un administrador debe asignarte un rol para que puedas acceder al portal.
           </p>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
-            <p className="text-amber-700 text-xs font-semibold uppercase tracking-wider mb-2">
-              ¿Qué hacer ahora?
-            </p>
-            <ul className="text-amber-700 text-sm space-y-1.5">
-              <li className="flex gap-2 items-start">
-                <span className="mt-0.5">1.</span>
-                Comunícate con un administrador de la corporación.
-              </li>
-              <li className="flex gap-2 items-start">
-                <span className="mt-0.5">2.</span>
-                Diles tu correo electrónico registrado.
-              </li>
-              <li className="flex gap-2 items-start">
-                <span className="mt-0.5">3.</span>
-                Vuelve a ingresar cuando te confirmen la asignación.
-              </li>
-            </ul>
-          </div>
+          {requestedRole ? (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-left">
+              <p className="text-blue-700 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <CheckCircle2 size={14} />
+                Solicitud enviada
+              </p>
+              <p className="text-blue-700 text-sm">
+                Tu solicitud para el rol de <strong>{getRoleLabel(requestedRole)}</strong> quedó
+                pendiente de aprobación por la administración. Te notificaremos cuando sea revisada.
+              </p>
+            </div>
+          ) : (
+            <div className="text-left mb-6">
+              <p className="text-dark text-sm font-semibold mb-3">
+                Mientras revisamos tu cuenta, elige cómo quieres ingresar:
+              </p>
+              <div className="space-y-2">
+                {SELF_SERVICE_ROLES.map(({ value, label, desc }) => (
+                  <button
+                    key={value}
+                    onClick={() => handleChooseRole(value)}
+                    disabled={submitting !== null}
+                    className={cn(
+                      'w-full text-left px-4 py-3 rounded-xl border-2 transition-colors disabled:opacity-50',
+                      'border-gray-200 hover:border-royal hover:bg-royal/5'
+                    )}
+                  >
+                    <p className="text-sm font-semibold text-dark">{label}</p>
+                    <p className="text-xs text-gray-400">{desc}</p>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-3">
+                Si eliges <strong>Visitante</strong> tendrás acceso inmediato. Cualquier otro rol
+                quedará pendiente de aprobación por la administración.
+              </p>
+            </div>
+          )}
 
           {/* Contacts */}
           <div className="space-y-2 mb-6">
