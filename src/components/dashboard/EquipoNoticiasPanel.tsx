@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Bell, Calendar } from 'lucide-react'
 import { getNewsForRole, type NewsItem } from '@/lib/firebase'
+import { toast } from 'sonner'
 import type { UserRole } from '@/types'
 
 interface Props {
@@ -16,7 +17,10 @@ export default function EquipoNoticiasPanel({ role }: Props) {
   useEffect(() => {
     getNewsForRole(role, 20)
       .then(items => setNews(items.filter(n => !n.visibleTo.includes('public'))))
-      .catch(() => setNews([]))
+      .catch(() => {
+        setNews([])
+        toast.error('Error al cargar las noticias internas')
+      })
       .finally(() => setLoading(false))
   }, [role])
 
@@ -34,7 +38,7 @@ export default function EquipoNoticiasPanel({ role }: Props) {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="w-6 h-6 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
         </div>
       ) : news.length === 0 ? (
         <div className="card p-12 text-center text-gray-400">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Calendar, MapPin, ClipboardList } from 'lucide-react'
 import { getEnsayosForRole } from '@/lib/firebase'
+import { toast } from 'sonner'
 import type { Ensayo, UserRole } from '@/types'
 
 const ENSAYO_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
@@ -26,7 +27,10 @@ export default function EquipoEnsayosPanel({ role }: Props) {
     const today = new Date().toISOString().split('T')[0]
     getEnsayosForRole(role)
       .then(items => setEnsayos((items as unknown as Ensayo[]).filter(e => e.date >= today)))
-      .catch(() => setEnsayos([]))
+      .catch(() => {
+        setEnsayos([])
+        toast.error('Error al cargar los ensayos')
+      })
       .finally(() => setLoading(false))
   }, [role])
 
@@ -44,7 +48,7 @@ export default function EquipoEnsayosPanel({ role }: Props) {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="w-6 h-6 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
         </div>
       ) : ensayos.length === 0 ? (
         <div className="card p-12 text-center text-gray-400">

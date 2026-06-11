@@ -109,7 +109,7 @@ export default function JuntaPage() {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           {ingLoading ? (
             <div className="flex items-center justify-center py-10">
-              <div className="w-6 h-6 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
+              <div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
             </div>
           ) : ingresos.length === 0 ? (
             <div className="text-center py-10 text-gray-400">

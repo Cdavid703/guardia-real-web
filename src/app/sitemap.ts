@@ -17,6 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/noticias',  priority: 0.8, changeFreq: 'weekly'  },
     { path: '/eventos',   priority: 0.8, changeFreq: 'weekly'  },
     { path: '/ingresos',  priority: 0.6, changeFreq: 'monthly' },
+    { path: '/donar',     priority: 0.6, changeFreq: 'monthly' },
     { path: '/privacidad',priority: 0.3, changeFreq: 'yearly'  },
     { path: '/terminos',  priority: 0.3, changeFreq: 'yearly'  },
   ]

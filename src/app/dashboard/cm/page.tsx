@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Newspaper, Image as ImageIcon, Globe, TrendingUp, ArrowRight, Plus } from 'lucide-react'
 import { getAllNews, getAllGalleryMedia } from '@/lib/firebase'
+import { toast } from 'sonner'
 
 export default function CMDashboardPage() {
   const { profile } = useAuth()
@@ -27,7 +28,7 @@ export default function CMDashboardPage() {
       const myNews  = news.filter(n => n.author === profile.uid)
       const myMedia = (media as { uploadedBy?: string }[]).filter(m => m.uploadedBy === profile.uid)
       setStats({ noticias: myNews.length, galeria: myMedia.length })
-    }).catch(() => {})
+    }).catch(() => toast.error('Error al cargar las estadísticas'))
   }, [profile])
 
   const QUICK_LINKS = [

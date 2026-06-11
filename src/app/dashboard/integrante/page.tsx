@@ -234,7 +234,7 @@ export default function IntegrantePage() {
           </h3>
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="w-6 h-6 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
+              <div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
             </div>
           ) : ensayos.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
@@ -281,7 +281,7 @@ export default function IntegrantePage() {
           </h3>
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="w-6 h-6 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
+              <div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
             </div>
           ) : news.length === 0 ? (
             <div className="text-center py-8 text-gray-400">

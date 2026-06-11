@@ -1,0 +1,123 @@
+rules_version = '2';
+
+// ──────────────────────────────────────────────────────────────────
+// GUARDIA REAL DE ANTIOQUIA — Reglas de seguridad de Firestore
+// ──────────────────────────────────────────────────────────────────
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(uid())).data.role;
+    }
+
+    // admin
+    function isAdmin() {
+      return isSignedIn() && userRole() == 'admin';
+    }
+
+    // admin + director (repertorio, eventos, ensayos)
+    function isDirector() {
+      return isSignedIn() && userRole() in ['admin', 'director'];
+    }
+
+    // admin + community manager (noticias, galería)
+    function isContentEditor() {
+      return isSignedIn() && userRole() in ['admin', 'cm'];
+    }
+
+    // ── users ──────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isSignedIn() && (uid() == userId || isAdmin());
+
+      // Primer login: el usuario crea su propio perfil con role 'pending'
+      allow create: if isSignedIn() && uid() == userId
+                    && request.resource.data.role == 'pending';
+
+      // Admin: puede actualizar cualquier perfil (rol, estado, etc.)
+      // Usuario propio: puede editar sus datos, pero no su propio rol/estado,
+      // salvo la auto-asignación 'pending' -> 'visitante'.
+      allow update: if isAdmin()
+                    || (isSignedIn() && uid() == userId
+                        && request.resource.data.active == resource.data.active
+                        && (
+                          request.resource.data.role == resource.data.role
+                          || (resource.data.role == 'pending' && request.resource.data.role == 'visitante')
+                        ));
+
+      allow delete: if false;
+    }
+
+    // ── news ───────────────────────────────────────────────────────
+    match /news/{newsId} {
+      allow read: if (resource.data.published == true
+                       && ('public' in resource.data.visibleTo
+                           || (isSignedIn() && userRole() in resource.data.visibleTo)))
+                   || isContentEditor();
+      allow write: if isContentEditor();
+    }
+
+    // ── gallery ────────────────────────────────────────────────────
+    match /gallery/{itemId} {
+      allow read: if ('public' in resource.data.visibleTo)
+                   || (isSignedIn() && userRole() in resource.data.visibleTo)
+                   || isContentEditor();
+      allow write: if isContentEditor();
+    }
+
+    // ── events ─────────────────────────────────────────────────────
+    match /events/{eventId} {
+      allow read: if resource.data.isPublic == true
+                   || (isSignedIn() && userRole() in resource.data.visibleTo)
+                   || isDirector();
+      allow write: if isDirector();
+    }
+
+    // ── ensayos ────────────────────────────────────────────────────
+    match /ensayos/{ensayoId} {
+      allow read: if (isSignedIn() && userRole() in resource.data.visibleTo) || isDirector();
+      allow write: if isDirector();
+    }
+
+    // ── repertoire ─────────────────────────────────────────────────
+    match /repertoire/{songId} {
+      allow read: if (isSignedIn() && userRole() in resource.data.visibleTo) || isDirector();
+      allow write: if isDirector();
+    }
+
+    // ── quotes (cotizaciones — formulario público de contacto) ────
+    match /quotes/{quoteId} {
+      allow create: if request.resource.data.status == 'pending';
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── donations (formulario público de donaciones) ──────────────
+    match /donations/{donationId} {
+      allow create: if request.resource.data.status == 'recibida';
+      allow read, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // ── ingresos (solicitudes de ingreso — gestionadas vía API admin) ─
+    match /ingresos/{ingresoId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── stats (contador de visitas — solo vía Admin SDK) ──────────
+    match /stats/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Cualquier otra colección no contemplada: denegar por defecto.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
