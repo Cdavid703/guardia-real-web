@@ -539,6 +539,10 @@ export async function getAllDonations() {
   })
 }
 
+export async function updateDonationStatus(id: string, status: 'recibida' | 'verificada' | 'rechazada') {
+  return updateDoc(doc(db, 'donations', id), { status })
+}
+
 export {
   app, auth, db, storage,
   onAuthStateChanged,

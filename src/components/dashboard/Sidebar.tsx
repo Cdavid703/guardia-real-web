@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Newspaper, Image as ImageIcon,
   Music, Calendar, FileText, MessageSquare, Settings,
-  ChevronLeft, ChevronRight, LogOut, ClipboardList, Globe, X,
+  ChevronLeft, ChevronRight, LogOut, ClipboardList, Globe, X, Heart,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -24,6 +24,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/admin/events',      label: 'Eventos',           icon: Calendar,        roles: ['admin'] },
   { href: '/dashboard/admin/gallery',     label: 'Galería (admin)',   icon: ImageIcon,       roles: ['admin'] },
   { href: '/dashboard/admin/quotes',      label: 'Cotizaciones',      icon: MessageSquare,   roles: ['admin'] },
+  { href: '/dashboard/admin/donaciones',  label: 'Donaciones',        icon: Heart,           roles: ['admin'] },
   { href: '/dashboard/director',          label: 'Repertorio',        icon: Music,           roles: ['admin','director'] },
   { href: '/dashboard/director/events',   label: 'Ensayos',           icon: ClipboardList,   roles: ['admin','director'] },
   { href: '/dashboard/integrante',        label: 'Portal integrante', icon: Settings,        roles: ['admin','integrante'] },

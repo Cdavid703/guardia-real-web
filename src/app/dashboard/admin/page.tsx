@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, Clock, CheckCircle, ClipboardList, Newspaper, Calendar, Image as ImageIcon, MessageSquare, ArrowRight } from 'lucide-react'
+import { Users, Clock, CheckCircle, ClipboardList, Newspaper, Calendar, Image as ImageIcon, MessageSquare, Heart, ArrowRight } from 'lucide-react'
 import { getAllUsers, getIngresoRequests } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -15,6 +15,7 @@ const QUICK_LINKS = [
   { href: '/dashboard/admin/events',      label: 'Eventos',      desc: 'Agenda y presentaciones',                  icon: Calendar },
   { href: '/dashboard/admin/gallery',     label: 'Galería',      desc: 'Fotos, videos y enlaces',                  icon: ImageIcon },
   { href: '/dashboard/admin/quotes',      label: 'Cotizaciones', desc: 'Solicitudes de contratación',              icon: MessageSquare },
+  { href: '/dashboard/admin/donaciones',  label: 'Donaciones',   desc: 'Aportes registrados y comprobantes',       icon: Heart },
 ]
 
 export default function AdminPage() {
