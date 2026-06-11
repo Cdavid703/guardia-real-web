@@ -8,6 +8,7 @@ import { Menu, X, LogIn, User, LogOut, LayoutDashboard } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getRoleDashboard, getRoleLabel } from '@/lib/utils'
 import { cn } from '@/lib/utils'
+import type { UserRole } from '@/types'
 
 const NAV_LINKS = [
   { href: '/',           label: 'Inicio' },
@@ -20,6 +21,8 @@ const NAV_LINKS = [
   { href: '/donar',      label: 'Donar' },
 ]
 
+const INTEGRANTES_ROLES: UserRole[] = ['admin', 'director', 'junta', 'cm', 'integrante']
+
 export default function Navbar() {
   const [open,      setOpen]      = useState(false)
   const [scrolled,  setScrolled]  = useState(false)
@@ -27,6 +30,10 @@ export default function Navbar() {
   const pathname = usePathname()
   const router   = useRouter()
   const { user, profile, logout } = useAuth()
+
+  const navLinks = profile && INTEGRANTES_ROLES.includes(profile.role)
+    ? [...NAV_LINKS, { href: '/integrantes', label: 'Integrantes' }]
+    : NAV_LINKS
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10)
@@ -74,7 +81,7 @@ export default function Navbar() {
 
         {/* ── Desktop links ── */}
         <ul className="hidden lg:flex items-center gap-1">
-          {NAV_LINKS.map(({ href, label }) => (
+          {navLinks.map(({ href, label }) => (
             <li key={href}>
               <Link
                 href={href}
@@ -176,7 +183,7 @@ export default function Navbar() {
       {open && (
         <div className="lg:hidden bg-near-black border-t border-gold/20">
           <ul className="section-container py-4 flex flex-col gap-1">
-            {NAV_LINKS.map(({ href, label }) => (
+            {navLinks.map(({ href, label }) => (
               <li key={href}>
                 <Link
                   href={href}

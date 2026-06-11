@@ -18,7 +18,6 @@ type NavItem = { href: string; label: string; icon: React.ElementType; roles: Us
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard',                   label: 'Panel principal',   icon: LayoutDashboard, roles: ['admin','director','integrante','junta','cm'] },
-  { href: '/dashboard/equipo',            label: 'Integrantes',       icon: Users,           roles: ['admin','director','junta','cm','integrante'] },
   { href: '/dashboard/admin',             label: 'Gestión usuarios',  icon: Users,           roles: ['admin'] },
   { href: '/dashboard/admin/integrantes', label: 'Solicitudes y roles', icon: ClipboardList, roles: ['admin'] },
   { href: '/dashboard/admin/noticias',    label: 'Noticias',          icon: Newspaper,       roles: ['admin'] },
