@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronDown, Play } from 'lucide-react'
+import VisitCounter from '@/components/ui/VisitCounter'
 
 export default function HeroSection() {
   return (
@@ -105,6 +106,11 @@ export default function HeroSection() {
               <p className="text-gray-400 text-sm mt-1">{label}</p>
             </div>
           ))}
+        </div>
+
+        {/* Visit counter */}
+        <div className="mt-8 flex justify-center animate-fade-up" style={{ animationDelay: '450ms' }}>
+          <VisitCounter />
         </div>
       </div>
 

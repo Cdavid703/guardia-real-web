@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, Clock, CheckCircle, ClipboardList, Newspaper, Calendar, Image as ImageIcon, MessageSquare, Heart, ArrowRight } from 'lucide-react'
+import { Users, Clock, CheckCircle, ClipboardList, Newspaper, Calendar, Image as ImageIcon, MessageSquare, Heart, ArrowRight, Eye, TrendingUp } from 'lucide-react'
 import { getAllUsers, getIngresoRequests } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -23,6 +23,7 @@ export default function AdminPage() {
   const router = useRouter()
   const [users,    setUsers]    = useState<UserProfile[]>([])
   const [ingresos, setIngresos] = useState<(IngresoRequest & { id: string })[]>([])
+  const [visits,   setVisits]   = useState<{ total: number; today: number } | null>(null)
 
   useEffect(() => {
     if (profile && profile.role !== 'admin') {
@@ -40,6 +41,11 @@ export default function AdminPage() {
         toast.error('Error al cargar los datos del panel')
       }
     })()
+
+    fetch('/api/visits')
+      .then(r => r.json())
+      .then(data => setVisits({ total: data.total ?? 0, today: data.today ?? 0 }))
+      .catch(() => {})
   }, [])
 
   const stats = [
@@ -47,6 +53,11 @@ export default function AdminPage() {
     { label: 'Pendientes',           value: users.filter(u => u.role === 'pending').length,        icon: Clock,          color: 'text-amber-600' },
     { label: 'Activos',              value: users.filter(u => u.role !== 'pending').length,        icon: CheckCircle,    color: 'text-green-600' },
     { label: 'Solicitudes ingreso',  value: ingresos.filter(i => i.status === 'nuevo').length,     icon: ClipboardList,  color: 'text-blue-600' },
+  ]
+
+  const visitStats = [
+    { label: 'Visitas totales', value: visits?.total ?? '—', icon: Eye,        color: 'text-royal' },
+    { label: 'Visitas hoy',     value: visits?.today ?? '—', icon: TrendingUp, color: 'text-gold' },
   ]
 
   return (
@@ -62,8 +73,21 @@ export default function AdminPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         {stats.map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="card p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{label}</p>
+              <Icon size={18} className={color} />
+            </div>
+            <p className={`text-3xl font-bold font-display ${color}`}>{value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Visit stats */}
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        {visitStats.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="card p-5">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{label}</p>
