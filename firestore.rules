@@ -6,116 +6,102 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
+    function isAuth() {
       return request.auth != null;
     }
 
-    function uid() {
-      return request.auth.uid;
+    function myRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
-    function userRole() {
-      return get(/databases/$(database)/documents/users/$(uid())).data.role;
-    }
-
-    // admin
     function isAdmin() {
-      return isSignedIn() && userRole() == 'admin';
+      return isAuth() && myRole() == 'admin';
     }
 
-    // admin + director (repertorio, eventos, ensayos)
-    function isDirector() {
-      return isSignedIn() && userRole() in ['admin', 'director'];
+    function isStaff() {
+      return isAuth() && myRole() in ['admin', 'director', 'junta'];
     }
 
-    // admin + community manager (noticias, galería)
-    function isContentEditor() {
-      return isSignedIn() && userRole() in ['admin', 'cm'];
-    }
-
-    // ── users ──────────────────────────────────────────────────────
-    match /users/{userId} {
-      allow read: if isSignedIn() && (uid() == userId || isAdmin());
-
-      // Primer login: el usuario crea su propio perfil con role 'pending'
-      allow create: if isSignedIn() && uid() == userId
-                    && request.resource.data.role == 'pending';
-
-      // Admin: puede actualizar cualquier perfil (rol, estado, etc.)
-      // Usuario propio: puede editar sus datos, pero no su propio rol/estado,
-      // salvo la auto-asignación 'pending' -> 'visitante'.
+    // Perfil propio
+    match /users/{uid} {
+      allow read:   if isAuth() && (request.auth.uid == uid || isStaff());
+      allow create: if isAuth() && request.auth.uid == uid
+                     && request.resource.data.role == 'pending';
       allow update: if isAdmin()
-                    || (isSignedIn() && uid() == userId
+                    || (isAuth() && request.auth.uid == uid
                         && request.resource.data.active == resource.data.active
                         && (
                           request.resource.data.role == resource.data.role
                           || (resource.data.role == 'pending' && request.resource.data.role == 'visitante')
                         ));
-
       allow delete: if false;
     }
 
-    // ── news ───────────────────────────────────────────────────────
-    match /news/{newsId} {
-      allow read: if (resource.data.published == true
-                       && ('public' in resource.data.visibleTo
-                           || (isSignedIn() && userRole() in resource.data.visibleTo)))
-                   || isContentEditor();
-      allow write: if isContentEditor();
+    // Ingresos
+    match /ingresos/{id} {
+      allow read:   if isStaff();
+      allow update: if isStaff();
+      allow create: if false;
+      allow delete: if isAdmin();
     }
 
-    // ── gallery ────────────────────────────────────────────────────
-    match /gallery/{itemId} {
-      allow read: if ('public' in resource.data.visibleTo)
-                   || (isSignedIn() && userRole() in resource.data.visibleTo)
-                   || isContentEditor();
-      allow write: if isContentEditor();
+    // Eventos públicos/internos
+    match /events/{id} {
+      allow read:  if isAuth() || resource.data.isPublic == true;
+      allow write: if isAuth() && myRole() in ['admin', 'director'];
     }
 
-    // ── events ─────────────────────────────────────────────────────
-    match /events/{eventId} {
-      allow read: if resource.data.isPublic == true
-                   || (isSignedIn() && userRole() in resource.data.visibleTo)
-                   || isDirector();
-      allow write: if isDirector();
+    // Noticias — solo published+visibles se exponen al público; staff/cm ven todo
+    match /news/{id} {
+      allow read: if (resource.data.published == true &&
+                       (!('visibleTo' in resource.data) ||
+                        'public' in resource.data.visibleTo ||
+                        (isAuth() && myRole() in resource.data.visibleTo)))
+                   || (isAuth() && myRole() in ['admin', 'cm']);
+      allow write: if isAuth() && myRole() in ['admin', 'cm'];
     }
 
-    // ── ensayos ────────────────────────────────────────────────────
-    match /ensayos/{ensayoId} {
-      allow read: if (isSignedIn() && userRole() in resource.data.visibleTo) || isDirector();
-      allow write: if isDirector();
+    // Cotizaciones
+    match /quotes/{id} {
+      allow create: if true;
+      allow read:   if isStaff();
     }
 
-    // ── repertoire ─────────────────────────────────────────────────
-    match /repertoire/{songId} {
-      allow read: if (isSignedIn() && userRole() in resource.data.visibleTo) || isDirector();
-      allow write: if isDirector();
+    // Galería — robusto ante documentos sin visibleTo
+    match /gallery/{id} {
+      allow read: if !('visibleTo' in resource.data)
+                  || 'public' in resource.data.visibleTo
+                  || (isAuth() && myRole() in resource.data.visibleTo);
+      allow write: if isAuth() && myRole() in ['admin', 'cm'];
     }
 
-    // ── quotes (cotizaciones — formulario público de contacto) ────
-    match /quotes/{quoteId} {
-      allow create: if request.resource.data.status == 'pending';
-      allow read, update, delete: if isAdmin();
+    // Ensayos — robusto ante documentos sin visibleTo
+    match /ensayos/{id} {
+      allow read:  if isAuth() && (
+                     !('visibleTo' in resource.data) ||
+                     myRole() in resource.data.visibleTo
+                   );
+      allow write: if isAuth() && myRole() in ['admin', 'director'];
     }
 
-    // ── donations (formulario público de donaciones) ──────────────
-    match /donations/{donationId} {
-      allow create: if request.resource.data.status == 'recibida';
-      allow read, update: if isAdmin();
-      allow delete: if false;
+    // Repertorio — robusto ante documentos sin visibleTo
+    match /repertoire/{id} {
+      allow read:  if isAuth() && (
+                     !('visibleTo' in resource.data) ||
+                     myRole() in resource.data.visibleTo
+                   );
+      allow write: if isAuth() && myRole() in ['admin', 'director'];
     }
 
-    // ── ingresos (solicitudes de ingreso — gestionadas vía API admin) ─
-    match /ingresos/{ingresoId} {
-      allow read, write: if isAdmin();
+    // Donaciones — formulario público crea; solo admin ve
+    match /donations/{id} {
+      allow create: if true;
+      allow read:   if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
-    // ── stats (contador de visitas — solo vía Admin SDK) ──────────
-    match /stats/{document=**} {
-      allow read, write: if false;
-    }
-
-    // Cualquier otra colección no contemplada: denegar por defecto.
+    // Denegar todo lo demás (incluye stats/visitas, gestionado solo por Admin SDK)
     match /{document=**} {
       allow read, write: if false;
     }
