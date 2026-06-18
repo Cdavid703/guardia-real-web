@@ -197,34 +197,6 @@ export default function GaleriaPage() {
               </div>
             )}
 
-            {/* ── Fotos propias ─────────────────────────────────── */}
-            {photoItems.length > 0 && (
-              <div className="mb-16">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
-                    <Play size={14} className="text-gold" />
-                  </div>
-                  <div>
-                    <h2 className="font-display text-navy text-xl font-bold uppercase tracking-wider">Fotos</h2>
-                    <p className="text-gray-400 text-xs">Momentos de nuestras presentaciones</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {photoItems.map(item => (
-                    <div key={item.id} className="relative aspect-square rounded-lg overflow-hidden group bg-gray-100">
-                      <Image src={item.url} alt={item.title} fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                      <div className="absolute inset-0 bg-navy/0 group-hover:bg-navy/40 transition-all duration-300 flex items-end">
-                        <p className="text-white text-xs font-semibold p-2 opacity-0 group-hover:opacity-100 transition-opacity line-clamp-2">
-                          {item.title}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* ── Instagram ──────────────────────────────────────── */}
             {posts.length > 0 && (
               <div className="mb-10">
