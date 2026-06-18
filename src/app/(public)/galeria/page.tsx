@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { Instagram, ExternalLink, Loader2, Play, Youtube, Link as LinkIcon } from 'lucide-react'
+import Link from 'next/link'
+import { Instagram, ExternalLink, Loader2, Play, Youtube, Link as LinkIcon, Trophy, Camera, Video } from 'lucide-react'
 import PageBanner from '@/components/layout/PageBanner'
 import { getPublicGalleryMedia } from '@/lib/firebase'
 import { getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/lib/utils'
@@ -84,6 +85,46 @@ export default function GaleriaPage() {
           <Instagram size={16} />
           @bandashowguardiareal
         </a>
+      </div>
+
+      {/* ── Calarcá 2026 — Evento destacado ─────────────────────── */}
+      <div className="section-container pt-10 pb-2">
+        <Link
+          href="/galeria/calarca-2026"
+          className="group relative flex flex-col sm:flex-row items-center gap-0 rounded-2xl overflow-hidden border border-gold/30 hover:border-gold/60 shadow-md hover:shadow-xl transition-all duration-300"
+        >
+          {/* Foto de portada */}
+          <div className="relative w-full sm:w-64 shrink-0 aspect-[16/9] sm:aspect-[4/3]">
+            <Image
+              src="/images/galeria/calarca-2026/calarca-20.jpg"
+              alt="Concurso de Bandas Calarcá 2026"
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-navy/30 group-hover:bg-navy/10 transition-colors" />
+          </div>
+
+          {/* Texto */}
+          <div className="flex-1 bg-gradient-to-r from-navy to-navy/90 p-6 sm:p-7 w-full">
+            <div className="inline-flex items-center gap-1.5 bg-gold/20 text-gold text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3">
+              <Trophy size={10} /> Evento destacado
+            </div>
+            <h3 className="font-display text-white text-lg md:text-xl font-bold uppercase tracking-wider mb-1">
+              Concurso Nacional de Bandas
+              <span className="text-gold"> Calarcá 2026</span>
+            </h3>
+            <p className="text-gray-300 text-sm mb-4">
+              14 de junio de 2026 · Calarcá, Quindío · Colombia
+            </p>
+            <div className="flex items-center gap-4 text-xs text-gray-400">
+              <span className="flex items-center gap-1"><Camera size={12} className="text-gold" /> 28 fotos</span>
+              <span className="flex items-center gap-1"><Video size={12} className="text-gold" /> 6 videos</span>
+            </div>
+            <div className="mt-4 inline-flex items-center gap-2 bg-gold text-navy text-xs font-bold px-4 py-2 rounded-lg group-hover:bg-gold/90 transition-colors">
+              Ver galería completa →
+            </div>
+          </div>
+        </Link>
       </div>
 
       <div className="section-container py-16">
