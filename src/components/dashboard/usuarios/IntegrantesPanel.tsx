@@ -208,6 +208,46 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
     finally { setBusy(false); setReportOpen(false) }
   }
 
+  /**
+   * Compara fichas sin cuenta vs. cuentas de banda que no tienen ficha enlazada.
+   * Usa similitud de nombre (no solo correo) para sugerir candidatos de enlace
+   * manual, porque muchos se registraron con un correo distinto al del Excel.
+   */
+  const exportCruceCuentas = () => {
+    const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z\s]/g, '').trim()
+    const fichasSinCuenta = integrantes.filter(i => !i.linkedUid)
+    const linkedUids = new Set(integrantes.filter(i => i.linkedUid).map(i => i.linkedUid))
+    const cuentasSinFicha = users.filter(u =>
+      ['integrante', 'director', 'junta'].includes(u.role) && !linkedUids.has(u.uid))
+
+    const filas = fichasSinCuenta.map(f => {
+      const nombreFicha = norm(`${f.nombre} ${f.apellidos}`)
+      const palabras = nombreFicha.split(/\s+/).filter(Boolean)
+      // candidato: cuenta cuyo nombre comparte al menos 2 palabras con la ficha
+      const candidato = cuentasSinFicha.find(u => {
+        const nombreCuenta = norm(u.displayName || '')
+        const coincidencias = palabras.filter(p => p.length > 2 && nombreCuenta.includes(p)).length
+        return coincidencias >= 2
+      })
+      return [
+        `${f.nombre} ${f.apellidos}`, getSeccion(f.seccion)?.label ?? f.seccion, f.correo, f.whatsapp,
+        candidato ? `${candidato.displayName} (${candidato.email})` : '',
+      ]
+    })
+
+    descargarCSV('cruce-fichas-vs-cuentas',
+      ['Integrante (ficha)', 'Sección', 'Correo en el Excel', 'WhatsApp', 'Posible cuenta registrada con otro correo'],
+      filas)
+
+    if (cuentasSinFicha.length) {
+      descargarCSV('cuentas-de-banda-sin-ficha',
+        ['Nombre de la cuenta', 'Correo', 'Rol'],
+        cuentasSinFicha.map(u => [u.displayName, u.email, u.role]))
+    }
+    setReportOpen(false)
+    toast.success(`Descargado: ${fichasSinCuenta.length} ficha(s) sin cuenta y ${cuentasSinFicha.length} cuenta(s) sin ficha`)
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center py-16"><div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" /></div>
   }
@@ -238,6 +278,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
               <div className="fixed inset-0 z-10" onClick={() => setReportOpen(false)} />
               <div className="absolute right-0 mt-1 z-20 bg-white border border-gray-200 rounded-xl shadow-lg w-64 py-1 text-sm">
                 <ReportItem icon={AlertTriangle} title="Pendientes por actualizar" desc="Nombre + WhatsApp + qué les falta" onClick={exportRecordatorio} />
+                <ReportItem icon={Link2} title="Cruce fichas vs. cuentas" desc="Quién falta enlazar y posibles candidatos" onClick={exportCruceCuentas} />
                 <ReportItem icon={Users2} title="Lista de gira" desc="Menores, sangre, EPS, médico, pasaporte" onClick={exportGira} />
                 <ReportItem icon={Download} title="Roster completo" desc="Todos los datos de todos" onClick={exportTodos} />
               </div>
