@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import {
@@ -9,31 +9,19 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
-  getMiIntegrante, updateMiIntegrante, getRosterSeccion,
+  getMiIntegrante, updateMiIntegrante, getRosterSeccion, storage,
   type IntegranteBase,
 } from '@/lib/firebase'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import {
   SECCIONES_POR_FAMILIA, SECCIONES_LIST, getSeccion, seccionImage,
 } from '@/lib/secciones'
+import { camposFaltantes } from '@/lib/integrantes-utils'
 import type { Integrante } from '@/types'
 import { cn } from '@/lib/utils'
 
 const TIPOS_DOC = ['CEDULA CIUDADANIA', 'TARJETA IDENTIDAD', 'PERMISO PERMANENCIA', 'CEDULA EXTRANJERIA', 'PASAPORTE']
 const TIPOS_SANGRE = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']
-
-// Campos obligatorios para considerar la ficha "completa"
-const REQUERIDOS: [keyof Integrante, string][] = [
-  ['apellidos', 'Apellidos'], ['tipoDoc', 'Tipo de documento'], ['numDoc', 'Número de documento'],
-  ['fechaNacimiento', 'Fecha de nacimiento'], ['whatsapp', 'WhatsApp'], ['direccion', 'Dirección'],
-  ['tipoSangre', 'Tipo de sangre'], ['eps', 'EPS'], ['contactoEmergencia', 'Contacto de emergencia'],
-]
-
-function camposFaltantes(f: Integrante): string[] {
-  return REQUERIDOS.filter(([k]) => {
-    const v = f[k]
-    return v === undefined || v === null || String(v).trim() === ''
-  }).map(([, label]) => label)
-}
 
 export default function SeccionesPage() {
   const { profile } = useAuth()
@@ -82,9 +70,16 @@ export default function SeccionesPage() {
     if (!form.nombre?.trim() || !form.apellidos?.trim()) {
       toast.error('Nombre y apellidos son obligatorios'); return
     }
+    if (!form.consentimientoDatos) {
+      toast.error('Debes aceptar la autorización de tratamiento de datos para guardar'); return
+    }
     setSaving(true)
     try {
       const patch: Partial<Integrante> = { ...form }
+      // Sellar la fecha de consentimiento la primera vez que se acepta
+      if (form.consentimientoDatos && !ficha.consentimientoFecha) {
+        patch.consentimientoFecha = new Date().toISOString().slice(0, 10)
+      }
       // mantener secciones en sincronía con la sección principal
       if (form.seccion) {
         const sec = getSeccion(form.seccion)
@@ -220,8 +215,8 @@ function MiFicha({
       <div className="card p-6 border-l-4 border-royal">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-royal/10 flex items-center justify-center">
-              <User size={22} className="text-royal" />
+            <div className="w-12 h-12 rounded-full bg-royal/10 overflow-hidden flex items-center justify-center shrink-0">
+              {ficha.fotoURL ? <Image src={ficha.fotoURL} alt="" width={48} height={48} className="w-12 h-12 object-cover" /> : <User size={22} className="text-royal" />}
             </div>
             <div>
               <h2 className="font-serif font-bold text-navy text-lg leading-tight">{ficha.nombre} {ficha.apellidos}</h2>
@@ -296,6 +291,24 @@ function MiFicha({
         <Campo label="Diagnóstico médico / medicamentos (si aplica)" full>
           <textarea className="input resize-none" rows={2} value={form.diagnostico ?? ''} onChange={e => set('diagnostico', e.target.value)} placeholder="Describe brevemente o escribe 'No'" />
         </Campo>
+
+        {/* Foto de perfil */}
+        <div className="sm:col-span-2">
+          <label className="block text-xs font-semibold text-dark mb-1">Foto de perfil <span className="font-normal text-gray-400">(opcional)</span></label>
+          <FotoUpload integranteId={ficha.id} current={form.fotoURL} onUploaded={url => set('fotoURL', url)} />
+        </div>
+
+        {/* Consentimiento de datos */}
+        <label className="sm:col-span-2 flex items-start gap-2.5 p-3 rounded-xl border border-gray-200 cursor-pointer hover:border-royal/40">
+          <input type="checkbox" checked={!!form.consentimientoDatos}
+            onChange={e => set('consentimientoDatos', e.target.checked)}
+            className="w-4 h-4 accent-royal mt-0.5 shrink-0" />
+          <span className="text-xs text-gray-600 leading-relaxed">
+            Autorizo a la Corporación Musical Guardia Real de Antioquia el tratamiento de mis datos personales
+            (incluidos datos sensibles de salud) para fines administrativos, logísticos y de la actividad de la banda,
+            conforme a la Ley 1581 de 2012 (Habeas Data). <strong>Obligatorio</strong>.
+          </span>
+        </label>
       </div>
       <div className="flex gap-3 mt-5">
         <button onClick={onSave} disabled={saving} className="btn btn-primary btn-md disabled:opacity-60">
@@ -355,6 +368,42 @@ function RosterModal({ seccionKey, roster, loading, onClose }: {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+/** Subida de foto de perfil del integrante a Firebase Storage. */
+function FotoUpload({ integranteId, current, onUploaded }: { integranteId: string; current?: string; onUploaded: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handle = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) { toast.error('Solo imágenes'); return }
+    setUploading(true)
+    try {
+      const storageRef = ref(storage, `integrantes/${integranteId}/${Date.now()}_${file.name.replace(/\s/g, '_')}`)
+      await uploadBytes(storageRef, file)
+      const url = await getDownloadURL(storageRef)
+      onUploaded(url)
+      toast.success('Foto subida')
+    } catch {
+      toast.error('No se pudo subir la foto')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-14 h-14 rounded-full bg-royal/10 overflow-hidden flex items-center justify-center shrink-0">
+        {current ? <Image src={current} alt="" width={56} height={56} className="w-14 h-14 object-cover" /> : <User size={22} className="text-royal" />}
+      </div>
+      <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading} className="btn btn-ghost btn-sm disabled:opacity-60">
+        {uploading ? 'Subiendo...' : current ? 'Cambiar foto' : 'Subir foto'}
+      </button>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handle} />
     </div>
   )
 }

@@ -52,6 +52,14 @@ export interface Integrante {
   diagnostico:        string   // diagnóstico médico / medicamentos
   // Vínculo con cuenta de login
   linkedUid?:         string   // uid del UserProfile enlazado (si tiene cuenta)
+  // Perfil
+  fotoURL?:           string
+  // Consentimiento de tratamiento de datos (Ley 1581 / Habeas Data)
+  consentimientoDatos?: boolean
+  consentimientoFecha?: string  // ISO de cuándo aceptó
+  // Completitud (metadatos no sensibles, calculados al guardar)
+  faltan?:            string[]  // etiquetas de campos requeridos vacíos
+  datosCompletos?:    boolean
   // Metadatos
   activo:             boolean
   createdAt:          Date

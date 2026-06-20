@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Newspaper, Image as ImageIcon,
-  Music, Music2, Contact, Calendar, FileText, MessageSquare, Settings,
+  Music, Music2, Calendar, FileText, MessageSquare, Settings,
   ChevronLeft, ChevronRight, LogOut, ClipboardList, Globe, X, Heart,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -18,10 +18,8 @@ type NavItem = { href: string; label: string; icon: React.ElementType; roles: Us
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard',                   label: 'Panel principal',   icon: LayoutDashboard, roles: ['admin','director','integrante','junta','cm'] },
-  { href: '/dashboard/secciones',         label: 'Secciones',         icon: Music2,          roles: ['admin','director','integrante','junta','cm'] },
-  { href: '/dashboard/admin',             label: 'Gestión usuarios',  icon: Users,           roles: ['admin'] },
-  { href: '/dashboard/admin/integrantes', label: 'Solicitudes y roles', icon: ClipboardList, roles: ['admin'] },
-  { href: '/dashboard/admin/mapa-integrantes', label: 'Mapeo integrantes', icon: Contact,    roles: ['admin'] },
+  { href: '/dashboard/secciones',         label: 'Secciones',          icon: Music2,          roles: ['admin','director','integrante','junta','cm'] },
+  { href: '/dashboard/admin',             label: 'Gestión de usuarios', icon: Users,          roles: ['admin'] },
   { href: '/dashboard/admin/noticias',    label: 'Noticias',          icon: Newspaper,       roles: ['admin'] },
   { href: '/dashboard/admin/events',      label: 'Eventos',           icon: Calendar,        roles: ['admin'] },
   { href: '/dashboard/admin/gallery',     label: 'Galería (admin)',   icon: ImageIcon,       roles: ['admin'] },

@@ -33,6 +33,7 @@ import {
 } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 import type { UserProfile, UserRole, Integrante } from '@/types'
+import { camposFaltantes, diaMesCumple } from '@/lib/integrantes-utils'
 
 const firebaseConfig = {
   apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -192,6 +193,13 @@ export interface IntegranteBase {
   whatsapp:  string
   correo:    string
   linkedUid?: string
+  fotoURL?:  string
+  consentimientoDatos?: boolean
+  consentimientoFecha?: string
+  faltan?:   string[]
+  datosCompletos?: boolean
+  cumpleDia?: number
+  cumpleMes?: number
   activo:    boolean
   createdAt: Date
   updatedAt: Date
@@ -208,9 +216,28 @@ function mapBase(id: string, d: Record<string, unknown>): IntegranteBase {
     whatsapp:  (d.whatsapp as string) ?? '',
     correo:    (d.correo as string) ?? '',
     linkedUid: (d.linkedUid as string) ?? undefined,
+    fotoURL:   (d.fotoURL as string) ?? undefined,
+    consentimientoDatos: (d.consentimientoDatos as boolean) ?? false,
+    consentimientoFecha: (d.consentimientoFecha as string) ?? undefined,
+    faltan:    (d.faltan as string[]) ?? undefined,
+    datosCompletos: (d.datosCompletos as boolean) ?? undefined,
+    cumpleDia: (d.cumpleDia as number) ?? undefined,
+    cumpleMes: (d.cumpleMes as number) ?? undefined,
     activo:    (d.activo as boolean) ?? true,
     createdAt: (d.createdAt as Timestamp)?.toDate() ?? new Date(),
     updatedAt: (d.updatedAt as Timestamp)?.toDate() ?? new Date(),
+  }
+}
+
+/** Calcula metadatos no sensibles (completitud + cumpleaños) desde un registro full. */
+function completitud(data: Partial<Integrante>) {
+  const faltan = camposFaltantes(data)
+  const cumple = diaMesCumple(data.fechaNacimiento)
+  return {
+    faltan,
+    datosCompletos: faltan.length === 0,
+    cumpleDia: cumple?.dia ?? null,
+    cumpleMes: cumple?.mes ?? null,
   }
 }
 
@@ -283,9 +310,10 @@ export async function updateMiIntegrante(
   data: Partial<Integrante>,
 ): Promise<void> {
   const { base, priv } = splitIntegrante(data)
-  const ops: Promise<unknown>[] = []
-  if (Object.keys(base).length)
-    ops.push(updateDoc(doc(db, 'integrantes', id), { ...base, updatedAt: serverTimestamp(), updatedBy: uid }))
+  const comp = completitud(data)
+  const ops: Promise<unknown>[] = [
+    updateDoc(doc(db, 'integrantes', id), { ...base, ...comp, updatedAt: serverTimestamp(), updatedBy: uid }),
+  ]
   if (Object.keys(priv).length)
     ops.push(setDoc(doc(db, 'integrantesPrivado', id), { ...priv, linkedUid: uid, updatedAt: serverTimestamp(), updatedBy: uid }, { merge: true }))
   await Promise.all(ops)
@@ -298,15 +326,16 @@ export async function upsertIntegrante(
   uid: string,
 ): Promise<void> {
   const { base, priv } = splitIntegrante(data)
+  const comp = completitud(data)
   if (id) {
     await Promise.all([
-      updateDoc(doc(db, 'integrantes', id), { ...base, updatedAt: serverTimestamp(), updatedBy: uid }),
+      updateDoc(doc(db, 'integrantes', id), { ...base, ...comp, updatedAt: serverTimestamp(), updatedBy: uid }),
       setDoc(doc(db, 'integrantesPrivado', id), { ...priv, linkedUid: base.linkedUid ?? null, updatedAt: serverTimestamp(), updatedBy: uid }, { merge: true }),
     ])
   } else {
     const refBase = doc(collection(db, 'integrantes'))
     await Promise.all([
-      setDoc(refBase, { ...base, activo: data.activo ?? true, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid }),
+      setDoc(refBase, { ...base, ...comp, activo: data.activo ?? true, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid }),
       setDoc(doc(db, 'integrantesPrivado', refBase.id), { ...priv, linkedUid: base.linkedUid ?? null, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid }),
     ])
   }
@@ -349,14 +378,15 @@ export async function bulkImportIntegrantes(
 
   for (const r of registros) {
     const { base, priv } = splitIntegrante(r)
+    const comp = completitud(r)
     const matchId = (r.numDoc && porDoc.get(r.numDoc)) || (r.correo && porCorreo.get(r.correo)) || null
     if (matchId) {
-      batch.update(doc(db, 'integrantes', matchId), { ...base, updatedAt: serverTimestamp(), updatedBy: uid })
+      batch.update(doc(db, 'integrantes', matchId), { ...base, ...comp, updatedAt: serverTimestamp(), updatedBy: uid })
       batch.set(doc(db, 'integrantesPrivado', matchId), { ...priv, updatedAt: serverTimestamp(), updatedBy: uid }, { merge: true })
       actualizados++
     } else {
       const refBase = doc(collection(db, 'integrantes'))
-      batch.set(refBase, { ...base, activo: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid })
+      batch.set(refBase, { ...base, ...comp, activo: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid })
       batch.set(doc(db, 'integrantesPrivado', refBase.id), { ...priv, linkedUid: null, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid })
       creados++
     }
@@ -365,6 +395,30 @@ export async function bulkImportIntegrantes(
   }
   await flush()
   return { creados, actualizados }
+}
+
+/**
+ * Enlaza automáticamente todas las fichas sin cuenta cuyo correo coincide con
+ * una cuenta existente, y opcionalmente asciende el rol a 'integrante'.
+ * Devuelve cuántas se enlazaron.
+ */
+export async function autoLinkIntegrantes(
+  asignarRol = true,
+): Promise<{ enlazados: number }> {
+  const [bases, users] = await Promise.all([getAllIntegrantes(), getAllUsers()])
+  const userByEmail = new Map(users.map(u => [u.email?.toLowerCase(), u]))
+  let enlazados = 0
+  for (const b of bases) {
+    if (b.linkedUid) continue
+    const u = userByEmail.get(b.correo)
+    if (!u) continue
+    await linkIntegranteToUser(b.id, u.uid)
+    if (asignarRol && (u.role === 'pending' || u.role === 'visitante')) {
+      await updateUserRole(u.uid, 'integrante')
+    }
+    enlazados++
+  }
+  return { enlazados }
 }
 
 // ── Firestore: News ───────────────────────────────────────────────
