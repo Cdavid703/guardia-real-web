@@ -73,6 +73,18 @@ export function formatDate(date: Date | undefined, options?: Intl.DateTimeFormat
   }).format(date)
 }
 
+/**
+ * Detecta si la página se abrió dentro de un navegador embebido (WhatsApp,
+ * Instagram, Facebook, Line, etc.). Google bloquea el login OAuth dentro de
+ * estos WebViews por política propia ("disallowed_useragent"), así que el
+ * login con Google/Microsoft falla ahí sin importar el código de la app.
+ */
+export function isInAppBrowser(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  return /\b(WhatsApp|FBAN|FBAV|Instagram|Line\/|MicroMessenger|TikTok|Snapchat)\b/i.test(ua)
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

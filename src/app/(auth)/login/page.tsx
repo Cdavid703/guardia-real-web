@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { AlertCircle, Mail, Lock } from 'lucide-react'
+import { AlertCircle, Mail, Lock, ExternalLink, Copy } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getRoleDashboard } from '@/lib/utils'
+import { getRoleDashboard, isInAppBrowser } from '@/lib/utils'
 
 // SVG icons inline para evitar dependencia de imágenes externas
 function GoogleIcon() {
@@ -26,9 +26,23 @@ function LoginContent() {
   const [loadingEmail,     setLoadingEmail]     = useState(false)
   const [email,            setEmail]            = useState('')
   const [password,         setPassword]         = useState('')
+  const [inAppBrowser,     setInAppBrowser]     = useState(false)
 
   const { loginWithGoogle, loginWithEmail, user, profile } = useAuth()
   const router       = useRouter()
+
+  useEffect(() => {
+    setInAppBrowser(isInAppBrowser())
+  }, [])
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      toast.success('Enlace copiado. Pégalo en Chrome o Safari para continuar.')
+    } catch {
+      toast.error('No se pudo copiar el enlace, cópialo manualmente desde la barra de direcciones.')
+    }
+  }
 
   // Redirect if already logged in
   useEffect(() => {
@@ -38,6 +52,10 @@ function LoginContent() {
   }, [user, profile, router])
 
   const handleGoogle = async () => {
+    if (inAppBrowser) {
+      toast.error('Google no permite iniciar sesión desde WhatsApp/Instagram. Abre este enlace en Chrome o Safari.', { duration: 8000 })
+      return
+    }
     setLoadingGoogle(true)
     try {
       await loginWithGoogle()
@@ -119,11 +137,26 @@ function LoginContent() {
             Exclusivo para integrantes y directivos de la corporación
           </p>
 
+          {inAppBrowser && (
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex gap-3">
+              <ExternalLink size={16} className="text-blue-600 shrink-0 mt-0.5" />
+              <div className="text-xs text-blue-700 leading-relaxed flex-1">
+                <strong>Estás navegando desde WhatsApp/Instagram.</strong> Google no permite
+                iniciar sesión dentro de estas apps. Toca <strong>⋮</strong> o el ícono de compartir
+                y elige <strong>&ldquo;Abrir en el navegador&rdquo;</strong> (Chrome o Safari), o copia el enlace:
+                <button onClick={handleCopyLink} className="mt-2 flex items-center gap-1.5 text-blue-700 font-semibold hover:underline">
+                  <Copy size={12} /> Copiar enlace de esta página
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-3">
             {/* Google */}
             <button
               onClick={handleGoogle}
               disabled={loadingGoogle || loadingEmail}
+              title={inAppBrowser ? 'Abre este enlace en Chrome o Safari para usar Google' : undefined}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-lg text-sm font-semibold text-dark bg-white hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loadingGoogle ? (
