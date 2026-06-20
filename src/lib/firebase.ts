@@ -247,6 +247,7 @@ function splitIntegrante(r: Partial<Integrante>) {
   const priv: Record<string, unknown> = {}
   for (const [k, v] of Object.entries(r)) {
     if (k === 'id' || k === 'createdAt' || k === 'updatedAt' || k === 'updatedBy') continue
+    if (v === undefined) continue // Firestore rechaza valores `undefined` en updateDoc/setDoc
     if ((CAMPOS_SENSIBLES as readonly string[]).includes(k)) priv[k] = v
     else base[k] = v
   }
