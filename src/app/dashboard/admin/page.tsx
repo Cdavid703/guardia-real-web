@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, Clock, CheckCircle, ClipboardList, Newspaper, Calendar, Image as ImageIcon, MessageSquare, Heart, ArrowRight, Eye, TrendingUp } from 'lucide-react'
+import { Users, Clock, CheckCircle, ClipboardList, Contact, ArrowRight, Eye, TrendingUp } from 'lucide-react'
 import { getAllUsers, getIngresoRequests } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -10,12 +10,8 @@ import type { UserProfile, IngresoRequest } from '@/types'
 import Link from 'next/link'
 
 const QUICK_LINKS = [
-  { href: '/dashboard/admin/integrantes', label: 'Integrantes',  desc: 'Solicitudes de ingreso, roles y usuarios', icon: Users },
-  { href: '/dashboard/admin/noticias',    label: 'Noticias',     desc: 'Crear, editar y publicar',                 icon: Newspaper },
-  { href: '/dashboard/admin/events',      label: 'Eventos',      desc: 'Agenda y presentaciones',                  icon: Calendar },
-  { href: '/dashboard/admin/gallery',     label: 'Galería',      desc: 'Fotos, videos y enlaces',                  icon: ImageIcon },
-  { href: '/dashboard/admin/quotes',      label: 'Cotizaciones', desc: 'Solicitudes de contratación',              icon: MessageSquare },
-  { href: '/dashboard/admin/donaciones',  label: 'Donaciones',   desc: 'Aportes registrados y comprobantes',       icon: Heart },
+  { href: '/dashboard/admin/integrantes',      label: 'Solicitudes y roles', desc: 'Solicitudes de ingreso, roles y usuarios', icon: Users },
+  { href: '/dashboard/admin/mapa-integrantes', label: 'Mapeo integrantes',   desc: 'Roster por sección, cruce y datos',        icon: Contact },
 ]
 
 export default function AdminPage() {

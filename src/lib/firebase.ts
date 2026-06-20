@@ -587,6 +587,11 @@ export async function updateIngresoStatus(
   })
 }
 
+/** Elimina una solicitud de ingreso (solo admin por reglas). */
+export async function deleteIngresoRequest(id: string) {
+  return deleteDoc(doc(db, 'ingresos', id))
+}
+
 // ── Firestore: Gallery ────────────────────────────────────────────
 export async function getGalleryItems(limitCount = 20) {
   const snap = await getDocs(

@@ -1,13 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, Clock, CheckCircle, ClipboardList, ChevronDown, ChevronUp, ShieldCheck } from 'lucide-react'
-import { getAllUsers, updateUserRole, updateUserProfile, getIngresoRequests, updateIngresoStatus } from '@/lib/firebase'
+import { Users, Clock, CheckCircle, ClipboardList, ChevronDown, ChevronUp, ShieldCheck, Trash2, Sparkles } from 'lucide-react'
+import {
+  getAllUsers, updateUserRole, updateUserProfile, getIngresoRequests, updateIngresoStatus,
+  deleteIngresoRequest, getIntegranteByCorreo, upsertIntegrante,
+} from '@/lib/firebase'
+import { getSeccion } from '@/lib/secciones'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { cn, getRoleLabel, getRoleBadgeColor, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
-import type { UserProfile, UserRole, IngresoRequest } from '@/types'
+import type { UserProfile, UserRole, IngresoRequest, Integrante } from '@/types'
 import Image from 'next/image'
 
 const ROLES: { value: UserRole; label: string }[] = [
@@ -43,6 +47,7 @@ export default function AdminIntegrantesPage() {
   const [ingresos,  setIngresos]  = useState<(IngresoRequest & { id: string })[]>([])
   const [ingLoading,setIngLoading]= useState(true)
   const [expanded,  setExpanded]  = useState<string | null>(null)
+  const [ingFilter, setIngFilter] = useState<'todas' | 'nuevo' | 'contactado' | 'aceptado' | 'rechazado'>('todas')
 
   useEffect(() => {
     if (profile && profile.role !== 'admin') {
@@ -84,8 +89,69 @@ export default function AdminIntegrantesPage() {
       await updateIngresoStatus(id, newStatus, undefined, profile?.uid)
       setIngresos(prev => prev.map(i => i.id === id ? { ...i, status: newStatus } : i))
       toast.success(`Estado actualizado a "${INGRESO_STATUS_LABELS[newStatus]}"`)
+      if (newStatus === 'aceptado') {
+        const ing = ingresos.find(i => i.id === id)
+        if (ing) await crearFichaDesdeIngreso(ing)
+      }
     } catch {
       toast.error('Error al actualizar el estado')
+    }
+  }
+
+  // Al aceptar: crea la ficha de integrante precargada con lo que llenó al ingresar
+  const crearFichaDesdeIngreso = async (ing: IngresoRequest & { id: string }) => {
+    try {
+      const correo = ing.email?.toLowerCase() ?? ''
+      if (correo) {
+        const existente = await getIntegranteByCorreo(correo)
+        if (existente) { toast.info(`${ing.nombreCompleto} ya tenía una ficha en el roster`); return }
+      }
+      const partes = (ing.nombreCompleto ?? '').trim().split(/\s+/)
+      const sec = getSeccion(ing.instrumentoInteres)
+      const direccion = [ing.barrio, ing.ciudad].filter(Boolean).join(', ')
+      const ficha: Partial<Integrante> = {
+        nombre:    partes[0] ?? ing.nombreCompleto,
+        apellidos: partes.slice(1).join(' '),
+        correo,
+        whatsapp:  ing.telefono ?? '',
+        numDoc:    ing.identificacion ?? '',
+        fechaNacimiento: ing.fechaNacimiento ?? '',
+        seccion:   sec?.key ?? '',
+        familia:   sec?.familia ?? '',
+        secciones: sec ? [sec.key] : [],
+        direccion,
+        tipoDoc: '', tipoSangre: '', eps: '', pasaporte: false,
+        contactoEmergencia: '', diagnostico: '',
+        activo: true,
+      }
+      await upsertIntegrante(null, ficha, profile!.uid)
+      toast.success(`Ficha creada para ${ing.nombreCompleto}. Pídele completar sus datos al ingresar.`)
+    } catch {
+      toast.error('La solicitud se aceptó, pero no se pudo crear la ficha de integrante')
+    }
+  }
+
+  const handleDeleteIngreso = async (id: string, nombre: string) => {
+    if (!confirm(`¿Eliminar la solicitud de ${nombre}? Esta acción no se puede deshacer.`)) return
+    try {
+      await deleteIngresoRequest(id)
+      setIngresos(prev => prev.filter(i => i.id !== id))
+      toast.success('Solicitud eliminada')
+    } catch {
+      toast.error('Error al eliminar la solicitud')
+    }
+  }
+
+  const handleLimpiarRechazadas = async () => {
+    const rechazadas = ingresos.filter(i => i.status === 'rechazado')
+    if (rechazadas.length === 0) { toast.info('No hay solicitudes rechazadas'); return }
+    if (!confirm(`¿Eliminar ${rechazadas.length} solicitud(es) rechazada(s)?`)) return
+    try {
+      await Promise.all(rechazadas.map(i => deleteIngresoRequest(i.id)))
+      setIngresos(prev => prev.filter(i => i.status !== 'rechazado'))
+      toast.success(`${rechazadas.length} solicitud(es) eliminada(s)`)
+    } catch {
+      toast.error('Error al limpiar las solicitudes')
     }
   }
 
@@ -125,6 +191,7 @@ export default function AdminIntegrantesPage() {
 
   const filtered = filter === 'all' ? users : users.filter(u => u.role === filter)
   const pendingApprovals = users.filter(u => u.role === 'pending' && u.requestedRole)
+  const filteredIngresos = ingFilter === 'todas' ? ingresos : ingresos.filter(i => i.status === ingFilter)
 
   const stats = [
     { label: 'Total usuarios',       value: users.length,                                          icon: Users,          color: 'text-navy' },
@@ -235,15 +302,44 @@ export default function AdminIntegrantesPage() {
 
       {/* Ingresos section */}
       <div className="mb-10">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div>
             <h2 className="font-display text-navy text-xl font-bold uppercase tracking-wider">
               Solicitudes de ingreso
             </h2>
             <p className="text-gray-400 text-xs mt-0.5">
-              {ingresos.filter(i => i.status === 'nuevo').length} nuevas solicitudes sin revisar
+              {ingresos.filter(i => i.status === 'nuevo').length} nuevas sin revisar · {ingresos.length} en el historial
             </p>
           </div>
+          {ingresos.some(i => i.status === 'rechazado') && (
+            <button onClick={handleLimpiarRechazadas} className="btn btn-ghost btn-sm text-red-500 hover:bg-red-50">
+              <Trash2 size={14} /> Limpiar rechazadas
+            </button>
+          )}
+        </div>
+
+        {/* Filtro por estado */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {([
+            ['todas', 'Todas'], ['nuevo', 'Nuevas'], ['contactado', 'Contactadas'],
+            ['aceptado', 'Aceptadas'], ['rechazado', 'Rechazadas'],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              onClick={() => setIngFilter(value)}
+              className={cn(
+                'px-3 py-1.5 rounded-full text-xs font-semibold border transition-all',
+                ingFilter === value
+                  ? 'bg-navy text-white border-navy'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-navy hover:text-navy'
+              )}
+            >
+              {label}
+              <span className="ml-1.5 opacity-60">
+                {value === 'todas' ? ingresos.length : ingresos.filter(i => i.status === value).length}
+              </span>
+            </button>
+          ))}
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -251,14 +347,14 @@ export default function AdminIntegrantesPage() {
             <div className="flex items-center justify-center py-10">
               <div className="w-6 h-6 border-2 border-royal/30 border-t-royal rounded-full animate-spin" />
             </div>
-          ) : ingresos.length === 0 ? (
+          ) : filteredIngresos.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
               <ClipboardList size={32} className="mx-auto mb-3 opacity-30" />
-              <p className="text-sm">No hay solicitudes de ingreso todavía</p>
+              <p className="text-sm">{ingresos.length === 0 ? 'No hay solicitudes de ingreso todavía' : 'No hay solicitudes en este estado'}</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {ingresos.map(ing => (
+              {filteredIngresos.map(ing => (
                 <div key={ing.id} className="px-5 py-4">
                   <div
                     className="flex items-center justify-between cursor-pointer"
@@ -336,7 +432,20 @@ export default function AdminIntegrantesPage() {
                         >
                           Email
                         </a>
+                        <button
+                          onClick={() => handleDeleteIngreso(ing.id, ing.nombreCompleto)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-lg transition-colors ml-auto"
+                        >
+                          <Trash2 size={13} /> Eliminar
+                        </button>
                       </div>
+
+                      {ing.status === 'aceptado' && (
+                        <div className="flex items-start gap-2 bg-green-50 border border-green-100 rounded-lg p-3 text-xs text-green-800">
+                          <Sparkles size={14} className="shrink-0 mt-0.5 text-green-600" />
+                          <span>Al aceptar se creó (o ya existía) su ficha de integrante con estos datos. Cuando inicie sesión verá un aviso para completar la información que falta.</span>
+                        </div>
+                      )}
 
                       {/* Cambio de estado */}
                       <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { toast } from 'sonner'
 import {
   Music2, User, Phone, MapPin, Droplet, Shield, Plane, HeartPulse,
-  IdCard, Calendar, Mail, Pencil, X, Save, Users2, ChevronRight, AlertCircle,
+  IdCard, Calendar, Mail, Pencil, X, Save, Users2, ChevronRight, AlertCircle, PartyPopper,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -20,6 +20,20 @@ import { cn } from '@/lib/utils'
 
 const TIPOS_DOC = ['CEDULA CIUDADANIA', 'TARJETA IDENTIDAD', 'PERMISO PERMANENCIA', 'CEDULA EXTRANJERIA', 'PASAPORTE']
 const TIPOS_SANGRE = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']
+
+// Campos obligatorios para considerar la ficha "completa"
+const REQUERIDOS: [keyof Integrante, string][] = [
+  ['apellidos', 'Apellidos'], ['tipoDoc', 'Tipo de documento'], ['numDoc', 'Número de documento'],
+  ['fechaNacimiento', 'Fecha de nacimiento'], ['whatsapp', 'WhatsApp'], ['direccion', 'Dirección'],
+  ['tipoSangre', 'Tipo de sangre'], ['eps', 'EPS'], ['contactoEmergencia', 'Contacto de emergencia'],
+]
+
+function camposFaltantes(f: Integrante): string[] {
+  return REQUERIDOS.filter(([k]) => {
+    const v = f[k]
+    return v === undefined || v === null || String(v).trim() === ''
+  }).map(([, label]) => label)
+}
 
 export default function SeccionesPage() {
   const { profile } = useAuth()
@@ -182,9 +196,28 @@ function MiFicha({
   const sec = getSeccion(ficha.seccion)
   const set = (k: keyof Integrante, v: unknown) => setForm({ ...form, [k]: v })
 
+  const faltan = camposFaltantes(ficha)
+
   if (!editing) {
     return (
-      <div className="card p-6 mb-8 border-l-4 border-royal">
+      <div className="mb-8 space-y-3">
+        {faltan.length > 0 && (
+          <div className="card border-l-4 border-gold p-5 flex items-start gap-3 bg-gold/5">
+            <PartyPopper size={20} className="text-gold shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-semibold text-navy text-sm">¡Bienvenido(a), {ficha.nombre}! 🎉</p>
+              <p className="text-gray-600 text-sm mt-1">
+                Tu ficha ya está creada con los datos que diste al ingresar. Para completar tu registro,
+                actualiza la información que falta: <strong>{faltan.join(', ')}</strong>.
+              </p>
+              <button onClick={() => setEditing(true)} className="btn btn-primary btn-sm mt-3">
+                <Pencil size={14} /> Completar mis datos ahora
+              </button>
+            </div>
+          </div>
+        )}
+
+      <div className="card p-6 border-l-4 border-royal">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-royal/10 flex items-center justify-center">
@@ -215,6 +248,7 @@ function MiFicha({
             <Dato icon={HeartPulse} label="Diagnóstico / medicamentos" value={ficha.diagnostico} />
           </div>
         )}
+      </div>
       </div>
     )
   }
