@@ -28,10 +28,11 @@ import {
   deleteDoc,
   serverTimestamp,
   deleteField,
+  writeBatch,
   Timestamp,
 } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
-import type { UserProfile, UserRole } from '@/types'
+import type { UserProfile, UserRole, Integrante } from '@/types'
 
 const firebaseConfig = {
   apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -165,6 +166,205 @@ export async function getAllUsers(): Promise<UserProfile[]> {
       updatedAt: (data.updatedAt as Timestamp)?.toDate() ?? new Date(),
     } as UserProfile
   })
+}
+
+// ── Firestore: Integrantes (roster oficial) ───────────────────────
+// Modelo de doble colección para privacidad a nivel de campo:
+//   integrantes/{id}        → datos NO sensibles (roster, visible a miembros)
+//   integrantesPrivado/{id} → datos sensibles (cédula, dirección, salud)
+// Ambos comparten el mismo id. linkedUid se guarda en los dos para que las
+// reglas de Firestore puedan validar al dueño sin lecturas cruzadas.
+
+/** Campos que viven en la colección sensible (integrantesPrivado). */
+const CAMPOS_SENSIBLES = [
+  'tipoDoc', 'numDoc', 'fechaNacimiento', 'direccion',
+  'tipoSangre', 'eps', 'pasaporte', 'contactoEmergencia', 'diagnostico',
+] as const
+
+/** Roster ligero — solo datos no sensibles (colección integrantes). */
+export interface IntegranteBase {
+  id:        string
+  nombre:    string
+  apellidos: string
+  seccion:   string
+  familia:   string
+  secciones: string[]
+  whatsapp:  string
+  correo:    string
+  linkedUid?: string
+  activo:    boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+function mapBase(id: string, d: Record<string, unknown>): IntegranteBase {
+  return {
+    id,
+    nombre:    (d.nombre as string) ?? '',
+    apellidos: (d.apellidos as string) ?? '',
+    seccion:   (d.seccion as string) ?? '',
+    familia:   (d.familia as string) ?? '',
+    secciones: (d.secciones as string[]) ?? [],
+    whatsapp:  (d.whatsapp as string) ?? '',
+    correo:    (d.correo as string) ?? '',
+    linkedUid: (d.linkedUid as string) ?? undefined,
+    activo:    (d.activo as boolean) ?? true,
+    createdAt: (d.createdAt as Timestamp)?.toDate() ?? new Date(),
+    updatedAt: (d.updatedAt as Timestamp)?.toDate() ?? new Date(),
+  }
+}
+
+/** Separa un registro plano en sus partes base y sensible. */
+function splitIntegrante(r: Partial<Integrante>) {
+  const base: Record<string, unknown> = {}
+  const priv: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(r)) {
+    if (k === 'id' || k === 'createdAt' || k === 'updatedAt' || k === 'updatedBy') continue
+    if ((CAMPOS_SENSIBLES as readonly string[]).includes(k)) priv[k] = v
+    else base[k] = v
+  }
+  return { base, priv }
+}
+
+/** Roster completo (solo base) para tabla admin / listados. */
+export async function getAllIntegrantes(): Promise<IntegranteBase[]> {
+  const snap = await getDocs(collection(db, 'integrantes'))
+  return snap.docs
+    .map(d => mapBase(d.id, d.data()))
+    .sort((a, b) => `${a.apellidos} ${a.nombre}`.localeCompare(`${b.apellidos} ${b.nombre}`, 'es'))
+}
+
+/** Datos sensibles de una ficha (solo admin o dueño, por reglas). */
+export async function getIntegrantePrivado(id: string): Promise<Partial<Integrante> | null> {
+  const s = await getDoc(doc(db, 'integrantesPrivado', id))
+  return s.exists() ? (s.data() as Partial<Integrante>) : null
+}
+
+/** Ficha COMPLETA (base + sensible) enlazada a un uid de cuenta. */
+export async function getMiIntegrante(uid: string): Promise<Integrante | null> {
+  const snap = await getDocs(query(collection(db, 'integrantes'), where('linkedUid', '==', uid), limit(1)))
+  if (snap.empty) return null
+  const base = mapBase(snap.docs[0].id, snap.docs[0].data())
+  const priv = await getIntegrantePrivado(base.id) ?? {}
+  return mergeIntegrante(base, priv)
+}
+
+function mergeIntegrante(base: IntegranteBase, priv: Partial<Integrante>): Integrante {
+  return {
+    ...base,
+    tipoDoc:            priv.tipoDoc ?? '',
+    numDoc:             priv.numDoc ?? '',
+    fechaNacimiento:    priv.fechaNacimiento ?? '',
+    direccion:          priv.direccion ?? '',
+    tipoSangre:         priv.tipoSangre ?? '',
+    eps:                priv.eps ?? '',
+    pasaporte:          priv.pasaporte ?? false,
+    contactoEmergencia: priv.contactoEmergencia ?? '',
+    diagnostico:        priv.diagnostico ?? '',
+  }
+}
+
+/** Busca una ficha base por correo (para enlazar cuenta tras registro). */
+export async function getIntegranteByCorreo(correo: string): Promise<IntegranteBase | null> {
+  const snap = await getDocs(query(collection(db, 'integrantes'), where('correo', '==', correo.toLowerCase()), limit(1)))
+  return snap.empty ? null : mapBase(snap.docs[0].id, snap.docs[0].data())
+}
+
+/** Roster ligero de una sección (solo campos no sensibles). */
+export async function getRosterSeccion(seccion: string): Promise<IntegranteBase[]> {
+  const snap = await getDocs(query(collection(db, 'integrantes'), where('secciones', 'array-contains', seccion)))
+  return snap.docs.map(d => mapBase(d.id, d.data()))
+}
+
+/** El integrante actualiza su propia ficha (escribe en ambas colecciones). */
+export async function updateMiIntegrante(
+  id: string,
+  uid: string,
+  data: Partial<Integrante>,
+): Promise<void> {
+  const { base, priv } = splitIntegrante(data)
+  const ops: Promise<unknown>[] = []
+  if (Object.keys(base).length)
+    ops.push(updateDoc(doc(db, 'integrantes', id), { ...base, updatedAt: serverTimestamp(), updatedBy: uid }))
+  if (Object.keys(priv).length)
+    ops.push(setDoc(doc(db, 'integrantesPrivado', id), { ...priv, linkedUid: uid, updatedAt: serverTimestamp(), updatedBy: uid }, { merge: true }))
+  await Promise.all(ops)
+}
+
+/** Admin: crea o actualiza una ficha completa. */
+export async function upsertIntegrante(
+  id: string | null,
+  data: Partial<Integrante>,
+  uid: string,
+): Promise<void> {
+  const { base, priv } = splitIntegrante(data)
+  if (id) {
+    await Promise.all([
+      updateDoc(doc(db, 'integrantes', id), { ...base, updatedAt: serverTimestamp(), updatedBy: uid }),
+      setDoc(doc(db, 'integrantesPrivado', id), { ...priv, linkedUid: base.linkedUid ?? null, updatedAt: serverTimestamp(), updatedBy: uid }, { merge: true }),
+    ])
+  } else {
+    const refBase = doc(collection(db, 'integrantes'))
+    await Promise.all([
+      setDoc(refBase, { ...base, activo: data.activo ?? true, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid }),
+      setDoc(doc(db, 'integrantesPrivado', refBase.id), { ...priv, linkedUid: base.linkedUid ?? null, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid }),
+    ])
+  }
+}
+
+/** Admin: enlaza una ficha con una cuenta (actualiza ambas colecciones). */
+export async function linkIntegranteToUser(integranteId: string, uid: string): Promise<void> {
+  await Promise.all([
+    updateDoc(doc(db, 'integrantes', integranteId), { linkedUid: uid, updatedAt: serverTimestamp() }),
+    setDoc(doc(db, 'integrantesPrivado', integranteId), { linkedUid: uid }, { merge: true }),
+  ])
+}
+
+export async function deleteIntegrante(id: string): Promise<void> {
+  await Promise.all([
+    deleteDoc(doc(db, 'integrantes', id)),
+    deleteDoc(doc(db, 'integrantesPrivado', id)),
+  ])
+}
+
+/**
+ * Importación masiva idempotente desde el Excel limpio.
+ * Match por numDoc (o correo) para no duplicar. Escribe en ambas colecciones.
+ */
+export async function bulkImportIntegrantes(
+  registros: Partial<Integrante>[],
+  uid: string,
+): Promise<{ creados: number; actualizados: number }> {
+  const existentesBase = await getAllIntegrantes()
+  // numDoc vive en la colección sensible — lo traemos para el match
+  const privados = await Promise.all(existentesBase.map(e => getIntegrantePrivado(e.id)))
+  const porDoc = new Map<string, string>()   // numDoc -> id
+  existentesBase.forEach((e, i) => { const nd = privados[i]?.numDoc; if (nd) porDoc.set(nd, e.id) })
+  const porCorreo = new Map(existentesBase.map(e => [e.correo, e.id]))
+
+  let creados = 0, actualizados = 0
+  let batch = writeBatch(db)
+  let ops = 0
+  const flush = async () => { if (ops) { await batch.commit(); batch = writeBatch(db); ops = 0 } }
+
+  for (const r of registros) {
+    const { base, priv } = splitIntegrante(r)
+    const matchId = (r.numDoc && porDoc.get(r.numDoc)) || (r.correo && porCorreo.get(r.correo)) || null
+    if (matchId) {
+      batch.update(doc(db, 'integrantes', matchId), { ...base, updatedAt: serverTimestamp(), updatedBy: uid })
+      batch.set(doc(db, 'integrantesPrivado', matchId), { ...priv, updatedAt: serverTimestamp(), updatedBy: uid }, { merge: true })
+      actualizados++
+    } else {
+      const refBase = doc(collection(db, 'integrantes'))
+      batch.set(refBase, { ...base, activo: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid })
+      batch.set(doc(db, 'integrantesPrivado', refBase.id), { ...priv, linkedUid: null, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid })
+      creados++
+    }
+    ops += 2
+    if (ops >= 440) await flush()
+  }
+  await flush()
+  return { creados, actualizados }
 }
 
 // ── Firestore: News ───────────────────────────────────────────────

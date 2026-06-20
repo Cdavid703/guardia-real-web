@@ -22,6 +22,43 @@ export interface UserProfile {
   active:      boolean
 }
 
+// ──────────────────────────────────────────────────────────────────
+// Roster oficial de integrantes (colección `integrantes`)
+// Importado del Excel institucional y mantenido por admin + cada integrante.
+// Contiene datos sensibles (cédula, dirección, salud) — acceso restringido
+// por reglas de Firestore.
+// ──────────────────────────────────────────────────────────────────
+export interface Integrante {
+  id:                 string
+  // Identidad
+  nombre:             string
+  apellidos:          string
+  tipoDoc:            string
+  numDoc:             string
+  fechaNacimiento:    string   // ISO (YYYY-MM-DD) o texto libre
+  // Sección musical
+  seccion:            string   // clave de SECCIONES (MAYÚSCULAS sin acentos)
+  familia:            string   // FamiliaKey
+  secciones:          string[] // un integrante puede estar en 2+ secciones
+  // Contacto
+  whatsapp:           string
+  correo:             string
+  direccion:          string
+  // Salud / sensible
+  tipoSangre:         string
+  eps:                string
+  pasaporte:          boolean
+  contactoEmergencia: string   // nombre + parentesco + teléfono
+  diagnostico:        string   // diagnóstico médico / medicamentos
+  // Vínculo con cuenta de login
+  linkedUid?:         string   // uid del UserProfile enlazado (si tiene cuenta)
+  // Metadatos
+  activo:             boolean
+  createdAt:          Date
+  updatedAt:          Date
+  updatedBy?:         string   // uid de quien actualizó por última vez
+}
+
 export interface NewsArticle {
   id: string
   title: string

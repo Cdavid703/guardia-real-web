@@ -22,6 +22,10 @@ service cloud.firestore {
       return isAuth() && myRole() in ['admin', 'director', 'junta'];
     }
 
+    function isMiembro() {
+      return isAuth() && myRole() in ['admin', 'director', 'integrante', 'junta', 'cm'];
+    }
+
     // Perfil propio
     match /users/{uid} {
       allow read:   if isAuth() && (request.auth.uid == uid || isStaff());
@@ -98,6 +102,28 @@ service cloud.firestore {
       allow create: if true;
       allow read:   if isAdmin();
       allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Integrantes — roster NO sensible: visible a cualquier miembro de la banda.
+    // El dueño (linkedUid) puede editar su propia ficha sin cambiar el vínculo.
+    match /integrantes/{id} {
+      allow read:   if isMiembro();
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+                    || (isAuth() && resource.data.linkedUid == request.auth.uid
+                        && request.resource.data.linkedUid == resource.data.linkedUid);
+      allow delete: if isAdmin();
+    }
+
+    // Integrantes — datos SENSIBLES (cédula, dirección, salud): solo admin o dueño.
+    match /integrantesPrivado/{id} {
+      allow read:   if isAdmin()
+                    || (isAuth() && resource.data.linkedUid == request.auth.uid);
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+                    || (isAuth() && resource.data.linkedUid == request.auth.uid
+                        && request.resource.data.linkedUid == resource.data.linkedUid);
       allow delete: if isAdmin();
     }
 
