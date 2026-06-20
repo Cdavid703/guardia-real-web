@@ -37,6 +37,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
   const [filterComp,  setFilterComp]  = useState<CompFilter>('all')
   const [expanded,    setExpanded]    = useState<string | null>(null)
   const [editing,     setEditing]     = useState<Integrante | null>(null)
+  const [creatingNew, setCreatingNew] = useState(false)
   const [preview,     setPreview]     = useState<PreviewResult | null>(null)
   const [reportOpen,  setReportOpen]  = useState(false)
 
@@ -269,6 +270,9 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
             <Link2 size={14} /> Enlazar coincidentes ({stats.vinculables})
           </button>
         )}
+        <button onClick={() => setCreatingNew(true)} className="btn btn-ghost btn-sm">
+          <Users2 size={14} /> Nuevo integrante
+        </button>
         <div className="relative ml-auto">
           <button onClick={() => setReportOpen(o => !o)} disabled={busy} className="btn btn-primary btn-sm disabled:opacity-60">
             <FileDown size={14} /> Informe ▾
@@ -391,6 +395,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
       )}
 
       {editing && <EditModal integrante={editing} uid={uid} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load() }} />}
+      {creatingNew && <EditModal integrante={FICHA_VACIA} isNew uid={uid} onClose={() => setCreatingNew(false)} onSaved={() => { setCreatingNew(false); load() }} />}
       {preview && <PreviewModal result={preview} onClose={() => setPreview(null)} />}
     </div>
   )
@@ -428,25 +433,34 @@ function ExpandedRow({ id, base }: { id: string; base: IntegranteBase }) {
   )
 }
 
-function EditModal({ integrante, onClose, onSaved, uid }: { integrante: Integrante; onClose: () => void; onSaved: () => void; uid: string }) {
+const FICHA_VACIA: Integrante = {
+  id: '', nombre: '', apellidos: '', tipoDoc: '', numDoc: '', fechaNacimiento: '',
+  seccion: '', familia: '', secciones: [], whatsapp: '', correo: '', direccion: '',
+  tipoSangre: '', eps: '', pasaporte: false, contactoEmergencia: '', diagnostico: '',
+  activo: true, createdAt: new Date(), updatedAt: new Date(),
+}
+
+function EditModal({ integrante, onClose, onSaved, uid, isNew }: { integrante: Integrante; onClose: () => void; onSaved: () => void; uid: string; isNew?: boolean }) {
   const [form, setForm] = useState<Integrante>(integrante)
   const [saving, setSaving] = useState(false)
   const set = (k: keyof Integrante, v: unknown) => setForm({ ...form, [k]: v })
   const save = async () => {
+    if (!form.nombre.trim() || !form.apellidos.trim()) { toast.error('Nombre y apellidos son obligatorios'); return }
+    if (!form.correo.trim()) { toast.error('El correo es obligatorio'); return }
     setSaving(true)
     try {
       const patch: Partial<Integrante> = { ...form }
       if (form.seccion) { const sec = getSeccion(form.seccion); patch.seccion = sec?.key ?? form.seccion; patch.familia = sec?.familia ?? form.familia; if (!patch.secciones?.length) patch.secciones = sec ? [sec.key] : [] }
       delete (patch as Record<string, unknown>).createdAt; delete (patch as Record<string, unknown>).updatedAt
-      await upsertIntegrante(integrante.id, patch, uid)
-      toast.success('Ficha actualizada'); onSaved()
+      await upsertIntegrante(isNew ? null : integrante.id, patch, uid)
+      toast.success(isNew ? 'Integrante creado' : 'Ficha actualizada'); onSaved()
     } catch { toast.error('Error al guardar') } finally { setSaving(false) }
   }
   return (
     <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-serif font-bold text-navy text-lg">Editar ficha</h3>
+          <h3 className="font-serif font-bold text-navy text-lg">{isNew ? 'Nuevo integrante' : 'Editar ficha'}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-navy"><X size={18} /></button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
