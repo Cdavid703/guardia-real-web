@@ -3,12 +3,19 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { Calendar, Music, Bell, User, MapPin, X, Save, Phone, Hash } from 'lucide-react'
+import { Calendar, Music, Bell, User, MapPin, X, Save, Phone, Hash, LayoutDashboard, IdCard } from 'lucide-react'
 import Image from 'next/image'
 import { getEnsayosForRole, getNewsForRole, updateUserProfile, type NewsItem } from '@/lib/firebase'
 import type { Ensayo } from '@/types'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import Tabs from '@/components/ui/Tabs'
+import MiFichaIntegrante from '@/components/dashboard/MiFichaIntegrante'
+
+const PORTAL_TABS = [
+  { id: 'resumen', label: 'Resumen',  icon: LayoutDashboard },
+  { id: 'ficha',   label: 'Mi ficha', icon: IdCard },
+]
 
 const ENSAYO_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
   general:    { emoji: '🎺', label: 'Ensayo General' },
@@ -47,6 +54,7 @@ export default function IntegrantePage() {
     displayName: '', phone: '', instrument: '', joinedYear: '', bio: '',
   })
   const [saving,     setSaving]     = useState(false)
+  const [tab,        setTab]        = useState('resumen')
 
   useEffect(() => {
     if (profile && profile.role !== 'integrante' && profile.role !== 'admin') {
@@ -112,10 +120,14 @@ export default function IntegrantePage() {
           <span>Estás viendo la vista tal como la ve un <strong>integrante</strong>. Los datos son reales.</span>
         </div>
       )}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="font-display text-navy text-2xl font-bold uppercase tracking-wider">Mi portal</h1>
         <p className="text-gray-400 text-sm mt-1">Tu espacio personal como integrante de la Guardia Real</p>
       </div>
+
+      <Tabs tabs={PORTAL_TABS} activeTab={tab} onChange={setTab} className="justify-start mb-6" />
+
+      {tab === 'ficha' && <MiFichaIntegrante />}
 
       {/* Edit Profile Modal */}
       {showEdit && (
@@ -190,6 +202,7 @@ export default function IntegrantePage() {
         </div>
       )}
 
+      {tab === 'resumen' && (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Profile card */}
         <div className="card p-6 text-center">
@@ -331,6 +344,7 @@ export default function IntegrantePage() {
           </div>
         </div>
       </div>
+      )}
     </div>
   )
 }
