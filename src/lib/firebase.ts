@@ -277,6 +277,29 @@ export async function getMiIntegrante(uid: string): Promise<Integrante | null> {
   return mergeIntegrante(base, priv)
 }
 
+/**
+ * Self-service: el propio usuario crea su ficha cuando todavía no existe.
+ * Permitido por las reglas porque linkedUid queda igual a su propio uid.
+ */
+export async function createMiFicha(uid: string, nombre: string, correo: string): Promise<void> {
+  const partes = nombre.trim().split(/\s+/)
+  const ficha: Partial<Integrante> = {
+    nombre: partes[0] ?? nombre, apellidos: partes.slice(1).join(' '),
+    correo: correo.toLowerCase(), whatsapp: '',
+    seccion: '', familia: '', secciones: [],
+    direccion: '', tipoDoc: '', numDoc: '', fechaNacimiento: '',
+    tipoSangre: '', eps: '', pasaporte: false, contactoEmergencia: '', diagnostico: '',
+    linkedUid: uid, activo: true,
+  }
+  const { base, priv } = splitIntegrante(ficha)
+  const comp = completitud(ficha)
+  const refBase = doc(collection(db, 'integrantes'))
+  await Promise.all([
+    setDoc(refBase, { ...base, ...comp, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid }),
+    setDoc(doc(db, 'integrantesPrivado', refBase.id), { ...priv, linkedUid: uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid }),
+  ])
+}
+
 function mergeIntegrante(base: IntegranteBase, priv: Partial<Integrante>): Integrante {
   return {
     ...base,

@@ -8,7 +8,7 @@ import {
   IdCard, Calendar, Mail, Pencil, X, Save, AlertCircle, PartyPopper,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getMiIntegrante, updateMiIntegrante, storage } from '@/lib/firebase'
+import { getMiIntegrante, updateMiIntegrante, createMiFicha, storage } from '@/lib/firebase'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { SECCIONES_LIST, getSeccion } from '@/lib/secciones'
 import { camposFaltantes } from '@/lib/integrantes-utils'
@@ -25,6 +25,7 @@ export default function MiFichaIntegrante() {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [saving,  setSaving]  = useState(false)
+  const [creating, setCreating] = useState(false)
   const [form,    setForm]    = useState<Partial<Integrante>>({})
 
   const load = useCallback(async () => {
@@ -60,18 +61,32 @@ export default function MiFichaIntegrante() {
     finally { setSaving(false) }
   }
 
+  const handleCrearFicha = async () => {
+    if (!profile) return
+    setCreating(true)
+    try {
+      await createMiFicha(profile.uid, profile.displayName ?? profile.email, profile.email)
+      toast.success('Tu ficha fue creada. Ahora completa tus datos.')
+      load()
+    } catch { toast.error('No se pudo crear tu ficha, intenta de nuevo') }
+    finally { setCreating(false) }
+  }
+
   if (loading) return <div className="flex items-center justify-center py-12"><div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" /></div>
 
   if (!ficha) {
     return (
-      <div className="card border-l-4 border-gold p-5 flex items-start gap-3">
-        <AlertCircle size={20} className="text-gold shrink-0 mt-0.5" />
+      <div className="card border-l-4 border-royal p-5 flex items-start gap-3">
+        <AlertCircle size={20} className="text-royal shrink-0 mt-0.5" />
         <div>
-          <p className="font-semibold text-navy text-sm">Tu cuenta aún no está enlazada a una ficha de integrante</p>
+          <p className="font-semibold text-navy text-sm">Aún no tienes una ficha de integrante</p>
           <p className="text-gray-500 text-sm mt-1">
-            Si tu correo <strong>{profile?.email}</strong> está en el listado oficial de la banda,
-            pídele al administrador que enlace tu ficha. Luego podrás ver y actualizar tus datos aquí.
+            Crea tu ficha para que aparezcas en el roster de tu sección y puedas
+            mantener tus datos al día.
           </p>
+          <button onClick={handleCrearFicha} disabled={creating} className="btn btn-primary btn-sm mt-3 disabled:opacity-60">
+            <PartyPopper size={14} /> {creating ? 'Creando...' : 'Crear mi ficha'}
+          </button>
         </div>
       </div>
     )

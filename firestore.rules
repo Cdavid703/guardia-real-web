@@ -106,10 +106,12 @@ service cloud.firestore {
     }
 
     // Integrantes — roster NO sensible: visible a cualquier miembro de la banda.
-    // El dueño (linkedUid) puede editar su propia ficha sin cambiar el vínculo.
+    // El dueño (linkedUid) puede editar su propia ficha sin cambiar el vínculo,
+    // o crear su propia ficha si todavía no tiene una (self-service).
     match /integrantes/{id} {
       allow read:   if isMiembro();
-      allow create: if isAdmin();
+      allow create: if isAdmin()
+                    || (isAuth() && request.resource.data.linkedUid == request.auth.uid);
       allow update: if isAdmin()
                     || (isAuth() && resource.data.linkedUid == request.auth.uid
                         && request.resource.data.linkedUid == resource.data.linkedUid);
@@ -120,7 +122,8 @@ service cloud.firestore {
     match /integrantesPrivado/{id} {
       allow read:   if isAdmin()
                     || (isAuth() && resource.data.linkedUid == request.auth.uid);
-      allow create: if isAdmin();
+      allow create: if isAdmin()
+                    || (isAuth() && request.resource.data.linkedUid == request.auth.uid);
       allow update: if isAdmin()
                     || (isAuth() && resource.data.linkedUid == request.auth.uid
                         && request.resource.data.linkedUid == resource.data.linkedUid);
