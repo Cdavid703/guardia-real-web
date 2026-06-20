@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
-import { Users, ShieldCheck } from 'lucide-react'
-import { getAllUsers, updateUserRole, updateUserProfile } from '@/lib/firebase'
+import { Users, ShieldCheck, UserPlus } from 'lucide-react'
+import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante } from '@/lib/firebase'
 import { cn, getRoleLabel, getRoleBadgeColor, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
-import type { UserProfile, UserRole } from '@/types'
+import type { UserProfile, UserRole, Integrante } from '@/types'
 
 const ROLES: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'Administrador' }, { value: 'director', label: 'Director Musical' },
@@ -15,21 +15,29 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: 'pending', label: 'Pendiente' },
 ]
 
-export default function CuentasRolesPanel() {
-  const [users, setUsers]     = useState<UserProfile[]>([])
-  const [loading, setLoading] = useState(true)
-  const [filter, setFilter]   = useState<UserRole | 'all'>('all')
+// Roles que pertenecen a la banda y deberían tener ficha en el roster
+const ROLES_BANDA: UserRole[] = ['integrante', 'director', 'junta']
 
-  const fetchUsers = async () => {
+export default function CuentasRolesPanel({ uid }: { uid: string }) {
+  const [users, setUsers]         = useState<UserProfile[]>([])
+  const [linkedUids, setLinkedUids] = useState<Set<string>>(new Set())
+  const [loading, setLoading]     = useState(true)
+  const [creating, setCreating]   = useState<string | null>(null)
+  const [filter, setFilter]       = useState<UserRole | 'all'>('all')
+
+  const fetchAll = useCallback(async () => {
     setLoading(true)
-    try { setUsers(await getAllUsers()) }
-    catch { toast.error('Error al cargar usuarios') }
+    try {
+      const [us, ints] = await Promise.all([getAllUsers(), getAllIntegrantes()])
+      setUsers(us)
+      setLinkedUids(new Set(ints.filter(i => i.linkedUid).map(i => i.linkedUid as string)))
+    } catch { toast.error('Error al cargar usuarios') }
     finally { setLoading(false) }
-  }
-  useEffect(() => { fetchUsers() }, [])
+  }, [])
+  useEffect(() => { fetchAll() }, [fetchAll])
 
-  const handleRole = async (uid: string, role: UserRole) => {
-    try { await updateUserRole(uid, role); setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role } : u)); toast.success(`Rol actualizado a "${getRoleLabel(role)}"`) }
+  const handleRole = async (targetUid: string, role: UserRole) => {
+    try { await updateUserRole(targetUid, role); setUsers(prev => prev.map(u => u.uid === targetUid ? { ...u, role } : u)); toast.success(`Rol actualizado a "${getRoleLabel(role)}"`) }
     catch { toast.error('Error al actualizar el rol') }
   }
 
@@ -41,6 +49,27 @@ export default function CuentasRolesPanel() {
       setUsers(prev => prev.map(p => p.uid === u.uid ? { ...p, role: u.requestedRole as UserRole, requestedRole: undefined } : p))
       toast.success(`${u.displayName} ahora es ${getRoleLabel(u.requestedRole)}`)
     } catch { toast.error('Error al aprobar la solicitud') }
+  }
+
+  const handleCrearFicha = async (u: UserProfile) => {
+    setCreating(u.uid)
+    try {
+      const partes = (u.displayName ?? '').trim().split(/\s+/)
+      const ficha: Partial<Integrante> = {
+        nombre: partes[0] ?? u.displayName ?? '',
+        apellidos: partes.slice(1).join(' '),
+        correo: (u.email ?? '').toLowerCase(),
+        whatsapp: u.phone ?? '',
+        seccion: '', familia: '', secciones: [],
+        direccion: '', tipoDoc: '', numDoc: '', fechaNacimiento: '',
+        tipoSangre: '', eps: '', pasaporte: false, contactoEmergencia: '', diagnostico: '',
+        linkedUid: u.uid, activo: true,
+      }
+      await upsertIntegrante(null, ficha, uid)
+      toast.success(`Ficha creada y enlazada para ${u.displayName}. Pídele completar sus datos en "Mi ficha".`)
+      fetchAll()
+    } catch { toast.error('Error al crear la ficha') }
+    finally { setCreating(null) }
   }
 
   const filtered = filter === 'all' ? users : users.filter(u => u.role === filter)
@@ -92,11 +121,14 @@ export default function CuentasRolesPanel() {
                 <tr className="bg-navy text-white text-xs font-bold uppercase tracking-wider">
                   <th className="px-4 py-3 text-left">Usuario</th><th className="px-4 py-3 text-left">Email</th>
                   <th className="px-4 py-3 text-left">Rol actual</th><th className="px-4 py-3 text-left">Rol solicitado</th>
+                  <th className="px-4 py-3 text-left">Ficha</th>
                   <th className="px-4 py-3 text-left">Registro</th><th className="px-4 py-3 text-left">Cambiar rol</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((u, i) => (
+                {filtered.map((u, i) => {
+                  const necesitaFicha = ROLES_BANDA.includes(u.role) && !linkedUids.has(u.uid)
+                  return (
                   <tr key={u.uid} className={cn('border-t border-gray-100', i % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -114,6 +146,16 @@ export default function CuentasRolesPanel() {
                         </div>
                       ) : <span className="text-xs text-gray-300">—</span>}
                     </td>
+                    <td className="px-4 py-3">
+                      {necesitaFicha ? (
+                        <button onClick={() => handleCrearFicha(u)} disabled={creating === u.uid}
+                          className="text-[11px] bg-gold/15 text-amber-700 hover:bg-gold hover:text-navy rounded-full px-2.5 py-1 font-semibold flex items-center gap-1 transition-colors disabled:opacity-60">
+                          <UserPlus size={11} /> {creating === u.uid ? 'Creando...' : 'Crear ficha'}
+                        </button>
+                      ) : ROLES_BANDA.includes(u.role) ? (
+                        <span className="text-[11px] bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium">Con ficha</span>
+                      ) : <span className="text-xs text-gray-300">—</span>}
+                    </td>
                     <td className="px-4 py-3 text-xs text-gray-400">{formatDate(u.createdAt, { year: 'numeric', month: 'short', day: 'numeric' })}</td>
                     <td className="px-4 py-3">
                       <select value={u.role} onChange={e => handleRole(u.uid, e.target.value as UserRole)} className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-dark focus:outline-none focus:border-royal cursor-pointer">
@@ -121,7 +163,8 @@ export default function CuentasRolesPanel() {
                       </select>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>

@@ -52,7 +52,7 @@ function AdminHub() {
       {tab === 'resumen'     && <ResumenPanel />}
       {tab === 'integrantes' && profile && <IntegrantesPanel uid={profile.uid} />}
       {tab === 'solicitudes' && profile && <SolicitudesPanel uid={profile.uid} />}
-      {tab === 'cuentas'     && <CuentasRolesPanel />}
+      {tab === 'cuentas'     && profile && <CuentasRolesPanel uid={profile.uid} />}
     </div>
   )
 }
