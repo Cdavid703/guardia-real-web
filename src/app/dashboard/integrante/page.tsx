@@ -13,8 +13,8 @@ import Tabs from '@/components/ui/Tabs'
 import MiFichaIntegrante from '@/components/dashboard/MiFichaIntegrante'
 
 const PORTAL_TABS = [
-  { id: 'resumen', label: 'Resumen',  icon: LayoutDashboard },
   { id: 'ficha',   label: 'Mi ficha', icon: IdCard },
+  { id: 'resumen', label: 'Resumen',  icon: LayoutDashboard },
 ]
 
 const ENSAYO_TYPE_INFO: Record<string, { emoji: string; label: string }> = {
@@ -54,7 +54,7 @@ export default function IntegrantePage() {
     displayName: '', phone: '', instrument: '', joinedYear: '', bio: '',
   })
   const [saving,     setSaving]     = useState(false)
-  const [tab,        setTab]        = useState('resumen')
+  const [tab,        setTab]        = useState('ficha')
 
   useEffect(() => {
     if (profile && profile.role !== 'integrante' && profile.role !== 'admin') {

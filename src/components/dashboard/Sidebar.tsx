@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Newspaper, Image as ImageIcon,
-  Music, Music2, Calendar, FileText, MessageSquare, Settings,
+  Music, Music2, Calendar, FileText, MessageSquare, IdCard,
   ChevronLeft, ChevronRight, LogOut, ClipboardList, Globe, X, Heart,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -27,7 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/admin/donaciones',  label: 'Donaciones',        icon: Heart,           roles: ['admin'] },
   { href: '/dashboard/director',          label: 'Repertorio',        icon: Music,           roles: ['admin','director'] },
   { href: '/dashboard/director/events',   label: 'Ensayos',           icon: ClipboardList,   roles: ['admin','director'] },
-  { href: '/dashboard/integrante',        label: 'Portal integrante', icon: Settings,        roles: ['admin','integrante'] },
+  { href: '/dashboard/integrante',        label: 'Integrantes',        icon: IdCard,          roles: ['admin','integrante'] },
   { href: '/dashboard/junta',             label: 'Documentos',        icon: FileText,        roles: ['admin','junta'] },
   { href: '/dashboard/cm',               label: 'Panel CM',          icon: Globe,           roles: ['cm'] },
   { href: '/dashboard/cm/noticias',       label: 'Publicar noticias', icon: Newspaper,       roles: ['cm'] },
