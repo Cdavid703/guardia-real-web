@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import {
   Contact, Upload, Search, Link2, Link2Off, UserCheck, UserX,
   ChevronDown, Pencil, Trash2, X, Save, AlertTriangle, Users2, ArrowLeft,
+  FileSearch, UserPlus, MailX, CheckCircle2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
@@ -18,10 +19,27 @@ import { FAMILIAS, SECCIONES_LIST, getSeccion, type FamiliaKey } from '@/lib/sec
 import type { Integrante, UserProfile } from '@/types'
 import { cn } from '@/lib/utils'
 
+// Campos obligatorios para considerar una ficha "completa"
+const REQUERIDOS: [keyof Integrante, string][] = [
+  ['apellidos', 'Apellidos'], ['tipoDoc', 'Tipo doc'], ['numDoc', 'Documento'],
+  ['fechaNacimiento', 'Nacimiento'], ['whatsapp', 'WhatsApp'], ['direccion', 'Dirección'],
+  ['tipoSangre', 'Tipo de sangre'], ['eps', 'EPS'], ['contactoEmergencia', 'Contacto emergencia'],
+]
+
+interface PreviewRow { nombre: string; correo: string; seccion: string; faltan: string[] }
+interface PreviewResult {
+  total:          number
+  conCuenta:      PreviewRow[]   // su correo coincide con una cuenta (ya se registró)
+  sinCuenta:      PreviewRow[]   // su correo NO tiene cuenta (no se ha logueado)
+  incompletos:    PreviewRow[]   // les falta algún dato requerido
+  cuentasSinFicha: UserProfile[] // cuentas de banda que no están en el Excel
+}
+
 export default function MapaIntegrantesPage() {
   const { profile } = useAuth()
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
+  const previewRef = useRef<HTMLInputElement>(null)
 
   const [integrantes, setIntegrantes] = useState<IntegranteBase[]>([])
   const [users,       setUsers]       = useState<UserProfile[]>([])
@@ -31,6 +49,7 @@ export default function MapaIntegrantesPage() {
   const [filterFam,   setFilterFam]   = useState<FamiliaKey | 'all'>('all')
   const [expanded,    setExpanded]    = useState<string | null>(null)
   const [editing,     setEditing]     = useState<Integrante | null>(null)
+  const [preview,     setPreview]     = useState<PreviewResult | null>(null)
 
   useEffect(() => {
     if (profile && profile.role !== 'admin') router.replace('/dashboard')
@@ -110,6 +129,42 @@ export default function MapaIntegrantesPage() {
     }
   }
 
+  // Cruce SIN escribir: lee el JSON + cuentas en vivo y arma el diagnóstico
+  const handlePreview = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const parsed = JSON.parse(await file.text())
+      if (!Array.isArray(parsed)) throw new Error('El archivo debe ser un arreglo JSON')
+      const regs = parsed as Partial<Integrante>[]
+
+      const toRow = (r: Partial<Integrante>): PreviewRow => ({
+        nombre:  `${r.nombre ?? ''} ${r.apellidos ?? ''}`.trim(),
+        correo:  (r.correo ?? '').toLowerCase(),
+        seccion: getSeccion(r.seccion)?.label ?? (r.seccion ?? ''),
+        faltan:  REQUERIDOS.filter(([k]) => {
+          const v = r[k]
+          return v === undefined || v === null || String(v).trim() === ''
+        }).map(([, label]) => label),
+      })
+
+      const rows = regs.map(toRow)
+      const correosExcel = new Set(rows.map(r => r.correo))
+      const conCuenta = rows.filter(r => usersByEmail.has(r.correo))
+      const sinCuenta = rows.filter(r => !usersByEmail.has(r.correo))
+      const incompletos = rows.filter(r => r.faltan.length > 0)
+      const cuentasSinFicha = users.filter(u =>
+        ['integrante', 'director', 'junta'].includes(u.role) &&
+        !correosExcel.has(u.email?.toLowerCase()))
+
+      setPreview({ total: regs.length, conCuenta, sinCuenta, incompletos, cuentasSinFicha })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'No se pudo leer el archivo')
+    } finally {
+      if (previewRef.current) previewRef.current.value = ''
+    }
+  }
+
   const handleLink = async (i: IntegranteBase) => {
     const u = usersByEmail.get(i.correo)
     if (!u) { toast.error('No hay una cuenta con ese correo'); return }
@@ -145,6 +200,10 @@ export default function MapaIntegrantesPage() {
           <p className="text-gray-400 text-sm mt-1">Roster oficial por sección, cruce con cuentas y datos completos</p>
         </div>
         <div className="flex gap-2">
+          <button onClick={() => previewRef.current?.click()} className="btn btn-ghost btn-md">
+            <FileSearch size={15} /> Previsualizar cruce
+          </button>
+          <input ref={previewRef} type="file" accept="application/json,.json" className="hidden" onChange={handlePreview} />
           <button onClick={() => fileRef.current?.click()} disabled={importing} className="btn btn-primary btn-md disabled:opacity-60">
             <Upload size={15} /> {importing ? 'Importando...' : 'Importar JSON'}
           </button>
@@ -285,6 +344,118 @@ export default function MapaIntegrantesPage() {
           onSaved={() => { setEditing(null); load() }}
           uid={profile!.uid}
         />
+      )}
+
+      {/* ── Modal previsualización del cruce ─────────────────────── */}
+      {preview && <PreviewModal result={preview} onClose={() => setPreview(null)} />}
+    </div>
+  )
+}
+
+function PreviewModal({ result, onClose }: { result: PreviewResult; onClose: () => void }) {
+  const { total, conCuenta, sinCuenta, incompletos, cuentasSinFicha } = result
+  return (
+    <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+          <div>
+            <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2">
+              <FileSearch size={18} className="text-royal" /> Vista previa del cruce
+            </h3>
+            <p className="text-xs text-gray-400">{total} registros en el archivo · nada se ha guardado todavía</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-navy"><X size={18} /></button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Resumen */}
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <Mini value={conCuenta.length} label="Ya registrados" color="text-green-600" />
+            <Mini value={sinCuenta.length} label="No se han logueado" color="text-gold" />
+            <Mini value={incompletos.length} label="Con datos faltantes" color="text-red-500" />
+          </div>
+
+          {/* No se han logueado */}
+          <PreviewList
+            icon={UserX} color="text-gold"
+            title={`No se han registrado en la página (${sinCuenta.length})`}
+            hint="Su correo del Excel aún no tiene cuenta creada"
+            rows={sinCuenta.map(r => ({ main: r.nombre, sub: `${r.seccion} · ${r.correo}` }))}
+          />
+
+          {/* Con datos faltantes */}
+          <PreviewList
+            icon={AlertTriangle} color="text-red-500"
+            title={`Les falta algún dato (${incompletos.length})`}
+            hint="Campos vacíos en el Excel"
+            rows={incompletos.map(r => ({ main: r.nombre, sub: `Falta: ${r.faltan.join(', ')}` }))}
+          />
+
+          {/* Cuentas registradas sin ficha */}
+          <PreviewList
+            icon={MailX} color="text-royal"
+            title={`Cuentas registradas SIN ficha en el Excel (${cuentasSinFicha.length})`}
+            hint="Se han logueado pero su correo no está en el listado"
+            rows={cuentasSinFicha.map(u => ({ main: u.displayName || u.email, sub: `${u.role} · ${u.email}` }))}
+          />
+
+          {/* Ya registrados (enlazables) */}
+          <PreviewList
+            icon={UserPlus} color="text-green-600"
+            title={`Ya tienen cuenta — enlazables (${conCuenta.length})`}
+            hint="Al importar, podrás enlazarlos con un clic"
+            rows={conCuenta.map(r => ({ main: r.nombre, sub: `${r.seccion} · ${r.correo}` }))}
+            collapsed
+          />
+        </div>
+
+        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-3 flex justify-end">
+          <button onClick={onClose} className="btn btn-primary btn-md">Entendido</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Mini({ value, label, color }: { value: number; label: string; color: string }) {
+  return (
+    <div className="bg-gray-50 rounded-xl p-3">
+      <div className={cn('font-display text-2xl font-bold', color)}>{value}</div>
+      <div className="text-[11px] text-gray-400 leading-tight">{label}</div>
+    </div>
+  )
+}
+
+function PreviewList({ icon: Icon, color, title, hint, rows, collapsed }: {
+  icon: React.ElementType; color: string; title: string; hint: string
+  rows: { main: string; sub: string }[]; collapsed?: boolean
+}) {
+  const [open, setOpen] = useState(!collapsed)
+  return (
+    <div className="border border-gray-100 rounded-xl overflow-hidden">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-2 px-4 py-2.5 bg-gray-50/60 text-left">
+        <Icon size={15} className={color} />
+        <span className="text-sm font-semibold text-navy flex-1">{title}</span>
+        {rows.length === 0
+          ? <CheckCircle2 size={15} className="text-green-500" />
+          : <ChevronDown size={15} className={cn('text-gray-300 transition-transform', open && 'rotate-180')} />}
+      </button>
+      {open && (
+        <div className="px-4 py-2">
+          <p className="text-[11px] text-gray-400 mb-2">{hint}</p>
+          {rows.length === 0 ? (
+            <p className="text-sm text-gray-400 py-1">Ninguno 🎉</p>
+          ) : (
+            <ul className="divide-y divide-gray-50">
+              {rows.map((r, i) => (
+                <li key={i} className="py-1.5">
+                  <p className="text-sm text-dark">{r.main}</p>
+                  <p className="text-xs text-gray-400">{r.sub}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   )
