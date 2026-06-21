@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import {
   Upload, Search, Link2, Link2Off, UserCheck, UserX, ChevronDown,
   Pencil, Trash2, X, Save, AlertTriangle, Users2, FileSearch, Download,
-  Cake, Link as LinkIcon, FileDown, CheckCircle2,
+  Cake, Link as LinkIcon, FileDown, CheckCircle2, Phone,
 } from 'lucide-react'
 import {
   getAllIntegrantes, getAllUsers, getIntegrantePrivado, bulkImportIntegrantes,
@@ -28,6 +28,27 @@ type SortBy = 'nombre' | 'apellido' | 'seccion' | 'incompletos'
 /** Normaliza texto para comparar/buscar sin importar mayúsculas ni acentos. */
 const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 
+/** ¿La ficha fue creada en los últimos 7 días? */
+const esNuevo = (createdAt?: Date) => {
+  if (!createdAt) return false
+  return Date.now() - createdAt.getTime() < 7 * 24 * 60 * 60 * 1000
+}
+
+/** Resalta en amarillo la coincidencia de búsqueda dentro del texto. */
+function Highlight({ text, query }: { text: string; query: string }) {
+  const q = query.trim()
+  if (!q) return <span className="truncate">{text}</span>
+  const idx = norm(text).indexOf(norm(q))
+  if (idx < 0) return <span className="truncate">{text}</span>
+  return (
+    <span className="truncate">
+      {text.slice(0, idx)}
+      <mark className="bg-gold/40 text-navy rounded px-0.5">{text.slice(idx, idx + q.length)}</mark>
+      {text.slice(idx + q.length)}
+    </span>
+  )
+}
+
 export default function IntegrantesPanel({ uid }: { uid: string }) {
   const fileRef    = useRef<HTMLInputElement>(null)
   const previewRef = useRef<HTMLInputElement>(null)
@@ -40,6 +61,13 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
   const [filterFam,   setFilterFam]   = useState<FamiliaKey | 'all'>('all')
   const [filterComp,  setFilterComp]  = useState<CompFilter>('all')
   const [sortBy,      setSortBy]      = useState<SortBy>('nombre')
+  const [quick,       setQuick]       = useState<Set<string>>(new Set())
+
+  const toggleQuick = (k: string) => setQuick(prev => {
+    const next = new Set(prev)
+    next.has(k) ? next.delete(k) : next.add(k)
+    return next
+  })
   const [expanded,    setExpanded]    = useState<string | null>(null)
   const [editing,     setEditing]     = useState<Integrante | null>(null)
   const [creatingNew, setCreatingNew] = useState(false)
@@ -80,6 +108,10 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
       if (filterComp === 'incompletos' && i.datosCompletos !== false) return false
       if (filterComp === 'completos'   && i.datosCompletos !== true)  return false
       if (filterComp === 'sincuenta'   && i.linkedUid) return false
+      if (quick.has('menor')     && i.esMenor !== true) return false
+      if (quick.has('pasaporte') && i.tienePasaporte !== true) return false
+      if (quick.has('sinwa')     && i.whatsapp) return false
+      if (quick.has('sinfoto')   && i.fotoURL) return false
       if (!q) return true
       return norm(`${i.nombre} ${i.apellidos} ${i.correo} ${getSeccion(i.seccion)?.label ?? ''}`).includes(q)
     })
@@ -94,7 +126,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
       return cmp(`${a.nombre} ${a.apellidos}`, `${b.nombre} ${b.apellidos}`)
     })
     return out
-  }, [integrantes, search, filterFam, filterComp, sortBy])
+  }, [integrantes, search, filterFam, filterComp, sortBy, quick])
 
   // ── Acciones ────────────────────────────────────────────────────
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -356,6 +388,27 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
         </select>
       </div>
 
+      {/* Chips de filtro rápido */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        {([
+          ['menor',     'Menores de edad', integrantes.filter(i => i.esMenor).length],
+          ['pasaporte', 'Con pasaporte',   integrantes.filter(i => i.tienePasaporte).length],
+          ['sinwa',     'Sin WhatsApp',    integrantes.filter(i => !i.whatsapp).length],
+          ['sinfoto',   'Sin foto',        integrantes.filter(i => !i.fotoURL).length],
+        ] as const).map(([k, label, count]) => (
+          <button key={k} onClick={() => toggleQuick(k)}
+            className={cn('px-3 py-1.5 rounded-full text-xs font-semibold border transition-all',
+              quick.has(k) ? 'bg-gold text-navy border-gold' : 'bg-white text-gray-600 border-gray-200 hover:border-navy hover:text-navy')}>
+            {label}<span className="ml-1.5 opacity-60">{count}</span>
+          </button>
+        ))}
+        {quick.size > 0 && (
+          <button onClick={() => setQuick(new Set())} className="px-3 py-1.5 rounded-full text-xs font-medium text-red-500 hover:bg-red-50">
+            Limpiar filtros
+          </button>
+        )}
+      </div>
+
       {!loading && integrantes.length > 0 && (
         <p className="text-xs text-gray-400 mb-3">
           Mostrando <strong className="text-gray-600">{filtered.length}</strong> de {integrantes.length} integrantes
@@ -388,10 +441,23 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
                       <div className="w-9 h-9 rounded-full bg-royal/10 flex items-center justify-center text-royal text-sm font-bold shrink-0">{(i.nombre[0] ?? '?').toUpperCase()}</div>
                     )}
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
+                      <p className="text-sm font-medium text-dark truncate flex items-center gap-1.5">
+                        <Highlight text={`${i.nombre} ${i.apellidos}`} query={search} />
+                        {esNuevo(i.createdAt) && <span className="text-[9px] bg-gold/20 text-amber-700 rounded-full px-1.5 py-0.5 font-bold shrink-0">NUEVO</span>}
+                        {i.esMenor && <span className="text-[9px] bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5 font-medium shrink-0">menor</span>}
+                      </p>
                       <p className="text-xs text-gray-400 truncate">{sec?.label ?? i.seccion} · {i.correo}</p>
                     </div>
                   </button>
+                  {/* WhatsApp directo */}
+                  {i.whatsapp && (
+                    <a href={`https://wa.me/57${i.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      title={`WhatsApp ${i.whatsapp}`}
+                      className="w-7 h-7 rounded-full bg-[#25D366]/10 text-[#1ebd5a] hover:bg-[#25D366] hover:text-white flex items-center justify-center shrink-0 transition-colors">
+                      <Phone size={13} />
+                    </a>
+                  )}
                   {/* Completitud */}
                   {i.datosCompletos === false && (
                     <span className="text-[10px] bg-red-100 text-red-600 rounded-full px-2 py-1 font-medium hidden sm:flex items-center gap-1 shrink-0" title={(i.faltan ?? []).join(', ')}>

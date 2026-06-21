@@ -33,7 +33,7 @@ import {
 } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 import type { UserProfile, UserRole, Integrante } from '@/types'
-import { camposFaltantes, diaMesCumple } from '@/lib/integrantes-utils'
+import { camposFaltantes, diaMesCumple, esMenorDeEdad } from '@/lib/integrantes-utils'
 
 const firebaseConfig = {
   apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -200,6 +200,8 @@ export interface IntegranteBase {
   datosCompletos?: boolean
   cumpleDia?: number
   cumpleMes?: number
+  esMenor?:  boolean
+  tienePasaporte?: boolean
   activo:    boolean
   createdAt: Date
   updatedAt: Date
@@ -223,6 +225,8 @@ function mapBase(id: string, d: Record<string, unknown>): IntegranteBase {
     datosCompletos: (d.datosCompletos as boolean) ?? undefined,
     cumpleDia: (d.cumpleDia as number) ?? undefined,
     cumpleMes: (d.cumpleMes as number) ?? undefined,
+    esMenor:   (d.esMenor as boolean) ?? undefined,
+    tienePasaporte: (d.tienePasaporte as boolean) ?? undefined,
     activo:    (d.activo as boolean) ?? true,
     createdAt: (d.createdAt as Timestamp)?.toDate() ?? new Date(),
     updatedAt: (d.updatedAt as Timestamp)?.toDate() ?? new Date(),
@@ -238,6 +242,8 @@ function completitud(data: Partial<Integrante>) {
     datosCompletos: faltan.length === 0,
     cumpleDia: cumple?.dia ?? null,
     cumpleMes: cumple?.mes ?? null,
+    esMenor: esMenorDeEdad(data.fechaNacimiento),
+    tienePasaporte: data.pasaporte === true,
   }
 }
 
