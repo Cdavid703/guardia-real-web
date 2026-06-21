@@ -14,6 +14,7 @@ import { SECCIONES_LIST, getSeccion } from '@/lib/secciones'
 import { camposFaltantes } from '@/lib/integrantes-utils'
 import type { Integrante } from '@/types'
 import { cn } from '@/lib/utils'
+import CarneIntegrante from '@/components/dashboard/CarneIntegrante'
 
 const TIPOS_DOC = ['CEDULA CIUDADANIA', 'TARJETA IDENTIDAD', 'PERMISO PERMANENCIA', 'CEDULA EXTRANJERIA', 'PASAPORTE']
 const TIPOS_SANGRE = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']
@@ -26,6 +27,7 @@ export default function MiFichaIntegrante() {
   const [editing, setEditing] = useState(false)
   const [saving,  setSaving]  = useState(false)
   const [creating, setCreating] = useState(false)
+  const [showCarne, setShowCarne] = useState(false)
   const [form,    setForm]    = useState<Partial<Integrante>>({})
 
   const load = useCallback(async () => {
@@ -123,7 +125,10 @@ export default function MiFichaIntegrante() {
                 <p className="text-gray-400 text-sm">{sec?.label ?? ficha.seccion}</p>
               </div>
             </div>
-            <button onClick={() => setEditing(true)} className="btn btn-primary btn-sm"><Pencil size={14} /> Actualizar</button>
+            <div className="flex gap-2">
+              <button onClick={() => setShowCarne(true)} className="btn btn-ghost btn-sm"><IdCard size={14} /> Ver carné</button>
+              <button onClick={() => setEditing(true)} className="btn btn-primary btn-sm"><Pencil size={14} /> Actualizar</button>
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 text-sm">
             <Dato icon={Mail}       label="Correo"      value={ficha.correo} />
@@ -148,6 +153,8 @@ export default function MiFichaIntegrante() {
             </span>
           </div>
         </div>
+
+        {showCarne && <CarneIntegrante ficha={ficha} onClose={() => setShowCarne(false)} />}
       </div>
     )
   }

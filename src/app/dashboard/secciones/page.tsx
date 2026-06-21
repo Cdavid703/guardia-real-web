@@ -7,6 +7,7 @@ import { Music2, Phone, Users2, ChevronRight, X } from 'lucide-react'
 import { getRosterSeccion, type IntegranteBase } from '@/lib/firebase'
 import { SECCIONES_POR_FAMILIA, getSeccion, seccionImage } from '@/lib/secciones'
 import MiFichaIntegrante from '@/components/dashboard/MiFichaIntegrante'
+import CumpleanosBanda from '@/components/dashboard/CumpleanosBanda'
 
 export default function SeccionesPage() {
   const [openSeccion, setOpenSeccion] = useState<string | null>(null)
@@ -35,6 +36,9 @@ export default function SeccionesPage() {
         </h1>
         <p className="text-gray-400 text-sm mt-1">Explora las secciones de la banda y mantén tu información al día</p>
       </div>
+
+      {/* ── Cumpleaños del mes ───────────────────────────────────── */}
+      <CumpleanosBanda />
 
       {/* ── Mi ficha (componente compartido) ─────────────────────── */}
       <div className="mb-8">
