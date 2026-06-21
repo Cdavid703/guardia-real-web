@@ -23,6 +23,10 @@ import { cn } from '@/lib/utils'
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
 
 type CompFilter = 'all' | 'incompletos' | 'completos' | 'sincuenta'
+type SortBy = 'nombre' | 'apellido' | 'seccion' | 'incompletos'
+
+/** Normaliza texto para comparar/buscar sin importar mayúsculas ni acentos. */
+const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 
 export default function IntegrantesPanel({ uid }: { uid: string }) {
   const fileRef    = useRef<HTMLInputElement>(null)
@@ -35,6 +39,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
   const [search,      setSearch]      = useState('')
   const [filterFam,   setFilterFam]   = useState<FamiliaKey | 'all'>('all')
   const [filterComp,  setFilterComp]  = useState<CompFilter>('all')
+  const [sortBy,      setSortBy]      = useState<SortBy>('nombre')
   const [expanded,    setExpanded]    = useState<string | null>(null)
   const [editing,     setEditing]     = useState<Integrante | null>(null)
   const [creatingNew, setCreatingNew] = useState(false)
@@ -69,16 +74,27 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
   }, [integrantes])
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    return integrantes.filter(i => {
+    const q = norm(search.trim())
+    const out = integrantes.filter(i => {
       if (filterFam !== 'all' && i.familia !== filterFam) return false
       if (filterComp === 'incompletos' && i.datosCompletos !== false) return false
       if (filterComp === 'completos'   && i.datosCompletos !== true)  return false
       if (filterComp === 'sincuenta'   && i.linkedUid) return false
       if (!q) return true
-      return `${i.nombre} ${i.apellidos} ${i.correo} ${getSeccion(i.seccion)?.label ?? ''}`.toLowerCase().includes(q)
+      return norm(`${i.nombre} ${i.apellidos} ${i.correo} ${getSeccion(i.seccion)?.label ?? ''}`).includes(q)
     })
-  }, [integrantes, search, filterFam, filterComp])
+    const cmp = (a: string, b: string) => a.localeCompare(b, 'es', { sensitivity: 'base' })
+    out.sort((a, b) => {
+      if (sortBy === 'apellido') return cmp(`${a.apellidos} ${a.nombre}`, `${b.apellidos} ${b.nombre}`)
+      if (sortBy === 'seccion')  return cmp(getSeccion(a.seccion)?.label ?? a.seccion, getSeccion(b.seccion)?.label ?? b.seccion) || cmp(a.nombre, b.nombre)
+      if (sortBy === 'incompletos') {
+        const d = (a.datosCompletos === false ? 0 : 1) - (b.datosCompletos === false ? 0 : 1)
+        return d || cmp(`${a.nombre} ${a.apellidos}`, `${b.nombre} ${b.apellidos}`)
+      }
+      return cmp(`${a.nombre} ${a.apellidos}`, `${b.nombre} ${b.apellidos}`)
+    })
+    return out
+  }, [integrantes, search, filterFam, filterComp, sortBy])
 
   // ── Acciones ────────────────────────────────────────────────────
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -332,7 +348,19 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
           <option value="completos">Solo completos</option>
           <option value="sincuenta">Sin cuenta enlazada</option>
         </select>
+        <select value={sortBy} onChange={e => setSortBy(e.target.value as SortBy)} className="input max-w-[190px]">
+          <option value="nombre">Orden: Nombre (A-Z)</option>
+          <option value="apellido">Orden: Apellido (A-Z)</option>
+          <option value="seccion">Orden: Sección</option>
+          <option value="incompletos">Orden: Incompletos primero</option>
+        </select>
       </div>
+
+      {!loading && integrantes.length > 0 && (
+        <p className="text-xs text-gray-400 mb-3">
+          Mostrando <strong className="text-gray-600">{filtered.length}</strong> de {integrantes.length} integrantes
+        </p>
+      )}
 
       {/* Tabla */}
       {integrantes.length === 0 ? (
