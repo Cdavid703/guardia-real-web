@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import {
   Upload, Search, Link2, Link2Off, UserCheck, UserX, ChevronDown,
   Pencil, Trash2, X, Save, AlertTriangle, Users2, FileSearch, Download,
-  Cake, Link as LinkIcon, FileDown, CheckCircle2, Phone,
+  Cake, Link as LinkIcon, FileDown, CheckCircle2, Phone, List, LayoutGrid,
 } from 'lucide-react'
 import {
   getAllIntegrantes, getAllUsers, getIntegrantePrivado, bulkImportIntegrantes,
@@ -62,10 +62,19 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
   const [filterComp,  setFilterComp]  = useState<CompFilter>('all')
   const [sortBy,      setSortBy]      = useState<SortBy>('nombre')
   const [quick,       setQuick]       = useState<Set<string>>(new Set())
+  const [vista,       setVista]       = useState<'lista' | 'tarjetas'>('lista')
+  const [selected,    setSelected]    = useState<Set<string>>(new Set())
+  const [letra,       setLetra]       = useState<string | null>(null)
 
   const toggleQuick = (k: string) => setQuick(prev => {
     const next = new Set(prev)
     next.has(k) ? next.delete(k) : next.add(k)
+    return next
+  })
+
+  const toggleSel = (id: string) => setSelected(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
     return next
   })
   const [expanded,    setExpanded]    = useState<string | null>(null)
@@ -112,6 +121,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
       if (quick.has('pasaporte') && i.tienePasaporte !== true) return false
       if (quick.has('sinwa')     && i.whatsapp) return false
       if (quick.has('sinfoto')   && i.fotoURL) return false
+      if (letra && norm(sortBy === 'apellido' ? i.apellidos : i.nombre).charAt(0).toUpperCase() !== letra) return false
       if (!q) return true
       return norm(`${i.nombre} ${i.apellidos} ${i.correo} ${getSeccion(i.seccion)?.label ?? ''}`).includes(q)
     })
@@ -126,7 +136,13 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
       return cmp(`${a.nombre} ${a.apellidos}`, `${b.nombre} ${b.apellidos}`)
     })
     return out
-  }, [integrantes, search, filterFam, filterComp, sortBy, quick])
+  }, [integrantes, search, filterFam, filterComp, sortBy, quick, letra])
+
+  // Letras presentes en el roster (según el campo de orden)
+  const letrasDisponibles = useMemo(
+    () => new Set(integrantes.map(i => norm(sortBy === 'apellido' ? i.apellidos : i.nombre).charAt(0).toUpperCase()).filter(Boolean)),
+    [integrantes, sortBy],
+  )
 
   // ── Acciones ────────────────────────────────────────────────────
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -255,6 +271,28 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
       toast.success('Lista de gira descargada')
     } catch { toast.error('Error al generar la lista') }
     finally { setBusy(false); setReportOpen(false) }
+  }
+
+  const exportSeleccionados = async () => {
+    const sel = integrantes.filter(i => selected.has(i.id))
+    if (!sel.length) return
+    setBusy(true)
+    try {
+      const priv = await cargarPrivados(sel)
+      descargarCSV('integrantes-seleccionados',
+        ['Apellidos','Nombre','Sección','Edad','Menor de edad','Sangre','EPS','Pasaporte','Contacto emergencia','Condición médica','WhatsApp','Correo'],
+        sel.map(i => {
+          const p = priv.get(i.id) ?? {}
+          return [
+            i.apellidos, i.nombre, getSeccion(i.seccion)?.label ?? i.seccion,
+            edadDesde(p.fechaNacimiento) ?? '', esMenorDeEdad(p.fechaNacimiento) ? 'SÍ' : 'No',
+            p.tipoSangre ?? '', p.eps ?? '', p.pasaporte ? 'Sí' : 'No',
+            p.contactoEmergencia ?? '', p.diagnostico ?? '', i.whatsapp, i.correo,
+          ]
+        }))
+      toast.success(`${sel.length} integrante(s) exportados`)
+    } catch { toast.error('Error al exportar') }
+    finally { setBusy(false) }
   }
 
   /**
@@ -409,10 +447,51 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
         )}
       </div>
 
+      {/* Índice alfabético */}
       {!loading && integrantes.length > 0 && (
-        <p className="text-xs text-gray-400 mb-3">
-          Mostrando <strong className="text-gray-600">{filtered.length}</strong> de {integrantes.length} integrantes
-        </p>
+        <div className="flex flex-wrap items-center gap-1 mb-3">
+          <button onClick={() => setLetra(null)}
+            className={cn('px-2 py-0.5 rounded text-xs font-semibold transition-colors', !letra ? 'bg-navy text-white' : 'text-gray-500 hover:text-navy')}>
+            Todos
+          </button>
+          {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(L => {
+            const avail = letrasDisponibles.has(L)
+            return (
+              <button key={L} disabled={!avail} onClick={() => setLetra(letra === L ? null : L)}
+                className={cn('w-6 h-6 rounded text-xs font-semibold transition-colors',
+                  letra === L ? 'bg-royal text-white' : avail ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-300 cursor-default')}>
+                {L}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {!loading && integrantes.length > 0 && (
+        <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+          <p className="text-xs text-gray-400">
+            Mostrando <strong className="text-gray-600">{filtered.length}</strong> de {integrantes.length} integrantes
+          </p>
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+            <button onClick={() => setVista('lista')} className={cn('px-2.5 py-1 rounded-md text-xs font-medium transition-colors', vista === 'lista' ? 'bg-white text-navy shadow-sm' : 'text-gray-500')}>
+              <List size={13} className="inline mr-1" /> Lista
+            </button>
+            <button onClick={() => setVista('tarjetas')} className={cn('px-2.5 py-1 rounded-md text-xs font-medium transition-colors', vista === 'tarjetas' ? 'bg-white text-navy shadow-sm' : 'text-gray-500')}>
+              <LayoutGrid size={13} className="inline mr-1" /> Tarjetas
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Barra de selección múltiple */}
+      {selected.size > 0 && (
+        <div className="flex items-center gap-3 mb-3 px-4 py-2.5 bg-royal/10 border border-royal/20 rounded-xl">
+          <span className="text-sm font-semibold text-royal">{selected.size} seleccionado(s)</span>
+          <button onClick={exportSeleccionados} disabled={busy} className="btn btn-primary btn-sm disabled:opacity-60">
+            <FileDown size={13} /> Exportar seleccionados
+          </button>
+          <button onClick={() => setSelected(new Set())} className="text-xs text-gray-500 hover:text-navy ml-auto">Limpiar selección</button>
+        </div>
       )}
 
       {/* Tabla */}
@@ -424,6 +503,42 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
         </div>
       ) : filtered.length === 0 ? (
         <div className="card text-center py-12 text-gray-400 text-sm">Sin resultados para el filtro.</div>
+      ) : vista === 'tarjetas' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map(i => {
+            const sec = getSeccion(i.seccion)
+            const cuenta = usersByEmail.get(i.correo)
+            return (
+              <div key={i.id} className="relative bg-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition-shadow">
+                <input type="checkbox" checked={selected.has(i.id)} onChange={() => toggleSel(i.id)}
+                  className="absolute top-3 right-3 w-4 h-4 accent-royal" />
+                <button onClick={() => openEdit(i)} className="flex flex-col items-center text-center w-full">
+                  {i.fotoURL ? (
+                    <Image src={i.fotoURL} alt="" width={64} height={64} className="rounded-full w-16 h-16 object-cover mb-2" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-royal/10 flex items-center justify-center text-royal text-xl font-bold mb-2">{(i.nombre[0] ?? '?').toUpperCase()}</div>
+                  )}
+                  <p className="text-sm font-semibold text-dark leading-tight">{i.nombre} {i.apellidos}</p>
+                  <p className="text-xs text-gray-400 mb-2">{sec?.label ?? i.seccion}</p>
+                  <div className="flex flex-wrap justify-center gap-1">
+                    {esNuevo(i.createdAt) && <span className="text-[9px] bg-gold/20 text-amber-700 rounded-full px-1.5 py-0.5 font-bold">NUEVO</span>}
+                    {i.esMenor && <span className="text-[9px] bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5 font-medium">menor</span>}
+                    {i.datosCompletos === false && <span className="text-[9px] bg-red-100 text-red-600 rounded-full px-1.5 py-0.5 font-medium">Falta {i.faltan?.length}</span>}
+                    {i.linkedUid ? <span className="text-[9px] bg-green-100 text-green-700 rounded-full px-1.5 py-0.5 font-medium">Cuenta</span>
+                      : cuenta ? <span className="text-[9px] bg-royal/10 text-royal rounded-full px-1.5 py-0.5 font-medium">Enlazable</span>
+                      : <span className="text-[9px] bg-gray-100 text-gray-400 rounded-full px-1.5 py-0.5 font-medium">Sin cuenta</span>}
+                  </div>
+                </button>
+                {i.whatsapp && (
+                  <a href={`https://wa.me/57${i.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                    className="absolute bottom-3 right-3 w-7 h-7 rounded-full bg-[#25D366]/10 text-[#1ebd5a] hover:bg-[#25D366] hover:text-white flex items-center justify-center transition-colors">
+                    <Phone size={13} />
+                  </a>
+                )}
+              </div>
+            )
+          })}
+        </div>
       ) : (
         <div className="space-y-1">
           {filtered.map(i => {
@@ -433,6 +548,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
             return (
               <div key={i.id} className="bg-white border border-gray-100 rounded-xl overflow-hidden">
                 <div className="flex items-center gap-3 p-3">
+                  <input type="checkbox" checked={selected.has(i.id)} onChange={() => toggleSel(i.id)} className="w-4 h-4 accent-royal shrink-0" />
                   <button onClick={() => setExpanded(isOpen ? null : i.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                     <ChevronDown size={16} className={cn('text-gray-300 transition-transform shrink-0', isOpen && 'rotate-180')} />
                     {i.fotoURL ? (
