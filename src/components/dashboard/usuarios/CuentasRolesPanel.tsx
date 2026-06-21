@@ -16,7 +16,7 @@ const ROLES: { value: UserRole; label: string }[] = [
 ]
 
 // Roles que pertenecen a la banda y deberían tener ficha en el roster
-const ROLES_BANDA: UserRole[] = ['integrante', 'director', 'junta']
+const ROLES_BANDA: UserRole[] = ['integrante', 'director', 'junta', 'cm']
 
 export default function CuentasRolesPanel({ uid }: { uid: string }) {
   const [users, setUsers]         = useState<UserProfile[]>([])

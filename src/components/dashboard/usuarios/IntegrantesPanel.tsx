@@ -113,7 +113,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
         conCuenta: rows.filter(r => usersByEmail.has(r.correo)),
         sinCuenta: rows.filter(r => !usersByEmail.has(r.correo)),
         incompletos: rows.filter(r => r.faltan.length > 0),
-        cuentasSinFicha: users.filter(u => ['integrante','director','junta'].includes(u.role) && !correos.has(u.email?.toLowerCase())),
+        cuentasSinFicha: users.filter(u => ['integrante','director','junta','cm'].includes(u.role) && !correos.has(u.email?.toLowerCase())),
       })
     } catch (err) { toast.error(err instanceof Error ? err.message : 'No se pudo leer el archivo') }
     finally { if (previewRef.current) previewRef.current.value = '' }
@@ -219,7 +219,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
     const fichasSinCuenta = integrantes.filter(i => !i.linkedUid)
     const linkedUids = new Set(integrantes.filter(i => i.linkedUid).map(i => i.linkedUid))
     const cuentasSinFicha = users.filter(u =>
-      ['integrante', 'director', 'junta'].includes(u.role) && !linkedUids.has(u.uid))
+      ['integrante', 'director', 'junta', 'cm'].includes(u.role) && !linkedUids.has(u.uid))
 
     const filas = fichasSinCuenta.map(f => {
       const nombreFicha = norm(`${f.nombre} ${f.apellidos}`)
