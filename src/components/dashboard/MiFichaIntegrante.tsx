@@ -15,6 +15,7 @@ import { camposFaltantes } from '@/lib/integrantes-utils'
 import type { Integrante } from '@/types'
 import { cn } from '@/lib/utils'
 import CarneIntegrante from '@/components/dashboard/CarneIntegrante'
+import FotoCropper from '@/components/dashboard/FotoCropper'
 
 const TIPOS_DOC = ['CEDULA CIUDADANIA', 'TARJETA IDENTIDAD', 'PERMISO PERMANENCIA', 'CEDULA EXTRANJERIA', 'PASAPORTE']
 const TIPOS_SANGRE = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']
@@ -227,19 +228,28 @@ export default function MiFichaIntegrante() {
 
 function FotoUpload({ integranteId, current, onUploaded }: { integranteId: string; current?: string; onUploaded: (url: string) => void }) {
   const [uploading, setUploading] = useState(false)
+  const [cropFile, setCropFile] = useState<File | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const handle = async (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const pick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return
     if (!file.type.startsWith('image/')) { toast.error('Solo imágenes'); return }
+    setCropFile(file)
+    e.target.value = '' // permite reelegir el mismo archivo
+  }
+
+  const subir = async (blob: Blob) => {
+    setCropFile(null)
     setUploading(true)
     try {
-      const storageRef = ref(storage, `integrantes/${integranteId}/${Date.now()}_${file.name.replace(/\s/g, '_')}`)
-      await uploadBytes(storageRef, file)
+      const storageRef = ref(storage, `integrantes/${integranteId}/${Date.now()}_foto.jpg`)
+      await uploadBytes(storageRef, blob)
       onUploaded(await getDownloadURL(storageRef))
-      toast.success('Foto subida')
+      toast.success('Foto actualizada')
     } catch { toast.error('No se pudo subir la foto') }
     finally { setUploading(false) }
   }
+
   return (
     <div className="flex items-center gap-3">
       <div className="w-14 h-14 rounded-full bg-royal/10 overflow-hidden flex items-center justify-center shrink-0">
@@ -248,7 +258,8 @@ function FotoUpload({ integranteId, current, onUploaded }: { integranteId: strin
       <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading} className="btn btn-ghost btn-sm disabled:opacity-60">
         {uploading ? 'Subiendo...' : current ? 'Cambiar foto' : 'Subir foto'}
       </button>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handle} />
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={pick} />
+      {cropFile && <FotoCropper file={cropFile} onCancel={() => setCropFile(null)} onCropped={subir} />}
     </div>
   )
 }
