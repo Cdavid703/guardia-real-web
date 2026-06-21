@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
-import { Users, ShieldCheck, UserPlus } from 'lucide-react'
+import { Users, ShieldCheck, UserPlus, Search } from 'lucide-react'
+
+const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante } from '@/lib/firebase'
 import { cn, getRoleLabel, getRoleBadgeColor, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -24,6 +26,7 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
   const [loading, setLoading]     = useState(true)
   const [creating, setCreating]   = useState<string | null>(null)
   const [filter, setFilter]       = useState<UserRole | 'all'>('all')
+  const [search, setSearch]       = useState('')
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -72,7 +75,12 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
     finally { setCreating(null) }
   }
 
-  const filtered = filter === 'all' ? users : users.filter(u => u.role === filter)
+  const q = norm(search.trim())
+  const filtered = users.filter(u => {
+    if (filter !== 'all' && u.role !== filter) return false
+    if (!q) return true
+    return norm(`${u.displayName} ${u.email}`).includes(q)
+  })
   const pendingApprovals = users.filter(u => u.role === 'pending' && u.requestedRole)
 
   return (
@@ -99,6 +107,12 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
           </div>
         </div>
       )}
+
+      {/* Buscador */}
+      <div className="relative mb-3 max-w-md">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input value={search} onChange={e => setSearch(e.target.value)} className="input pl-9" placeholder="Buscar por nombre o correo..." />
+      </div>
 
       {/* Filtros */}
       <div className="flex flex-wrap gap-2 mb-4">
