@@ -21,14 +21,26 @@ function GoogleIcon() {
   )
 }
 
+function MicrosoftIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
+      <path d="M11.4 11.4H2V2h9.4v9.4z" fill="#F25022"/>
+      <path d="M22 11.4h-9.4V2H22v9.4z" fill="#7FBA00"/>
+      <path d="M11.4 22H2v-9.4h9.4V22z" fill="#00A4EF"/>
+      <path d="M22 22h-9.4v-9.4H22V22z" fill="#FFB900"/>
+    </svg>
+  )
+}
+
 function LoginContent() {
   const [loadingGoogle,    setLoadingGoogle]    = useState(false)
+  const [loadingMicrosoft, setLoadingMicrosoft] = useState(false)
   const [loadingEmail,     setLoadingEmail]     = useState(false)
   const [email,            setEmail]            = useState('')
   const [password,         setPassword]         = useState('')
   const [inAppBrowser,     setInAppBrowser]     = useState(false)
 
-  const { loginWithGoogle, loginWithEmail, user, profile } = useAuth()
+  const { loginWithGoogle, loginWithMicrosoft, loginWithEmail, user, profile } = useAuth()
   const router       = useRouter()
 
   useEffect(() => {
@@ -69,6 +81,27 @@ function LoginContent() {
       }
     } finally {
       setLoadingGoogle(false)
+    }
+  }
+
+  const handleMicrosoft = async () => {
+    if (inAppBrowser) {
+      toast.error('Microsoft no permite iniciar sesión desde WhatsApp/Instagram. Abre este enlace en Chrome o Safari.', { duration: 8000 })
+      return
+    }
+    setLoadingMicrosoft(true)
+    try {
+      await loginWithMicrosoft()
+      toast.success('¡Bienvenido!')
+      window.location.href = '/dashboard'
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code ?? ''
+      const msg  = err instanceof Error ? err.message : 'Error desconocido'
+      if (!code.includes('popup-closed') && !msg.includes('popup-closed')) {
+        toast.error(`Error Microsoft: ${code || msg}`, { duration: 10000 })
+      }
+    } finally {
+      setLoadingMicrosoft(false)
     }
   }
 
@@ -141,7 +174,7 @@ function LoginContent() {
             <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex gap-3">
               <ExternalLink size={16} className="text-blue-600 shrink-0 mt-0.5" />
               <div className="text-xs text-blue-700 leading-relaxed flex-1">
-                <strong>Estás navegando desde WhatsApp/Instagram.</strong> Google no permite
+                <strong>Estás navegando desde WhatsApp/Instagram.</strong> Google y Microsoft no permiten
                 iniciar sesión dentro de estas apps. Toca <strong>⋮</strong> o el ícono de compartir
                 y elige <strong>&ldquo;Abrir en el navegador&rdquo;</strong> (Chrome o Safari), o copia el enlace:
                 <button onClick={handleCopyLink} className="mt-2 flex items-center gap-1.5 text-blue-700 font-semibold hover:underline">
@@ -155,7 +188,7 @@ function LoginContent() {
             {/* Google */}
             <button
               onClick={handleGoogle}
-              disabled={loadingGoogle || loadingEmail}
+              disabled={loadingGoogle || loadingMicrosoft || loadingEmail}
               title={inAppBrowser ? 'Abre este enlace en Chrome o Safari para usar Google' : undefined}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-lg text-sm font-semibold text-dark bg-white hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -167,9 +200,20 @@ function LoginContent() {
               {loadingGoogle ? 'Conectando...' : 'Continuar con Google'}
             </button>
 
-            {/* Microsoft — deshabilitado hasta tener Azure AD configurado.
-                 Las funciones handleMicrosoft / loginWithMicrosoft se mantienen
-                 para no romper imports; el botón está oculto. */}
+            {/* Microsoft */}
+            <button
+              onClick={handleMicrosoft}
+              disabled={loadingGoogle || loadingMicrosoft || loadingEmail}
+              title={inAppBrowser ? 'Abre este enlace en Chrome o Safari para usar Microsoft' : undefined}
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-lg text-sm font-semibold text-dark bg-white hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingMicrosoft ? (
+                <div className="w-5 h-5 border-2 border-gray-300 border-t-navy rounded-full animate-spin" />
+              ) : (
+                <MicrosoftIcon />
+              )}
+              {loadingMicrosoft ? 'Conectando...' : 'Continuar con Microsoft'}
+            </button>
           </div>
 
           {/* Divider */}
@@ -205,7 +249,7 @@ function LoginContent() {
             </div>
             <button
               type="submit"
-              disabled={loadingGoogle || loadingEmail}
+              disabled={loadingGoogle || loadingMicrosoft || loadingEmail}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-navy hover:bg-navy/90 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loadingEmail && (
