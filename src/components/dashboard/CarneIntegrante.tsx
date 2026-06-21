@@ -1,14 +1,37 @@
 'use client'
 
+import { useRef, useState } from 'react'
 import Image from 'next/image'
-import { X, Printer, Droplet, Shield, IdCard } from 'lucide-react'
+import { toast } from 'sonner'
+import { X, Printer, Download, Droplet, Shield, IdCard } from 'lucide-react'
 import { getSeccion } from '@/lib/secciones'
 import QrIntegrante from '@/components/dashboard/QrIntegrante'
 import type { Integrante } from '@/types'
 
-/** Carné digital del integrante — imprimible. */
+/** Carné digital del integrante — imprimible y descargable en PDF. */
 export default function CarneIntegrante({ ficha, onClose }: { ficha: Integrante; onClose: () => void }) {
   const sec = getSeccion(ficha.seccion)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [downloading, setDownloading] = useState(false)
+
+  const descargarPDF = async () => {
+    const node = cardRef.current
+    if (!node) return
+    setDownloading(true)
+    try {
+      const [{ toPng }, { jsPDF }] = await Promise.all([import('html-to-image'), import('jspdf')])
+      const dataUrl = await toPng(node, { pixelRatio: 3, cacheBust: true, backgroundColor: '#ffffff' })
+      const w = node.offsetWidth, h = node.offsetHeight
+      const pdf = new jsPDF({ unit: 'px', format: [w, h], orientation: w > h ? 'landscape' : 'portrait' })
+      pdf.addImage(dataUrl, 'PNG', 0, 0, w, h)
+      const nombre = `${ficha.nombre}-${ficha.apellidos}`.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '-')
+      pdf.save(`carne-${nombre || 'integrante'}.pdf`)
+    } catch {
+      toast.error('No se pudo generar el PDF, intenta de nuevo')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4 print:bg-white print:p-0" onClick={onClose}>
@@ -22,7 +45,7 @@ export default function CarneIntegrante({ ficha, onClose }: { ficha: Integrante;
 
       <div className="w-full max-w-sm" onClick={e => e.stopPropagation()}>
         {/* Tarjeta */}
-        <div className="carne-printable bg-white rounded-2xl overflow-hidden shadow-2xl border border-gray-200">
+        <div ref={cardRef} className="carne-printable bg-white rounded-2xl overflow-hidden shadow-2xl border border-gray-200">
           {/* Cabecera navy */}
           <div className="bg-navy relative px-5 pt-5 pb-4">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gold" />
@@ -97,9 +120,12 @@ export default function CarneIntegrante({ ficha, onClose }: { ficha: Integrante;
         </div>
 
         {/* Acciones */}
-        <div className="no-print flex justify-center gap-3 mt-4">
-          <button onClick={() => window.print()} className="btn btn-gold btn-md">
-            <Printer size={16} /> Imprimir / Guardar
+        <div className="no-print flex flex-wrap justify-center gap-2 mt-4">
+          <button onClick={descargarPDF} disabled={downloading} className="btn btn-gold btn-md disabled:opacity-60">
+            <Download size={16} /> {downloading ? 'Generando...' : 'Descargar PDF'}
+          </button>
+          <button onClick={() => window.print()} className="btn btn-ghost btn-md text-white hover:bg-white/10">
+            <Printer size={16} /> Imprimir
           </button>
           <button onClick={onClose} className="btn btn-ghost btn-md text-white hover:bg-white/10">
             <X size={16} /> Cerrar
