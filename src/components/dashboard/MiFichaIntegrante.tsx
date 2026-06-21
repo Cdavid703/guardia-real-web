@@ -16,6 +16,7 @@ import type { Integrante } from '@/types'
 import { cn } from '@/lib/utils'
 import CarneIntegrante from '@/components/dashboard/CarneIntegrante'
 import FotoCropper from '@/components/dashboard/FotoCropper'
+import QrIntegrante from '@/components/dashboard/QrIntegrante'
 
 const TIPOS_DOC = ['CEDULA CIUDADANIA', 'TARJETA IDENTIDAD', 'PERMISO PERMANENCIA', 'CEDULA EXTRANJERIA', 'PASAPORTE']
 const TIPOS_SANGRE = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']
@@ -147,11 +148,17 @@ export default function MiFichaIntegrante() {
               <Dato icon={HeartPulse} label="Diagnóstico / medicamentos" value={ficha.diagnostico} />
             </div>
           )}
-          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-1.5 text-xs">
-            <Shield size={13} className={ficha.consentimientoDatos ? 'text-green-500' : 'text-gray-300'} />
-            <span className={ficha.consentimientoDatos ? 'text-green-600' : 'text-gray-400'}>
-              {ficha.consentimientoDatos ? `Autorización de datos aceptada${ficha.consentimientoFecha ? ` (${ficha.consentimientoFecha})` : ''}` : 'Autorización de datos pendiente'}
-            </span>
+          <div className="mt-3 pt-3 border-t border-gray-100 flex items-end justify-between gap-3">
+            <div className="flex items-center gap-1.5 text-xs">
+              <Shield size={13} className={ficha.consentimientoDatos ? 'text-green-500' : 'text-gray-300'} />
+              <span className={ficha.consentimientoDatos ? 'text-green-600' : 'text-gray-400'}>
+                {ficha.consentimientoDatos ? `Autorización de datos aceptada${ficha.consentimientoFecha ? ` (${ficha.consentimientoFecha})` : ''}` : 'Autorización de datos pendiente'}
+              </span>
+            </div>
+            <div className="shrink-0 text-center">
+              <QrIntegrante ficha={ficha} size={84} />
+              <p className="text-[9px] text-gray-400 uppercase tracking-wide mt-1">Mi código único</p>
+            </div>
           </div>
         </div>
 

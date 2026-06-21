@@ -2,14 +2,14 @@
 
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Shirt, Bell, ClipboardList, MapPin, Lock, LogIn, IdCard } from 'lucide-react'
+import { Shirt, Bell, ClipboardList, History, Lock, LogIn, IdCard } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import Tabs from '@/components/ui/Tabs'
 import UniformesPanel from '@/components/dashboard/UniformesPanel'
 import EquipoNoticiasPanel from '@/components/dashboard/EquipoNoticiasPanel'
 import EquipoEnsayosPanel from '@/components/dashboard/EquipoEnsayosPanel'
-import CalarcaPanel from '@/components/dashboard/CalarcaPanel'
+import HistoriaPanel from '@/components/dashboard/HistoriaPanel'
 import MiFichaIntegrante from '@/components/dashboard/MiFichaIntegrante'
 import type { UserRole } from '@/types'
 
@@ -20,7 +20,7 @@ const TABS = [
   { id: 'uniformes', label: 'Uniformes',  icon: Shirt },
   { id: 'noticias',  label: 'Noticias',   icon: Bell },
   { id: 'ensayos',   label: 'Ensayos',    icon: ClipboardList },
-  { id: 'calarca',   label: 'Viaje a Calarcá', icon: MapPin },
+  { id: 'historia',  label: 'Historia',   icon: History },
 ]
 
 function IntegrantesContent() {
@@ -82,7 +82,7 @@ function IntegrantesContent() {
       {activeTab === 'uniformes' && <UniformesPanel />}
       {activeTab === 'noticias'  && <EquipoNoticiasPanel role={profile.role} />}
       {activeTab === 'ensayos'   && <EquipoEnsayosPanel role={profile.role} />}
-      {activeTab === 'calarca'   && <CalarcaPanel />}
+      {activeTab === 'historia'  && <HistoriaPanel />}
     </div>
   )
 }

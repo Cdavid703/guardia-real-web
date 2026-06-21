@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { X, Printer, Droplet, Shield, IdCard } from 'lucide-react'
 import { getSeccion } from '@/lib/secciones'
+import QrIntegrante from '@/components/dashboard/QrIntegrante'
 import type { Integrante } from '@/types'
 
 /** Carné digital del integrante — imprimible. */
@@ -73,12 +74,20 @@ export default function CarneIntegrante({ ficha, onClose }: { ficha: Integrante;
               </div>
             </div>
 
-            {ficha.contactoEmergencia && (
-              <div className="mt-3 pt-3 border-t border-gray-100">
-                <p className="text-[9px] text-gray-400 uppercase tracking-wide">Contacto de emergencia</p>
-                <p className="text-dark text-xs">{ficha.contactoEmergencia}</p>
+            <div className="mt-3 pt-3 border-t border-gray-100 flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                {ficha.contactoEmergencia && (
+                  <>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-wide">Contacto de emergencia</p>
+                    <p className="text-dark text-xs">{ficha.contactoEmergencia}</p>
+                  </>
+                )}
               </div>
-            )}
+              <div className="shrink-0 text-center">
+                <QrIntegrante ficha={ficha} size={72} />
+                <p className="text-[8px] text-gray-400 uppercase tracking-wide mt-1">Código único</p>
+              </div>
+            </div>
           </div>
 
           {/* Pie */}
