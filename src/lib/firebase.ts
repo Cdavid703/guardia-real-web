@@ -29,6 +29,7 @@ import {
   serverTimestamp,
   deleteField,
   writeBatch,
+  arrayUnion,
   Timestamp,
 } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
@@ -193,6 +194,8 @@ export interface IntegranteBase {
   whatsapp:  string
   correo:    string
   linkedUid?: string
+  linkedUids: string[]          // normalizado: incluye linkedUid legacy
+  correosAutorizados: string[]  // normalizado: incluye correo principal
   fotoURL?:  string
   consentimientoDatos?: boolean
   consentimientoFecha?: string
@@ -218,6 +221,8 @@ function mapBase(id: string, d: Record<string, unknown>): IntegranteBase {
     whatsapp:  (d.whatsapp as string) ?? '',
     correo:    (d.correo as string) ?? '',
     linkedUid: (d.linkedUid as string) ?? undefined,
+    linkedUids: (d.linkedUids as string[]) ?? (d.linkedUid ? [d.linkedUid as string] : []),
+    correosAutorizados: (d.correosAutorizados as string[]) ?? ((d.correo as string) ? [(d.correo as string).toLowerCase()] : []),
     fotoURL:   (d.fotoURL as string) ?? undefined,
     consentimientoDatos: (d.consentimientoDatos as boolean) ?? false,
     consentimientoFecha: (d.consentimientoFecha as string) ?? undefined,
@@ -276,33 +281,45 @@ export async function getIntegrantePrivado(id: string): Promise<Partial<Integran
 
 /** Ficha COMPLETA (base + sensible) enlazada a un uid de cuenta. */
 export async function getMiIntegrante(uid: string): Promise<Integrante | null> {
-  const snap = await getDocs(query(collection(db, 'integrantes'), where('linkedUid', '==', uid), limit(1)))
+  // Cuentas con acceso (puede haber varias por ficha)
+  let snap = await getDocs(query(collection(db, 'integrantes'), where('linkedUids', 'array-contains', uid), limit(1)))
+  // Compatibilidad con fichas antiguas que solo tienen linkedUid
+  if (snap.empty) snap = await getDocs(query(collection(db, 'integrantes'), where('linkedUid', '==', uid), limit(1)))
   if (snap.empty) return null
   const base = mapBase(snap.docs[0].id, snap.docs[0].data())
   const priv = await getIntegrantePrivado(base.id) ?? {}
   return mergeIntegrante(base, priv)
 }
 
+/** Busca una ficha cuyo correo autorizado coincida (aún sin enlazar al uid). */
+export async function getIntegranteByCorreoAutorizado(correo: string): Promise<IntegranteBase | null> {
+  const c = correo.toLowerCase()
+  let snap = await getDocs(query(collection(db, 'integrantes'), where('correosAutorizados', 'array-contains', c), limit(1)))
+  if (snap.empty) snap = await getDocs(query(collection(db, 'integrantes'), where('correo', '==', c), limit(1)))
+  return snap.empty ? null : mapBase(snap.docs[0].id, snap.docs[0].data())
+}
+
 /**
  * Self-service: el propio usuario crea su ficha cuando todavía no existe.
- * Permitido por las reglas porque linkedUid queda igual a su propio uid.
+ * Permitido por las reglas porque su uid queda en linkedUids.
  */
 export async function createMiFicha(uid: string, nombre: string, correo: string): Promise<void> {
   const partes = nombre.trim().split(/\s+/)
+  const c = correo.toLowerCase()
   const ficha: Partial<Integrante> = {
     nombre: partes[0] ?? nombre, apellidos: partes.slice(1).join(' '),
-    correo: correo.toLowerCase(), whatsapp: '',
+    correo: c, whatsapp: '',
     seccion: '', familia: '', secciones: [],
     direccion: '', tipoDoc: '', numDoc: '', fechaNacimiento: '',
     tipoSangre: '', eps: '', pasaporte: false, contactoEmergencia: '', diagnostico: '',
-    linkedUid: uid, activo: true,
+    linkedUid: uid, linkedUids: [uid], correosAutorizados: [c], activo: true,
   }
   const { base, priv } = splitIntegrante(ficha)
   const comp = completitud(ficha)
   const refBase = doc(collection(db, 'integrantes'))
   await Promise.all([
     setDoc(refBase, { ...base, ...comp, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid }),
-    setDoc(doc(db, 'integrantesPrivado', refBase.id), { ...priv, linkedUid: uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid }),
+    setDoc(doc(db, 'integrantesPrivado', refBase.id), { ...priv, linkedUid: uid, linkedUids: [uid], createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: uid }),
   ])
 }
 
@@ -345,7 +362,7 @@ export async function updateMiIntegrante(
     updateDoc(doc(db, 'integrantes', id), { ...base, ...comp, updatedAt: serverTimestamp(), updatedBy: uid }),
   ]
   if (Object.keys(priv).length)
-    ops.push(setDoc(doc(db, 'integrantesPrivado', id), { ...priv, linkedUid: uid, updatedAt: serverTimestamp(), updatedBy: uid }, { merge: true }))
+    ops.push(setDoc(doc(db, 'integrantesPrivado', id), { ...priv, linkedUid: uid, linkedUids: arrayUnion(uid), updatedAt: serverTimestamp(), updatedBy: uid }, { merge: true }))
   await Promise.all(ops)
 }
 
@@ -371,12 +388,24 @@ export async function upsertIntegrante(
   }
 }
 
-/** Admin: enlaza una ficha con una cuenta (actualiza ambas colecciones). */
-export async function linkIntegranteToUser(integranteId: string, uid: string): Promise<void> {
+/** Admin: enlaza una ficha con una cuenta (admite varias cuentas por ficha). */
+export async function linkIntegranteToUser(integranteId: string, uid: string, email?: string): Promise<void> {
+  const baseUpd: Record<string, unknown> = {
+    linkedUid: uid,                       // legacy: una cuenta de referencia
+    linkedUids: arrayUnion(uid),          // todas las cuentas con acceso
+    updatedAt: serverTimestamp(),
+  }
+  if (email) baseUpd.correosAutorizados = arrayUnion(email.toLowerCase())
   await Promise.all([
-    updateDoc(doc(db, 'integrantes', integranteId), { linkedUid: uid, updatedAt: serverTimestamp() }),
-    setDoc(doc(db, 'integrantesPrivado', integranteId), { linkedUid: uid }, { merge: true }),
+    updateDoc(doc(db, 'integrantes', integranteId), baseUpd),
+    setDoc(doc(db, 'integrantesPrivado', integranteId), { linkedUid: uid, linkedUids: arrayUnion(uid) }, { merge: true }),
   ])
+}
+
+/** Admin: define la lista de correos con acceso a una ficha. */
+export async function setCorreosAutorizados(integranteId: string, correos: string[]): Promise<void> {
+  const limpios = Array.from(new Set(correos.map(c => c.trim().toLowerCase()).filter(Boolean)))
+  await updateDoc(doc(db, 'integrantes', integranteId), { correosAutorizados: limpios, updatedAt: serverTimestamp() })
 }
 
 export async function deleteIntegrante(id: string): Promise<void> {
@@ -439,14 +468,17 @@ export async function autoLinkIntegrantes(
   const userByEmail = new Map(users.map(u => [u.email?.toLowerCase(), u]))
   let enlazados = 0
   for (const b of bases) {
-    if (b.linkedUid) continue
-    const u = userByEmail.get(b.correo)
-    if (!u) continue
-    await linkIntegranteToUser(b.id, u.uid)
-    if (asignarRol && (u.role === 'pending' || u.role === 'visitante')) {
-      await updateUserRole(u.uid, 'integrante')
+    // Correos que dan acceso a esta ficha (autorizados + principal)
+    const correos = new Set([b.correo, ...b.correosAutorizados].filter(Boolean))
+    for (const correo of correos) {
+      const u = userByEmail.get(correo)
+      if (!u || b.linkedUids.includes(u.uid)) continue
+      await linkIntegranteToUser(b.id, u.uid, u.email)
+      if (asignarRol && (u.role === 'pending' || u.role === 'visitante')) {
+        await updateUserRole(u.uid, 'integrante')
+      }
+      enlazados++
     }
-    enlazados++
   }
   return { enlazados }
 }

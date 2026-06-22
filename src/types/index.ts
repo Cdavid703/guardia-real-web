@@ -50,8 +50,10 @@ export interface Integrante {
   pasaporte:          boolean
   contactoEmergencia: string   // nombre + parentesco + teléfono
   diagnostico:        string   // diagnóstico médico / medicamentos
-  // Vínculo con cuenta de login
-  linkedUid?:         string   // uid del UserProfile enlazado (si tiene cuenta)
+  // Vínculo con cuenta(s) de login
+  linkedUid?:         string   // (legacy) uid de la primera cuenta enlazada
+  linkedUids?:        string[] // uids de TODAS las cuentas con acceso a esta ficha
+  correosAutorizados?: string[] // correos que pueden acceder/reclamar esta ficha
   // Perfil
   fotoURL?:           string
   // Consentimiento de tratamiento de datos (Ley 1581 / Habeas Data)

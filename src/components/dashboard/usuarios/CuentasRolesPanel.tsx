@@ -33,7 +33,7 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
     try {
       const [us, ints] = await Promise.all([getAllUsers(), getAllIntegrantes()])
       setUsers(us)
-      setLinkedUids(new Set(ints.filter(i => i.linkedUid).map(i => i.linkedUid as string)))
+      setLinkedUids(new Set(ints.flatMap(i => i.linkedUids)))
     } catch { toast.error('Error al cargar usuarios') }
     finally { setLoading(false) }
   }, [])
@@ -66,7 +66,7 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
         seccion: '', familia: '', secciones: [],
         direccion: '', tipoDoc: '', numDoc: '', fechaNacimiento: '',
         tipoSangre: '', eps: '', pasaporte: false, contactoEmergencia: '', diagnostico: '',
-        linkedUid: u.uid, activo: true,
+        linkedUid: u.uid, linkedUids: [u.uid], correosAutorizados: [(u.email ?? '').toLowerCase()], activo: true,
       }
       await upsertIntegrante(null, ficha, uid)
       toast.success(`Ficha creada y enlazada para ${u.displayName}. Pídele completar sus datos en "Mi ficha".`)

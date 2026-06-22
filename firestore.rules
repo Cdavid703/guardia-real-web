@@ -26,6 +26,14 @@ service cloud.firestore {
       return isAuth() && myRole() in ['admin', 'director', 'integrante', 'junta', 'cm'];
     }
 
+    // ¿La cuenta actual está enlazada a esta ficha? (varias cuentas por ficha + legacy)
+    function fichaPropia() {
+      return isAuth() && (
+        request.auth.uid in resource.data.get('linkedUids', []) ||
+        resource.data.get('linkedUid', '') == request.auth.uid
+      );
+    }
+
     // Perfil propio
     match /users/{uid} {
       allow read:   if isAuth() && (request.auth.uid == uid || isStaff());
@@ -106,27 +114,25 @@ service cloud.firestore {
     }
 
     // Integrantes — roster NO sensible: visible a cualquier miembro de la banda.
-    // El dueño (linkedUid) puede editar su propia ficha sin cambiar el vínculo,
-    // o crear su propia ficha si todavía no tiene una (self-service).
+    // Las cuentas enlazadas (linkedUids) pueden editar su ficha sin alterar el
+    // conjunto de vínculos. Un usuario puede crear su propia ficha (self-service).
     match /integrantes/{id} {
       allow read:   if isMiembro();
       allow create: if isAdmin()
-                    || (isAuth() && request.resource.data.linkedUid == request.auth.uid);
+                    || (isAuth() && request.auth.uid in request.resource.data.get('linkedUids', []));
       allow update: if isAdmin()
-                    || (isAuth() && resource.data.linkedUid == request.auth.uid
-                        && request.resource.data.linkedUid == resource.data.linkedUid);
+                    || (fichaPropia()
+                        && request.resource.data.get('linkedUids', []) == resource.data.get('linkedUids', [])
+                        && request.resource.data.get('correosAutorizados', []) == resource.data.get('correosAutorizados', []));
       allow delete: if isAdmin();
     }
 
-    // Integrantes — datos SENSIBLES (cédula, dirección, salud): solo admin o dueño.
+    // Integrantes — datos SENSIBLES (cédula, dirección, salud): solo admin o dueño(s).
     match /integrantesPrivado/{id} {
-      allow read:   if isAdmin()
-                    || (isAuth() && resource.data.linkedUid == request.auth.uid);
+      allow read:   if isAdmin() || fichaPropia();
       allow create: if isAdmin()
-                    || (isAuth() && request.resource.data.linkedUid == request.auth.uid);
-      allow update: if isAdmin()
-                    || (isAuth() && resource.data.linkedUid == request.auth.uid
-                        && request.resource.data.linkedUid == resource.data.linkedUid);
+                    || (isAuth() && request.auth.uid in request.resource.data.get('linkedUids', []));
+      allow update: if isAdmin() || fichaPropia();
       allow delete: if isAdmin();
     }
 

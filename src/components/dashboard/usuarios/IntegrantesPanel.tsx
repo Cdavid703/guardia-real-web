@@ -96,11 +96,23 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
 
   const usersByEmail = useMemo(() => new Map(users.map(u => [u.email?.toLowerCase(), u])), [users])
 
+  // Cuenta(s) cuyo correo autorizado coincide pero aún no está enlazada a la ficha
+  const enlazablesDe = (i: IntegranteBase): UserProfile[] => {
+    const correos = new Set([i.correo, ...i.correosAutorizados].filter(Boolean))
+    const res: UserProfile[] = []
+    for (const c of correos) {
+      const u = usersByEmail.get(c)
+      if (u && !i.linkedUids.includes(u.uid)) res.push(u)
+    }
+    return res
+  }
+
   const stats = useMemo(() => {
-    const vinculados  = integrantes.filter(i => i.linkedUid).length
-    const vinculables = integrantes.filter(i => !i.linkedUid && usersByEmail.has(i.correo)).length
+    const vinculados  = integrantes.filter(i => i.linkedUids.length > 0).length
+    const vinculables = integrantes.filter(i => enlazablesDe(i).length > 0).length
     const incompletos = integrantes.filter(i => i.datosCompletos === false).length
     return { total: integrantes.length, vinculados, vinculables, sinCuenta: integrantes.length - vinculados, incompletos }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [integrantes, usersByEmail])
 
   const cumpleMes = useMemo(() => {
@@ -116,7 +128,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
       if (filterFam !== 'all' && i.familia !== filterFam) return false
       if (filterComp === 'incompletos' && i.datosCompletos !== false) return false
       if (filterComp === 'completos'   && i.datosCompletos !== true)  return false
-      if (filterComp === 'sincuenta'   && i.linkedUid) return false
+      if (filterComp === 'sincuenta'   && i.linkedUids.length > 0) return false
       if (quick.has('menor')     && i.esMenor !== true) return false
       if (quick.has('pasaporte') && i.tienePasaporte !== true) return false
       if (quick.has('sinwa')     && i.whatsapp) return false
@@ -196,12 +208,14 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
   }
 
   const handleLink = async (i: IntegranteBase) => {
-    const u = usersByEmail.get(i.correo)
-    if (!u) { toast.error('No hay una cuenta con ese correo'); return }
+    const pendientes = enlazablesDe(i)
+    if (!pendientes.length) { toast.error('No hay una cuenta con ese correo'); return }
     try {
-      await linkIntegranteToUser(i.id, u.uid)
-      if (u.role === 'pending' || u.role === 'visitante') await updateUserRole(u.uid, 'integrante')
-      toast.success(`Enlazado con ${u.displayName || u.email}`)
+      for (const u of pendientes) {
+        await linkIntegranteToUser(i.id, u.uid, u.email)
+        if (u.role === 'pending' || u.role === 'visitante') await updateUserRole(u.uid, 'integrante')
+      }
+      toast.success(pendientes.length > 1 ? `${pendientes.length} cuentas enlazadas` : `Enlazado con ${pendientes[0].displayName || pendientes[0].email}`)
       load()
     } catch { toast.error('Error al enlazar') }
   }
@@ -245,7 +259,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
             i.apellidos, i.nombre, getSeccion(i.seccion)?.label ?? i.seccion, FAMILIAS[i.familia as FamiliaKey]?.label ?? i.familia,
             `${p.tipoDoc ?? ''} ${p.numDoc ?? ''}`.trim(), p.fechaNacimiento ?? '', edadDesde(p.fechaNacimiento) ?? '',
             i.whatsapp, i.correo, p.direccion ?? '', p.tipoSangre ?? '', p.eps ?? '', p.pasaporte ? 'Sí' : 'No',
-            p.contactoEmergencia ?? '', p.diagnostico ?? '', i.datosCompletos ? 'Sí' : 'No', i.linkedUid ? 'Sí' : 'No',
+            p.contactoEmergencia ?? '', p.diagnostico ?? '', i.datosCompletos ? 'Sí' : 'No', i.linkedUids.length ? 'Sí' : 'No',
           ]
         }))
       toast.success('Roster completo descargado')
@@ -302,10 +316,10 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
    */
   const exportCruceCuentas = () => {
     const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z\s]/g, '').trim()
-    const fichasSinCuenta = integrantes.filter(i => !i.linkedUid)
-    const linkedUids = new Set(integrantes.filter(i => i.linkedUid).map(i => i.linkedUid))
+    const fichasSinCuenta = integrantes.filter(i => i.linkedUids.length === 0)
+    const todosLinked = new Set(integrantes.flatMap(i => i.linkedUids))
     const cuentasSinFicha = users.filter(u =>
-      ['integrante', 'director', 'junta', 'cm'].includes(u.role) && !linkedUids.has(u.uid))
+      ['integrante', 'director', 'junta', 'cm'].includes(u.role) && !todosLinked.has(u.uid))
 
     const filas = fichasSinCuenta.map(f => {
       const nombreFicha = norm(`${f.nombre} ${f.apellidos}`)
@@ -507,7 +521,6 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map(i => {
             const sec = getSeccion(i.seccion)
-            const cuenta = usersByEmail.get(i.correo)
             return (
               <div key={i.id} className="relative bg-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition-shadow">
                 <input type="checkbox" checked={selected.has(i.id)} onChange={() => toggleSel(i.id)}
@@ -524,8 +537,8 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
                     {esNuevo(i.createdAt) && <span className="text-[9px] bg-gold/20 text-amber-700 rounded-full px-1.5 py-0.5 font-bold">NUEVO</span>}
                     {i.esMenor && <span className="text-[9px] bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5 font-medium">menor</span>}
                     {i.datosCompletos === false && <span className="text-[9px] bg-red-100 text-red-600 rounded-full px-1.5 py-0.5 font-medium">Falta {i.faltan?.length}</span>}
-                    {i.linkedUid ? <span className="text-[9px] bg-green-100 text-green-700 rounded-full px-1.5 py-0.5 font-medium">Cuenta</span>
-                      : cuenta ? <span className="text-[9px] bg-royal/10 text-royal rounded-full px-1.5 py-0.5 font-medium">Enlazable</span>
+                    {i.linkedUids.length > 0 ? <span className="text-[9px] bg-green-100 text-green-700 rounded-full px-1.5 py-0.5 font-medium">Cuenta{i.linkedUids.length > 1 ? ` ×${i.linkedUids.length}` : ''}</span>
+                      : enlazablesDe(i).length > 0 ? <span className="text-[9px] bg-royal/10 text-royal rounded-full px-1.5 py-0.5 font-medium">Enlazable</span>
                       : <span className="text-[9px] bg-gray-100 text-gray-400 rounded-full px-1.5 py-0.5 font-medium">Sin cuenta</span>}
                   </div>
                 </button>
@@ -543,7 +556,6 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
         <div className="space-y-1">
           {filtered.map(i => {
             const sec = getSeccion(i.seccion)
-            const cuenta = usersByEmail.get(i.correo)
             const isOpen = expanded === i.id
             return (
               <div key={i.id} className="bg-white border border-gray-100 rounded-xl overflow-hidden">
@@ -581,9 +593,9 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
                     </span>
                   )}
                   {/* Vínculo */}
-                  {i.linkedUid ? (
-                    <span className="text-[10px] bg-green-100 text-green-700 rounded-full px-2 py-1 font-medium flex items-center gap-1 shrink-0"><Link2 size={11} /> Cuenta</span>
-                  ) : cuenta ? (
+                  {i.linkedUids.length > 0 ? (
+                    <span className="text-[10px] bg-green-100 text-green-700 rounded-full px-2 py-1 font-medium flex items-center gap-1 shrink-0"><Link2 size={11} /> Cuenta{i.linkedUids.length > 1 ? ` ×${i.linkedUids.length}` : ''}</span>
+                  ) : enlazablesDe(i).length > 0 ? (
                     <button onClick={() => handleLink(i)} className="text-[10px] bg-royal/10 text-royal hover:bg-royal hover:text-white rounded-full px-2 py-1 font-medium flex items-center gap-1 shrink-0 transition-colors"><Link2 size={11} /> Enlazar</button>
                   ) : (
                     <span className="text-[10px] bg-gray-100 text-gray-400 rounded-full px-2 py-1 font-medium flex items-center gap-1 shrink-0"><Link2Off size={11} /> Sin cuenta</span>
@@ -661,7 +673,9 @@ function EditModal({ integrante, onClose, onSaved, uid, isNew }: { integrante: I
     try {
       const patch: Partial<Integrante> = { ...form }
       if (form.seccion) { const sec = getSeccion(form.seccion); patch.seccion = sec?.key ?? form.seccion; patch.familia = sec?.familia ?? form.familia; if (!patch.secciones?.length) patch.secciones = sec ? [sec.key] : [] }
-      delete (patch as Record<string, unknown>).createdAt; delete (patch as Record<string, unknown>).updatedAt
+      // Normaliza los correos con acceso (incluye siempre el correo principal)
+      patch.correosAutorizados = Array.from(new Set([form.correo, ...(form.correosAutorizados ?? [])].map(c => c.trim().toLowerCase()).filter(Boolean)))
+      delete (patch as Record<string, unknown>).createdAt; delete (patch as Record<string, unknown>).updatedAt; delete (patch as Record<string, unknown>).linkedUids
       await upsertIntegrante(isNew ? null : integrante.id, patch, uid)
       toast.success(isNew ? 'Integrante creado' : 'Ficha actualizada'); onSaved()
     } catch { toast.error('Error al guardar') } finally { setSaving(false) }
@@ -688,6 +702,12 @@ function EditModal({ integrante, onClose, onSaved, uid, isNew }: { integrante: I
           <Fld label="Dirección" full><input className="input" value={form.direccion} onChange={e => set('direccion', e.target.value)} /></Fld>
           <Fld label="Contacto emergencia" full><input className="input" value={form.contactoEmergencia} onChange={e => set('contactoEmergencia', e.target.value)} /></Fld>
           <Fld label="Condición médica" full><textarea className="input resize-none" rows={2} value={form.diagnostico} onChange={e => set('diagnostico', e.target.value)} /></Fld>
+          <Fld label="Correos con acceso (además del principal, separados por coma)" full>
+            <input className="input" value={(form.correosAutorizados ?? []).join(', ')}
+              onChange={e => set('correosAutorizados', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+              placeholder="otro-correo@gmail.com, tercero@hotmail.com" />
+            <p className="text-[11px] text-gray-400 mt-1">Cualquiera de estos correos podrá entrar y ver/editar esta ficha. Se enlazan con &ldquo;Enlazar coincidentes&rdquo; cuando la cuenta exista.</p>
+          </Fld>
         </div>
         <div className="flex gap-3 mt-5">
           <button onClick={save} disabled={saving} className="btn btn-primary btn-md disabled:opacity-60"><Save size={15} /> {saving ? 'Guardando...' : 'Guardar'}</button>

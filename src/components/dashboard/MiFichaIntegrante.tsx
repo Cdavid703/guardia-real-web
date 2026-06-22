@@ -8,7 +8,7 @@ import {
   IdCard, Calendar, Mail, Pencil, X, Save, AlertCircle, PartyPopper,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getMiIntegrante, updateMiIntegrante, createMiFicha, storage } from '@/lib/firebase'
+import { getMiIntegrante, updateMiIntegrante, createMiFicha, getIntegranteByCorreoAutorizado, storage } from '@/lib/firebase'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { SECCIONES_LIST, getSeccion } from '@/lib/secciones'
 import { camposFaltantes } from '@/lib/integrantes-utils'
@@ -30,6 +30,7 @@ export default function MiFichaIntegrante() {
   const [saving,  setSaving]  = useState(false)
   const [creating, setCreating] = useState(false)
   const [showCarne, setShowCarne] = useState(false)
+  const [existePorCorreo, setExistePorCorreo] = useState(false)
   const [form,    setForm]    = useState<Partial<Integrante>>({})
 
   const load = useCallback(async () => {
@@ -39,6 +40,11 @@ export default function MiFichaIntegrante() {
       const mi = await getMiIntegrante(profile.uid)
       setFicha(mi)
       if (mi) setForm(mi)
+      else {
+        // Aún no enlazada: ¿ya existe una ficha con su correo autorizado?
+        const porCorreo = await getIntegranteByCorreoAutorizado(profile.email)
+        setExistePorCorreo(!!porCorreo)
+      }
     } catch { toast.error('No se pudo cargar tu ficha') }
     finally { setLoading(false) }
   }, [profile])
@@ -79,6 +85,22 @@ export default function MiFichaIntegrante() {
   if (loading) return <div className="flex items-center justify-center py-12"><div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" /></div>
 
   if (!ficha) {
+    // Ya existe una ficha con su correo autorizado pero falta que el admin la enlace
+    if (existePorCorreo) {
+      return (
+        <div className="card border-l-4 border-gold p-5 flex items-start gap-3">
+          <AlertCircle size={20} className="text-gold shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-navy text-sm">Tu ficha ya existe</p>
+            <p className="text-gray-500 text-sm mt-1">
+              Encontramos una ficha asociada a tu correo <strong>{profile?.email}</strong>, pero
+              todavía no está enlazada a esta cuenta. Pídele al administrador que la enlace
+              (botón &ldquo;Enlazar coincidentes&rdquo;) y luego podrás ver y editar tus datos aquí.
+            </p>
+          </div>
+        </div>
+      )
+    }
     return (
       <div className="card border-l-4 border-royal p-5 flex items-start gap-3">
         <AlertCircle size={20} className="text-royal shrink-0 mt-0.5" />
