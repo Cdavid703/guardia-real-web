@@ -356,8 +356,13 @@ export async function updateMiIntegrante(
   uid: string,
   data: Partial<Integrante>,
 ): Promise<void> {
-  const { base, priv } = splitIntegrante(data)
-  const comp = completitud(data)
+  // El integrante NUNCA modifica los campos de vínculo (los gestiona el admin).
+  // Enviarlos rompía el guardado en fichas que aún no tienen estos campos.
+  const limpio: Partial<Integrante> = { ...data }
+  delete limpio.id; delete limpio.linkedUid; delete limpio.linkedUids
+  delete limpio.correosAutorizados; delete limpio.createdAt; delete limpio.updatedAt
+  const { base, priv } = splitIntegrante(limpio)
+  const comp = completitud(limpio)
   const ops: Promise<unknown>[] = [
     updateDoc(doc(db, 'integrantes', id), { ...base, ...comp, updatedAt: serverTimestamp(), updatedBy: uid }),
   ]

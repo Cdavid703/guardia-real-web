@@ -62,12 +62,15 @@ export default function MiFichaIntegrante() {
       const patch: Partial<Integrante> = { ...form }
       if (form.consentimientoDatos && !ficha.consentimientoFecha) patch.consentimientoFecha = new Date().toISOString().slice(0, 10)
       if (form.seccion) { const sec = getSeccion(form.seccion); patch.seccion = sec?.key ?? form.seccion; patch.familia = sec?.familia ?? form.familia; patch.secciones = sec ? [sec.key] : form.secciones }
-      delete patch.id; delete patch.linkedUid; delete patch.createdAt; delete patch.updatedAt
+      delete patch.id; delete patch.linkedUid; delete patch.linkedUids; delete patch.correosAutorizados; delete patch.createdAt; delete patch.updatedAt
       await updateMiIntegrante(ficha.id, profile.uid, patch)
       toast.success('Tu información fue actualizada')
       setEditing(false)
       load()
-    } catch { toast.error('Error al guardar') }
+    } catch (err) {
+      console.error('updateMiIntegrante error:', err)
+      toast.error('Error al guardar')
+    }
     finally { setSaving(false) }
   }
 
