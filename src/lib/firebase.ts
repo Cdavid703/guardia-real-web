@@ -32,8 +32,8 @@ import {
   arrayUnion,
   Timestamp,
 } from 'firebase/firestore'
-import { getStorage } from 'firebase/storage'
-import type { UserProfile, UserRole, Integrante } from '@/types'
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import type { UserProfile, UserRole, Integrante, Tema, Partitura } from '@/types'
 import { camposFaltantes, diaMesCumple, esMenorDeEdad } from '@/lib/integrantes-utils'
 
 const firebaseConfig = {
@@ -774,6 +774,86 @@ export async function updateEnsayo(id: string, data: Record<string, unknown>) {
 
 export async function deleteEnsayo(id: string) {
   return deleteDoc(doc(db, 'ensayos', id))
+}
+
+// ── Firestore + Storage: Repertorio / Partituras ──────────────────
+function mapTema(id: string, d: Record<string, unknown>): Tema {
+  return {
+    id,
+    numeroMarcacion: (d.numeroMarcacion as number) ?? undefined,
+    titulo:      (d.titulo as string) ?? '',
+    compositor:  (d.compositor as string) ?? '',
+    arreglista:  (d.arreglista as string) ?? '',
+    genero:      (d.genero as string) ?? '',
+    tonalidad:   (d.tonalidad as string) ?? '',
+    compas:      (d.compas as string) ?? '',
+    tempo:       (d.tempo as string) ?? '',
+    duracion:    (d.duracion as string) ?? '',
+    ano:         (d.ano as string) ?? '',
+    dificultad:  (d.dificultad as string) ?? '',
+    notas:       (d.notas as string) ?? '',
+    partituras:  (d.partituras as Partitura[]) ?? [],
+    audioUrl:    (d.audioUrl as string) ?? undefined,
+    activo:      (d.activo as boolean) ?? true,
+    visibleTo:   (d.visibleTo as string[]) ?? ['integrante', 'director', 'junta', 'cm', 'admin'],
+    createdAt:   (d.createdAt as Timestamp)?.toDate() ?? new Date(),
+    updatedAt:   (d.updatedAt as Timestamp)?.toDate() ?? new Date(),
+    uploadedBy:  (d.uploadedBy as string) ?? undefined,
+  }
+}
+
+/** Temas subidos por directores (Firestore). No incluye los seed. */
+export async function getRepertorio(): Promise<Tema[]> {
+  const snap = await getDocs(collection(db, 'repertoire'))
+  return snap.docs
+    .map(d => mapTema(d.id, d.data()))
+    .sort((a, b) => (a.numeroMarcacion ?? 999) - (b.numeroMarcacion ?? 999))
+}
+
+/** Director/admin: crea un tema nuevo. */
+export async function createTema(data: Partial<Tema>, uid: string): Promise<string> {
+  const ref = await addDoc(collection(db, 'repertoire'), {
+    ...data,
+    partituras: data.partituras ?? [],
+    activo: data.activo ?? true,
+    visibleTo: data.visibleTo ?? ['integrante', 'director', 'junta', 'cm', 'admin'],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    uploadedBy: uid,
+  })
+  return ref.id
+}
+
+export async function updateTema(id: string, data: Partial<Tema>, uid: string): Promise<void> {
+  const clean = { ...data }
+  delete (clean as Record<string, unknown>).id
+  delete (clean as Record<string, unknown>).createdAt
+  await updateDoc(doc(db, 'repertoire', id), { ...clean, updatedAt: serverTimestamp(), updatedBy: uid })
+}
+
+export async function deleteTema(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'repertoire', id))
+}
+
+/** Sube el PDF de una partitura a Storage y la agrega al tema. */
+export async function subirPartitura(
+  temaId: string, instrumento: string, file: File,
+): Promise<Partitura> {
+  const safe = file.name.replace(/\s+/g, '_')
+  const storageRef = ref(storage, `repertoire/${temaId}/${instrumento}_${Date.now()}_${safe}`)
+  await uploadBytes(storageRef, file)
+  const url = await getDownloadURL(storageRef)
+  const partitura: Partitura = { instrumento, url, filename: file.name }
+  await updateDoc(doc(db, 'repertoire', temaId), { partituras: arrayUnion(partitura), updatedAt: serverTimestamp() })
+  return partitura
+}
+
+/** Quita una partitura del tema (por url). */
+export async function quitarPartitura(temaId: string, actuales: Partitura[], url: string): Promise<void> {
+  await updateDoc(doc(db, 'repertoire', temaId), {
+    partituras: actuales.filter(p => p.url !== url),
+    updatedAt: serverTimestamp(),
+  })
 }
 
 // ── Firestore: Gallery (enhanced) ─────────────────────────────────

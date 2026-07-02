@@ -69,6 +69,39 @@ export interface Integrante {
   updatedBy?:         string   // uid de quien actualizó por última vez
 }
 
+// ──────────────────────────────────────────────────────────────────
+// Repertorio / Partituras (colección `repertoire`)
+// ──────────────────────────────────────────────────────────────────
+export interface Partitura {
+  instrumento: string   // clave de INSTRUMENTOS_PARTITURA (ej. 'flauta')
+  url:         string   // ruta pública o URL de Storage
+  filename?:   string
+}
+
+export interface Tema {
+  id:              string
+  numeroMarcacion?: number
+  titulo:          string
+  compositor:      string
+  arreglista:      string
+  genero:          string
+  tonalidad:       string
+  compas:          string
+  tempo:           string
+  duracion:        string
+  ano:             string
+  dificultad:      string   // 'Básico' | 'Intermedio' | 'Avanzado' | ''
+  notas:           string
+  partituras:      Partitura[]
+  audioUrl?:       string   // enlace de referencia (YouTube/mp3)
+  activo:          boolean  // en repertorio actual vs archivado
+  visibleTo:       string[]
+  esSeed?:         boolean  // temas base definidos en código (no editables desde la UI)
+  createdAt:       Date
+  updatedAt:       Date
+  uploadedBy?:     string
+}
+
 export interface NewsArticle {
   id: string
   title: string

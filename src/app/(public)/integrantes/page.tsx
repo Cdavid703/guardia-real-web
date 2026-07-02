@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Shirt, Bell, ClipboardList, History, Lock, LogIn, IdCard } from 'lucide-react'
+import { Shirt, Bell, ClipboardList, History, Lock, LogIn, IdCard, ListMusic } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import Tabs from '@/components/ui/Tabs'
@@ -10,17 +10,19 @@ import UniformesPanel from '@/components/dashboard/UniformesPanel'
 import EquipoNoticiasPanel from '@/components/dashboard/EquipoNoticiasPanel'
 import EquipoEnsayosPanel from '@/components/dashboard/EquipoEnsayosPanel'
 import HistoriaPanel from '@/components/dashboard/HistoriaPanel'
+import RepertorioPanel from '@/components/dashboard/RepertorioPanel'
 import MiFichaIntegrante from '@/components/dashboard/MiFichaIntegrante'
 import type { UserRole } from '@/types'
 
 const ALLOWED_ROLES: UserRole[] = ['admin', 'director', 'junta', 'cm', 'integrante']
 
 const TABS = [
-  { id: 'ficha',     label: 'Mi ficha',   icon: IdCard },
-  { id: 'uniformes', label: 'Uniformes',  icon: Shirt },
-  { id: 'noticias',  label: 'Noticias',   icon: Bell },
-  { id: 'ensayos',   label: 'Ensayos',    icon: ClipboardList },
-  { id: 'historia',  label: 'Historia',   icon: History },
+  { id: 'ficha',      label: 'Mi ficha',   icon: IdCard },
+  { id: 'partituras', label: 'Partituras', icon: ListMusic },
+  { id: 'uniformes',  label: 'Uniformes',  icon: Shirt },
+  { id: 'noticias',   label: 'Noticias',   icon: Bell },
+  { id: 'ensayos',    label: 'Ensayos',    icon: ClipboardList },
+  { id: 'historia',   label: 'Historia',   icon: History },
 ]
 
 function IntegrantesContent() {
@@ -78,8 +80,9 @@ function IntegrantesContent() {
 
       <Tabs tabs={TABS} activeTab={activeTab} onChange={handleChange} className="mb-8 justify-start" />
 
-      {activeTab === 'ficha'     && <MiFichaIntegrante />}
-      {activeTab === 'uniformes' && <UniformesPanel />}
+      {activeTab === 'ficha'      && <MiFichaIntegrante />}
+      {activeTab === 'partituras' && <RepertorioPanel role={profile.role} />}
+      {activeTab === 'uniformes'  && <UniformesPanel />}
       {activeTab === 'noticias'  && <EquipoNoticiasPanel role={profile.role} />}
       {activeTab === 'ensayos'   && <EquipoEnsayosPanel role={profile.role} />}
       {activeTab === 'historia'  && <HistoriaPanel />}
