@@ -50,6 +50,12 @@ Reglas: **miembros leen · admin y directores escriben**.
 `compas`, `tempo`, `duracion`, `ano`, `dificultad`, `notas`, `partituras[]` (por instrumento),
 `visibleTo`, `createdAt`, `updatedAt`, `uploadedBy`.
 
+### Repertorio oficial — Temporada 2026 (orden de marcación)
+1. Pregón · 2. Yolanda (Querubín) · 3. La Faldita · 4. Carita de Luna · 5. La Nene ·
+6. Noches de Fantasía · 7. Cumbia en Do · 8. Mambo No. 5
+> Los 8 aparecen precargados (seed). Los directores pulsan **"Cargar repertorio 2026"**
+> para pasarlos a la base y poder subirles las partituras. Mambo No. 5 ya trae las 14.
+
 ### Canción #8 — Mambo #5
 - **Compositor:** Dámaso Pérez Prado
 - **Arreglo:** José Gómez

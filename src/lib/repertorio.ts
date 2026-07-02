@@ -47,12 +47,37 @@ export function getInstrumentoPartitura(key?: string): InstrumentoPartitura | un
   return INSTRUMENTOS_PARTITURA.find(i => i.key === key)
 }
 
-/** Temas base (seed) — servidos desde /public, siempre disponibles. */
+/** Crea un tema base "vacío" (aún sin partituras) del repertorio de temporada. */
+function temaBase(numeroMarcacion: number, titulo: string, extra: Partial<Tema> = {}): Tema {
+  return {
+    id: `seed-${numeroMarcacion}`,
+    numeroMarcacion,
+    titulo,
+    compositor: '', arreglista: '', genero: '', tonalidad: '', compas: '',
+    tempo: '', duracion: '', ano: '', dificultad: '', notas: '',
+    partituras: [],
+    activo: true,
+    visibleTo: ['public'],
+    esSeed: true,
+    createdAt: new Date('2026-07-02'),
+    updatedAt: new Date('2026-07-02'),
+    ...extra,
+  }
+}
+
+/**
+ * Repertorio oficial temporada 2026 (orden de marcación).
+ * Los temas sin partitura quedan listos para que los directores les suban los PDFs.
+ */
 export const REPERTORIO_SEED: Tema[] = [
-  {
-    id: 'seed-mambo-no-5',
-    numeroMarcacion: 8,
-    titulo: 'Mambo No. 5',
+  temaBase(1, 'Pregón'),
+  temaBase(2, 'Yolanda (Querubín)'),
+  temaBase(3, 'La Faldita'),
+  temaBase(4, 'Carita de Luna'),
+  temaBase(5, 'La Nene'),
+  temaBase(6, 'Noches de Fantasía'),
+  temaBase(7, 'Cumbia en Do', { tonalidad: 'Do mayor', genero: 'Cumbia' }),
+  temaBase(8, 'Mambo No. 5', {
     compositor: 'Dámaso Pérez Prado',
     arreglista: 'José Gómez',
     genero: 'Mambo',
@@ -60,7 +85,6 @@ export const REPERTORIO_SEED: Tema[] = [
     compas: '2/2',
     tempo: '≈ 190 BPM',
     duracion: '≈ 2:30 min',
-    ano: '',
     dificultad: 'Intermedio',
     notas: 'Clásico del mambo de Pérez Prado, arreglo para banda show. D.C. al Coda. Dinámicas de f a ff.',
     partituras: [
@@ -79,10 +103,5 @@ export const REPERTORIO_SEED: Tema[] = [
       { instrumento: 'tuba',         url: '/partituras/mambo-5/tuba.pdf' },
       { instrumento: 'tuba-sib',     url: '/partituras/mambo-5/tuba-sib.pdf' },
     ],
-    activo: true,
-    visibleTo: ['public'],
-    esSeed: true,
-    createdAt: new Date('2026-07-02'),
-    updatedAt: new Date('2026-07-02'),
-  },
+  }),
 ]

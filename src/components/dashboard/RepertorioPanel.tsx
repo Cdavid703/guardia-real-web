@@ -30,7 +30,9 @@ const DIFICULTAD_COLOR: Record<string, string> = {
 export default function RepertorioPanel({ role }: { role: UserRole }) {
   const { profile } = useAuth()
   const [temas,   setTemas]   = useState<Tema[]>([])
+  const [seedFaltantes, setSeedFaltantes] = useState<Tema[]>([])
   const [loading, setLoading] = useState(true)
+  const [importando, setImportando] = useState(false)
   const [abierto, setAbierto] = useState<Tema | null>(null)
   const [creando, setCreando] = useState(false)
   const [search,  setSearch]  = useState('')
@@ -40,7 +42,10 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
     setLoading(true)
     try {
       const dyn = await getRepertorio()
-      setTemas([...REPERTORIO_SEED, ...dyn])
+      const nums = new Set(dyn.map(t => t.numeroMarcacion))
+      const faltantes = REPERTORIO_SEED.filter(s => !nums.has(s.numeroMarcacion))
+      setSeedFaltantes(faltantes)
+      setTemas([...dyn, ...faltantes].sort((a, b) => (a.numeroMarcacion ?? 999) - (b.numeroMarcacion ?? 999)))
     } catch { toast.error('No se pudo cargar el repertorio'); setTemas([...REPERTORIO_SEED]) }
     finally { setLoading(false) }
   }, [])
@@ -53,6 +58,21 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
   }, [profile])
 
   const gestiona = puedeGestionar(role)
+
+  const importarSeed = async () => {
+    if (!profile) return
+    setImportando(true)
+    try {
+      for (const s of seedFaltantes) {
+        const { id, esSeed, createdAt, updatedAt, ...datos } = s
+        void id; void esSeed; void createdAt; void updatedAt
+        await createTema(datos, profile.uid)
+      }
+      toast.success(`${seedFaltantes.length} tema(s) del repertorio cargados a la base`)
+      load()
+    } catch { toast.error('No se pudo importar el repertorio') }
+    finally { setImportando(false) }
+  }
 
   const filtrados = useMemo(() => {
     const q = search.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -87,6 +107,11 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={search} onChange={e => setSearch(e.target.value)} className="input pl-9" placeholder="Buscar por número, título o compositor..." />
         </div>
+        {gestiona && seedFaltantes.length > 0 && (
+          <button onClick={importarSeed} disabled={importando} className="btn btn-ghost btn-md disabled:opacity-60">
+            <Download size={16} /> {importando ? 'Cargando...' : `Cargar repertorio 2026 (${seedFaltantes.length})`}
+          </button>
+        )}
         {gestiona && (
           <button onClick={() => setCreando(true)} className="btn btn-primary btn-md">
             <Plus size={16} /> Agregar tema
