@@ -76,7 +76,7 @@ const META: Record<string, Partial<Tema>> = {
   'cumbia-en-do':       { arreglista: 'Faber Restrepo', genero: 'Cumbia',
                           tonalidad: 'Do menor', compas: '2/2', dificultad: 'Básico' },
   'calentamiento':      { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Calentamiento',
-                          tonalidad: 'La♭ mayor', compas: '4/4', ano: '2026', dificultad: 'Básico', notas: 'Basado en el tema de Dragon Ball Z (notas largas de calentamiento).' },
+                          tonalidad: 'La♭ mayor', compas: '4/4', ano: '2026', dificultad: 'Intermedio', notas: 'Basado en el tema de Dragon Ball Z (notas largas de calentamiento).' },
   // Semana Santa
   'jerusalen':          { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Sacro / Semana Santa',
                           tonalidad: 'Mi♭ mayor', compas: '4/4', tempo: '♩ = 100', ano: '2026', dificultad: 'Intermedio' },

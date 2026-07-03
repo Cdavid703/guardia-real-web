@@ -204,7 +204,8 @@ function Chip({ children }: { children: React.ReactNode }) {
 function TemaDetalle({ tema, role, miSeccion, uid, onClose, onChanged }: {
   tema: Tema; role: UserRole; miSeccion: string; uid: string; onClose: () => void; onChanged: () => void
 }) {
-  const gestiona = puedeGestionar(role) && !tema.esSeed
+  const gestiona = puedeGestionar(role)   // admin/director: puede editar datos de cualquier tema
+  const esDoc = !tema.esSeed              // ya existe en la base: puede subir/quitar/eliminar partituras
   const [subiendo, setSubiendo] = useState(false)
   const [editando, setEditando] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -309,7 +310,7 @@ function TemaDetalle({ tema, role, miSeccion, uid, onClose, onChanged }: {
                           </span>
                           <a href={p.url} target="_blank" rel="noopener noreferrer" title="Ver" className="w-8 h-8 rounded-lg bg-navy/8 text-navy hover:bg-navy hover:text-white flex items-center justify-center transition-colors"><Eye size={14} /></a>
                           <a href={p.url} download title="Descargar" className="w-8 h-8 rounded-lg bg-gold/15 text-amber-700 hover:bg-gold hover:text-navy flex items-center justify-center transition-colors"><Download size={14} /></a>
-                          {gestiona && <button onClick={() => handleQuitar(p)} title="Quitar" className="w-8 h-8 rounded-lg text-red-400 hover:bg-red-50 flex items-center justify-center"><Trash2 size={13} /></button>}
+                          {esDoc && <button onClick={() => handleQuitar(p)} title="Quitar" className="w-8 h-8 rounded-lg text-red-400 hover:bg-red-50 flex items-center justify-center"><Trash2 size={13} /></button>}
                         </div>
                       )
                     })}
@@ -319,27 +320,36 @@ function TemaDetalle({ tema, role, miSeccion, uid, onClose, onChanged }: {
             </div>
           )}
 
-          {/* Controles de gestión */}
+          {/* Controles de gestión (solo admin/director) */}
           {gestiona && (
             <div className="mt-5 pt-4 border-t border-gray-100">
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Subir partitura (PDF)</p>
-              <div className="flex flex-wrap items-center gap-2">
-                <select value={instrSel} onChange={e => setInstrSel(e.target.value)} className="input max-w-[200px]">
-                  {INSTRUMENTOS_PARTITURA.map(i => <option key={i.key} value={i.key}>{i.label}</option>)}
-                </select>
-                <button onClick={() => fileRef.current?.click()} disabled={subiendo} className="btn btn-primary btn-sm disabled:opacity-60">
-                  <Upload size={14} /> {subiendo ? 'Subiendo...' : 'Subir PDF'}
-                </button>
-                <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={handleUpload} />
-                <div className="ml-auto flex gap-2">
-                  <button onClick={() => setEditando(true)} className="btn btn-ghost btn-sm"><Pencil size={13} /> Editar datos</button>
-                  <button onClick={handleBorrarTema} className="btn btn-ghost btn-sm text-red-500 hover:bg-red-50"><Trash2 size={13} /> Eliminar</button>
-                </div>
+              {esDoc && (
+                <>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Subir partitura (PDF)</p>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <select value={instrSel} onChange={e => setInstrSel(e.target.value)} className="input max-w-[200px]">
+                      {INSTRUMENTOS_PARTITURA.map(i => <option key={i.key} value={i.key}>{i.label}</option>)}
+                    </select>
+                    <button onClick={() => fileRef.current?.click()} disabled={subiendo} className="btn btn-primary btn-sm disabled:opacity-60">
+                      <Upload size={14} /> {subiendo ? 'Subiendo...' : 'Subir PDF'}
+                    </button>
+                    <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={handleUpload} />
+                  </div>
+                </>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => setEditando(true)} className="btn btn-ghost btn-sm"><Pencil size={13} /> Editar datos</button>
+                {esDoc && (
+                  <button onClick={handleBorrarTema} className="btn btn-ghost btn-sm text-red-500 hover:bg-red-50 ml-auto"><Trash2 size={13} /> Eliminar</button>
+                )}
               </div>
+              {!esDoc && (
+                <p className="mt-3 text-[11px] text-gray-400">
+                  Al guardar los datos, este tema base queda registrado en la base y podrás también
+                  administrar sus partituras.
+                </p>
+              )}
             </div>
-          )}
-          {tema.esSeed && puedeGestionar(role) && (
-            <p className="mt-4 text-[11px] text-gray-400 text-center">Este es un tema base del sistema; para cambiarlo, crea una versión nueva y edítala.</p>
           )}
         </div>
       </div>
@@ -376,9 +386,17 @@ function TemaFormModal({ tema, uid, onClose, onSaved }: {
         ...f,
         numeroMarcacion: f.numeroMarcacion ? Number(f.numeroMarcacion) : undefined,
       }
-      if (tema) await updateTema(tema.id, data, uid)
-      else await createTema(data, uid)
-      toast.success(tema ? 'Tema actualizado' : 'Tema creado. Ahora súbele las partituras.')
+      if (tema && !tema.esSeed) {
+        await updateTema(tema.id, data, uid)
+        toast.success('Tema actualizado')
+      } else {
+        // Tema nuevo, o tema base del seed que se edita por primera vez:
+        // se registra en la base conservando sus partituras.
+        const { id, esSeed, createdAt, updatedAt, ...limpio } = data as Record<string, unknown>
+        void id; void esSeed; void createdAt; void updatedAt
+        await createTema(limpio as Partial<Tema>, uid)
+        toast.success(tema?.esSeed ? 'Datos guardados en la base' : 'Tema creado. Ahora súbele las partituras.')
+      }
       onSaved()
     } catch { toast.error('Error al guardar') } finally { setSaving(false) }
   }
