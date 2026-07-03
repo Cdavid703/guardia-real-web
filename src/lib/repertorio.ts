@@ -57,22 +57,36 @@ interface TemaManifest {
   categoria: string; partituras: { instrumento: string; label: string; url: string }[]
 }
 
-// Metadatos por slug, extraídos del encabezado de las partituras.
-// (Género y tonalidad de algunos quedan por confirmar con el director.)
+// Metadatos por slug: arreglista/compositor del encabezado y tonalidad, compás,
+// tempo y año LEÍDOS de la primera página de la partitura (flauta/score = concierto).
+// Falta por confirmar con el director: dificultad y duración de cada uno.
 const META: Record<string, Partial<Tema>> = {
-  'pregon-costeno':     { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Cumbia / Porro', notas: 'D.S. al Coda.' },
-  'yolanda':            { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Cumbia', notas: 'Arreglo con secciones de mambo. D.C. al Coda.' },
-  'la-faldita':         { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Cumbia', notas: 'Adaptación para banda. D.S. al Coda.' },
-  'carita-de-luna':     { compositor: 'Los Graduados', arreglista: 'Justin May', genero: 'Cumbia', tempo: 'Allegro Moderato', notas: 'Tema original de Los Graduados.' },
-  'la-nene':            { compositor: 'Tropibanda', arreglista: 'Justin May', genero: 'Tropical', notas: 'D.S. al Coda.' },
-  'noches-de-fantasia': { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Cumbia' },
-  'cumbia-en-do':       { arreglista: 'Faber Restrepo', genero: 'Cumbia', tonalidad: 'Do menor', compas: '4/4' },
-  'calentamiento':      { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Calentamiento', tonalidad: 'Fa mayor', compas: '4/4', notas: 'Basado en el tema de Dragon Ball Z.' },
+  'pregon-costeno':     { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Cumbia / Porro',
+                          tonalidad: 'Do mayor', compas: '2/2', ano: '2026', notas: 'D.S. al Coda.' },
+  'yolanda':            { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Cumbia',
+                          tonalidad: 'Mi♭ mayor', compas: '2/2', ano: '2025', notas: 'Arreglo con secciones de mambo. D.C. al Coda.' },
+  'la-faldita':         { arreglista: 'Rodrigo Bolívar (RodroGass) — adaptación', genero: 'Cumbia',
+                          tonalidad: 'La♭ mayor', compas: '2/2', ano: '2025', notas: 'Adaptación para banda. D.S. al Coda.' },
+  'carita-de-luna':     { compositor: 'Los Graduados', arreglista: 'Justin May (adapt. Rodrigo Bolívar)', genero: 'Cumbia',
+                          tonalidad: 'Si♭ mayor', compas: '4/4', tempo: 'Allegro Moderato', ano: '2026', notas: 'Tema original de Los Graduados.' },
+  'la-nene':            { compositor: 'La Tropibanda', arreglista: 'Justin May', genero: 'Tropical',
+                          tonalidad: 'Fa mayor', compas: '2/2', notas: 'D.S. al Coda.' },
+  'noches-de-fantasia': { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Cumbia',
+                          tonalidad: 'La♭ mayor', compas: '4/4', tempo: '♩ = 140', ano: '2026' },
+  'cumbia-en-do':       { arreglista: 'Faber Restrepo', genero: 'Cumbia',
+                          tonalidad: 'Do menor', compas: '2/2' },
+  'calentamiento':      { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Calentamiento',
+                          tonalidad: 'La♭ mayor', compas: '4/4', ano: '2026', notas: 'Basado en el tema de Dragon Ball Z (notas largas de calentamiento).' },
   // Semana Santa
-  'jerusalen':          { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Sacro / Semana Santa' },
-  'procesion-sardar':   { compositor: 'M. Ippolitov-Ivánov', arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Marcha / Clásico', notas: 'De «Cuadros del Cáucaso» (Procession of the Sardar). D.C. al Coda.' },
-  'soy-pecador':        { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Sacro / Semana Santa' },
-  'ten-piedad':         { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Sacro / Semana Santa' },
+  'jerusalen':          { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Sacro / Semana Santa',
+                          tonalidad: 'Mi♭ mayor', compas: '4/4', tempo: '♩ = 100', ano: '2026' },
+  'procesion-sardar':   { compositor: 'M. Ippolitov-Ivánov', arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Marcha / Clásico',
+                          tonalidad: 'Re mayor', compas: '4/4', tempo: '♩ = 90', ano: '2026',
+                          notas: 'De «Cuadros del Cáucaso» (Procession of the Sardar). D.C. al Coda.' },
+  'soy-pecador':        { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Sacro / Semana Santa',
+                          tonalidad: 'Do mayor', compas: '4/4', ano: '2026' },
+  'ten-piedad':         { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Sacro / Semana Santa',
+                          tonalidad: 'Do mayor', compas: '4/4', ano: '2026' },
 }
 
 function fromManifest(t: TemaManifest): Tema {
