@@ -57,11 +57,22 @@ interface TemaManifest {
   categoria: string; partituras: { instrumento: string; label: string; url: string }[]
 }
 
-// Metadatos adicionales por slug (lo que no se pudo extraer del PDF lo completa el director).
+// Metadatos por slug, extraídos del encabezado de las partituras.
+// (Género y tonalidad de algunos quedan por confirmar con el director.)
 const META: Record<string, Partial<Tema>> = {
-  'cumbia-en-do':  { genero: 'Cumbia', tonalidad: 'Do menor', compas: '4/4' },
-  'calentamiento': { genero: 'Calentamiento', tonalidad: 'Fa mayor', compas: '4/4',
-                     notas: 'Ejercicio de calentamiento sobre el tema de Dragon Ball Z.' },
+  'pregon-costeno':     { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Cumbia / Porro', notas: 'D.S. al Coda.' },
+  'yolanda':            { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Cumbia', notas: 'Arreglo con secciones de mambo. D.C. al Coda.' },
+  'la-faldita':         { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Cumbia', notas: 'Adaptación para banda. D.S. al Coda.' },
+  'carita-de-luna':     { compositor: 'Los Graduados', arreglista: 'Justin May', genero: 'Cumbia', tempo: 'Allegro Moderato', notas: 'Tema original de Los Graduados.' },
+  'la-nene':            { compositor: 'Tropibanda', arreglista: 'Justin May', genero: 'Tropical', notas: 'D.S. al Coda.' },
+  'noches-de-fantasia': { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Cumbia' },
+  'cumbia-en-do':       { arreglista: 'Faber Restrepo', genero: 'Cumbia', tonalidad: 'Do menor', compas: '4/4' },
+  'calentamiento':      { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Calentamiento', tonalidad: 'Fa mayor', compas: '4/4', notas: 'Basado en el tema de Dragon Ball Z.' },
+  // Semana Santa
+  'jerusalen':          { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Sacro / Semana Santa' },
+  'procesion-sardar':   { compositor: 'M. Ippolitov-Ivánov', arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Marcha / Clásico', notas: 'De «Cuadros del Cáucaso» (Procession of the Sardar). D.C. al Coda.' },
+  'soy-pecador':        { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Sacro / Semana Santa' },
+  'ten-piedad':         { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Sacro / Semana Santa' },
 }
 
 function fromManifest(t: TemaManifest): Tema {
