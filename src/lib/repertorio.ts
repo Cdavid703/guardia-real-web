@@ -71,7 +71,7 @@ const META: Record<string, Partial<Tema>> = {
                           tonalidad: 'Si♭ mayor', compas: '4/4', tempo: 'Allegro Moderato', ano: '2026', notas: 'Tema original de Los Graduados.' },
   'la-nene':            { compositor: 'La Tropibanda', arreglista: 'Justin May', genero: 'Tropical',
                           tonalidad: 'Fa mayor', compas: '2/2', notas: 'D.S. al Coda.' },
-  'noches-de-fantasia': { arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Cumbia',
+  'noches-de-fantasia': { compositor: 'Roberto Antonio', arreglista: 'Rodrigo Bolívar (RodroGass)', genero: 'Merengue',
                           tonalidad: 'La♭ mayor', compas: '4/4', tempo: '♩ = 140', ano: '2026' },
   'cumbia-en-do':       { arreglista: 'Faber Restrepo', genero: 'Cumbia',
                           tonalidad: 'Do menor', compas: '2/2' },
