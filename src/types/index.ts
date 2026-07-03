@@ -73,7 +73,8 @@ export interface Integrante {
 // Repertorio / Partituras (colección `repertoire`)
 // ──────────────────────────────────────────────────────────────────
 export interface Partitura {
-  instrumento: string   // clave de INSTRUMENTOS_PARTITURA (ej. 'flauta')
+  instrumento: string   // clave de INSTRUMENTOS_PARTITURA (para agrupar por familia)
+  label?:      string   // nombre a mostrar (tal cual el archivo, ej. "Trumpet in Bb 1")
   url:         string   // ruta pública o URL de Storage
   filename?:   string
 }
@@ -94,6 +95,7 @@ export interface Tema {
   notas:           string
   partituras:      Partitura[]
   audioUrl?:       string   // enlace de referencia (YouTube/mp3)
+  categoria?:      string   // 'temporada' (por defecto) | 'semana-santa'
   activo:          boolean  // en repertorio actual vs archivado
   visibleTo:       string[]
   esSeed?:         boolean  // temas base definidos en código (no editables desde la UI)

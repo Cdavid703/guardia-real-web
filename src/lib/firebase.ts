@@ -840,7 +840,8 @@ export async function subirPartitura(
   temaId: string, instrumento: string, file: File,
 ): Promise<Partitura> {
   const safe = file.name.replace(/\s+/g, '_')
-  const storageRef = ref(storage, `repertoire/${temaId}/${instrumento}_${Date.now()}_${safe}`)
+  // Un solo nivel bajo /repertoire para coincidir con la regla de Storage existente.
+  const storageRef = ref(storage, `repertoire/${temaId}_${instrumento}_${Date.now()}_${safe}`)
   await uploadBytes(storageRef, file)
   const url = await getDownloadURL(storageRef)
   const partitura: Partitura = { instrumento, url, filename: file.name }

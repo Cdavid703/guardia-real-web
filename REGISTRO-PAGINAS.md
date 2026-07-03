@@ -51,10 +51,14 @@ Reglas: **miembros leen · admin y directores escriben**.
 `visibleTo`, `createdAt`, `updatedAt`, `uploadedBy`.
 
 ### Repertorio oficial — Temporada 2026 (orden de marcación)
-1. Pregón · 2. Yolanda (Querubín) · 3. La Faldita · 4. Carita de Luna · 5. La Nene ·
-6. Noches de Fantasía · 7. Cumbia en Do · 8. Mambo No. 5
-> Los 8 aparecen precargados (seed). Los directores pulsan **"Cargar repertorio 2026"**
-> para pasarlos a la base y poder subirles las partituras. Mambo No. 5 ya trae las 14.
+0. Calentamiento (Dragon Ball) · 1. Pregón Costeño · 2. Yolanda (Querubín) · 3. La Faldita ·
+4. Carita de Luna · 5. La Nene · 6. Noches de Fantasía · 7. Cumbia en Do (Do menor) · 8. Mambo No. 5
+> Todos precargados con sus partituras (nombre de instrumento = nombre del archivo).
+> **Semana Santa** va en una **categoría aparte** dentro de la misma pestaña
+> (botón "✝️ Semana Santa"): Jerusalén, Procesión del Sardar, Señor Soy Pecador, Ten Piedad de Mí.
+> Fuente de datos: `src/lib/repertorio-data.json` (generado desde los PDF). PDFs en `/public/partituras/`.
+> Metadatos por completar (compositor, arreglista, tonalidad, tempo): los llena el director con
+> "Editar datos" o se pasan para agregarlos al seed. No se subieron los "ejercicios técnicos".
 
 ### Canción #8 — Mambo #5
 - **Compositor:** Dámaso Pérez Prado

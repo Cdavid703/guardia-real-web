@@ -13,7 +13,7 @@ import {
   getMiIntegrante,
 } from '@/lib/firebase'
 import {
-  REPERTORIO_SEED, INSTRUMENTOS_PARTITURA, FAMILIAS_PARTITURA, getInstrumentoPartitura,
+  REPERTORIO_SEED, REPERTORIO_SEMANA_SANTA, INSTRUMENTOS_PARTITURA, FAMILIAS_PARTITURA, getInstrumentoPartitura,
 } from '@/lib/repertorio'
 import { getSeccion } from '@/lib/secciones'
 import type { Tema, Partitura, UserRole } from '@/types'
@@ -29,28 +29,33 @@ const DIFICULTAD_COLOR: Record<string, string> = {
 
 export default function RepertorioPanel({ role }: { role: UserRole }) {
   const { profile } = useAuth()
-  const [temas,   setTemas]   = useState<Tema[]>([])
-  const [seedFaltantes, setSeedFaltantes] = useState<Tema[]>([])
+  const [dynTemas, setDynTemas] = useState<Tema[]>([])
   const [loading, setLoading] = useState(true)
   const [importando, setImportando] = useState(false)
   const [abierto, setAbierto] = useState<Tema | null>(null)
   const [creando, setCreando] = useState(false)
   const [search,  setSearch]  = useState('')
   const [miSeccion, setMiSeccion] = useState<string>('')
+  const [categoria, setCategoria] = useState<'temporada' | 'semana-santa'>('temporada')
 
   const load = useCallback(async () => {
     setLoading(true)
-    try {
-      const dyn = await getRepertorio()
-      const nums = new Set(dyn.map(t => t.numeroMarcacion))
-      const faltantes = REPERTORIO_SEED.filter(s => !nums.has(s.numeroMarcacion))
-      setSeedFaltantes(faltantes)
-      setTemas([...dyn, ...faltantes].sort((a, b) => (a.numeroMarcacion ?? 999) - (b.numeroMarcacion ?? 999)))
-    } catch { toast.error('No se pudo cargar el repertorio'); setTemas([...REPERTORIO_SEED]) }
+    try { setDynTemas(await getRepertorio()) }
+    catch { toast.error('No se pudo cargar el repertorio'); setDynTemas([]) }
     finally { setLoading(false) }
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  const dynCat = useMemo(() => dynTemas.filter(t => (t.categoria ?? 'temporada') === categoria), [dynTemas, categoria])
+  const seedFaltantes = useMemo(() => {
+    const seed = categoria === 'temporada' ? REPERTORIO_SEED : REPERTORIO_SEMANA_SANTA
+    return seed.filter(s => !dynCat.some(d => d.titulo.trim().toLowerCase() === s.titulo.trim().toLowerCase()))
+  }, [categoria, dynCat])
+  const temas = useMemo(
+    () => [...dynCat, ...seedFaltantes].sort((a, b) => (a.numeroMarcacion ?? 999) - (b.numeroMarcacion ?? 999)),
+    [dynCat, seedFaltantes],
+  )
 
   useEffect(() => {
     if (!profile) return
@@ -101,6 +106,20 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
         </div>
       </div>
 
+      {/* Categorías */}
+      <div className="flex gap-2 mb-5">
+        <button onClick={() => setCategoria('temporada')}
+          className={cn('px-4 py-2 rounded-full text-sm font-semibold transition-all',
+            categoria === 'temporada' ? 'bg-navy text-white shadow' : 'bg-white text-gray-600 border border-gray-200 hover:border-navy')}>
+          🎺 Repertorio 2026
+        </button>
+        <button onClick={() => setCategoria('semana-santa')}
+          className={cn('px-4 py-2 rounded-full text-sm font-semibold transition-all',
+            categoria === 'semana-santa' ? 'bg-[#5b2a86] text-white shadow' : 'bg-white text-gray-600 border border-gray-200 hover:border-[#5b2a86]')}>
+          ✝️ Semana Santa
+        </button>
+      </div>
+
       {/* Barra */}
       <div className="flex flex-wrap items-center gap-3 mb-5">
         <div className="relative flex-1 min-w-[200px]">
@@ -109,7 +128,7 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
         </div>
         {gestiona && seedFaltantes.length > 0 && (
           <button onClick={importarSeed} disabled={importando} className="btn btn-ghost btn-md disabled:opacity-60">
-            <Download size={16} /> {importando ? 'Cargando...' : `Cargar repertorio 2026 (${seedFaltantes.length})`}
+            <Download size={16} /> {importando ? 'Cargando...' : `Cargar ${categoria === 'temporada' ? 'repertorio 2026' : 'Semana Santa'} (${seedFaltantes.length})`}
           </button>
         )}
         {gestiona && (
@@ -285,7 +304,7 @@ function TemaDetalle({ tema, role, miSeccion, uid, onClose, onChanged }: {
                           esMio ? 'border-gold/50 bg-gold/5' : 'border-gray-100 hover:border-gray-200')}>
                           <FileText size={16} className="text-royal shrink-0" />
                           <span className="text-sm font-medium text-dark flex-1 truncate">
-                            {info?.label ?? p.instrumento}
+                            {p.label ?? info?.label ?? p.instrumento}
                             {esMio && <span className="ml-2 text-[9px] bg-gold text-navy rounded-full px-1.5 py-0.5 font-bold uppercase">Tu sección</span>}
                           </span>
                           <a href={p.url} target="_blank" rel="noopener noreferrer" title="Ver" className="w-8 h-8 rounded-lg bg-navy/8 text-navy hover:bg-navy hover:text-white flex items-center justify-center transition-colors"><Eye size={14} /></a>

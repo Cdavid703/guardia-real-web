@@ -1,0 +1,1204 @@
+{
+ "temporada": [
+  {
+   "id": "seed-temporada-pregon-costeno",
+   "slug": "pregon-costeno",
+   "titulo": "Pregón Costeño",
+   "numeroMarcacion": 1,
+   "categoria": "temporada",
+   "partituras": [
+    {
+     "instrumento": "sax-alto",
+     "label": "Alto Sax",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-alto-sax.pdf"
+    },
+    {
+     "instrumento": "bombos",
+     "label": "Bass Drums",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-bass-drums.pdf"
+    },
+    {
+     "instrumento": "clarinete-1",
+     "label": "Clarinet in Bb 1",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-clarinet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "Clarinet in Bb 2",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-clarinet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "platillos",
+     "label": "Cymbal Line",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-cymbal-line.pdf"
+    },
+    {
+     "instrumento": "flauta",
+     "label": "Flute",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-flute.pdf"
+    },
+    {
+     "instrumento": "percusion-lat",
+     "label": "Latin Percussion",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-latin-percussion.pdf"
+    },
+    {
+     "instrumento": "melofono",
+     "label": "Mellophone",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-mellophone.pdf"
+    },
+    {
+     "instrumento": "piccolo",
+     "label": "Piccolo",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-piccolo.pdf"
+    },
+    {
+     "instrumento": "redoblante",
+     "label": "Snareline",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-snareline.pdf"
+    },
+    {
+     "instrumento": "sax-soprano",
+     "label": "Soprano Sax",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-soprano-sax.pdf"
+    },
+    {
+     "instrumento": "sax-tenor",
+     "label": "Tenor Sax",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-tenor-sax.pdf"
+    },
+    {
+     "instrumento": "multitenor",
+     "label": "Tenorline",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-tenorline.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "Trombone 1",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-trombone-1.pdf"
+    },
+    {
+     "instrumento": "trombon-2",
+     "label": "Trombone 2",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-trombone-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-1",
+     "label": "Trumpet in Bb 1",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-trumpet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "Trumpet in Bb 2",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-trumpet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-3",
+     "label": "Trumpet in Bb 3",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-trumpet-in-bb-3.pdf"
+    },
+    {
+     "instrumento": "tuba-sib",
+     "label": "Tuba Bb",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-tuba-bb.pdf"
+    },
+    {
+     "instrumento": "tuba",
+     "label": "Tuba",
+     "url": "/partituras/pregon-costeno/pregon-costeno-bsgra-2026-tuba.pdf"
+    }
+   ]
+  },
+  {
+   "id": "seed-temporada-yolanda",
+   "slug": "yolanda",
+   "titulo": "Yolanda (Querubín)",
+   "numeroMarcacion": 2,
+   "categoria": "temporada",
+   "partituras": [
+    {
+     "instrumento": "sax-alto",
+     "label": "Alto Sax",
+     "url": "/partituras/yolanda/yolanda-bsgra-alto-sax.pdf"
+    },
+    {
+     "instrumento": "bombos",
+     "label": "Bass Drums",
+     "url": "/partituras/yolanda/yolanda-bsgra-bass-drums.pdf"
+    },
+    {
+     "instrumento": "clarinete-1",
+     "label": "Clarinet in Bb 1",
+     "url": "/partituras/yolanda/yolanda-bsgra-clarinet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "Clarinet in Bb 2",
+     "url": "/partituras/yolanda/yolanda-bsgra-clarinet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "platillos",
+     "label": "Cymbals",
+     "url": "/partituras/yolanda/yolanda-bsgra-cymbals.pdf"
+    },
+    {
+     "instrumento": "flauta",
+     "label": "Flute",
+     "url": "/partituras/yolanda/yolanda-bsgra-flute.pdf"
+    },
+    {
+     "instrumento": "melofono",
+     "label": "Mellophone",
+     "url": "/partituras/yolanda/yolanda-bsgra-mellophone.pdf"
+    },
+    {
+     "instrumento": "percusion-lat",
+     "label": "Percussion Latina",
+     "url": "/partituras/yolanda/yolanda-bsgra-percussion-latina.pdf"
+    },
+    {
+     "instrumento": "partitura-gral",
+     "label": "Score",
+     "url": "/partituras/yolanda/yolanda-bsgra-score.pdf"
+    },
+    {
+     "instrumento": "redoblante",
+     "label": "Snareline",
+     "url": "/partituras/yolanda/yolanda-bsgra-snareline.pdf"
+    },
+    {
+     "instrumento": "sax-soprano",
+     "label": "Soprano Sax",
+     "url": "/partituras/yolanda/yolanda-bsgra-soprano-sax.pdf"
+    },
+    {
+     "instrumento": "sax-tenor",
+     "label": "Tenor Sax",
+     "url": "/partituras/yolanda/yolanda-bsgra-tenor-sax.pdf"
+    },
+    {
+     "instrumento": "multitenor",
+     "label": "Tenorline",
+     "url": "/partituras/yolanda/yolanda-bsgra-tenorline.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "Trombone 1",
+     "url": "/partituras/yolanda/yolanda-bsgra-trombone-1.pdf"
+    },
+    {
+     "instrumento": "trombon-2",
+     "label": "Trombone 2",
+     "url": "/partituras/yolanda/yolanda-bsgra-trombone-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-1",
+     "label": "Trumpet in Bb 1",
+     "url": "/partituras/yolanda/yolanda-bsgra-trumpet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "Trumpet in Bb 2",
+     "url": "/partituras/yolanda/yolanda-bsgra-trumpet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-3",
+     "label": "Trumpet in Bb 3",
+     "url": "/partituras/yolanda/yolanda-bsgra-trumpet-in-bb-3.pdf"
+    },
+    {
+     "instrumento": "tuba-sib",
+     "label": "Tuba Bb",
+     "url": "/partituras/yolanda/yolanda-bsgra-tuba-bb.pdf"
+    },
+    {
+     "instrumento": "tuba",
+     "label": "Tuba",
+     "url": "/partituras/yolanda/yolanda-bsgra-tuba.pdf"
+    }
+   ]
+  },
+  {
+   "id": "seed-temporada-la-faldita",
+   "slug": "la-faldita",
+   "titulo": "La Faldita",
+   "numeroMarcacion": 3,
+   "categoria": "temporada",
+   "partituras": [
+    {
+     "instrumento": "sax-alto",
+     "label": "Alto Sax",
+     "url": "/partituras/la-faldita/la-faldita-bsgr-2025-alto-sax.pdf"
+    },
+    {
+     "instrumento": "clarinete-1",
+     "label": "Clarinet in Bb 1",
+     "url": "/partituras/la-faldita/la-faldita-bsgr-2025-clarinet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "Clarinet in Bb 2",
+     "url": "/partituras/la-faldita/la-faldita-bsgr-2025-clarinet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "flauta",
+     "label": "Flute",
+     "url": "/partituras/la-faldita/la-faldita-bsgr-2025-flute.pdf"
+    },
+    {
+     "instrumento": "melofono",
+     "label": "Mellophone",
+     "url": "/partituras/la-faldita/la-faldita-bsgr-2025-mellophone.pdf"
+    },
+    {
+     "instrumento": "sax-soprano",
+     "label": "Soprano Sax",
+     "url": "/partituras/la-faldita/la-faldita-bsgr-2025-soprano-sax.pdf"
+    },
+    {
+     "instrumento": "sax-tenor",
+     "label": "Tenor Sax",
+     "url": "/partituras/la-faldita/la-faldita-bsgr-2025-tenor-sax.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "Trombone 1",
+     "url": "/partituras/la-faldita/la-faldita-bsgr-2025-trombone-1.pdf"
+    },
+    {
+     "instrumento": "trombon-2",
+     "label": "Trombone 2",
+     "url": "/partituras/la-faldita/la-faldita-bsgr-2025-trombone-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-1",
+     "label": "Trumpet in Bb 1",
+     "url": "/partituras/la-faldita/la-faldita-bsgr-2025-trumpet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "Trumpet in Bb 2",
+     "url": "/partituras/la-faldita/la-faldita-bsgr-2025-trumpet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "tuba",
+     "label": "Tuba",
+     "url": "/partituras/la-faldita/la-faldita-bsgr-2025-tuba.pdf"
+    },
+    {
+     "instrumento": "bombos",
+     "label": "Bass Line",
+     "url": "/partituras/la-faldita/la-faldita-bass-line.pdf"
+    },
+    {
+     "instrumento": "platillos",
+     "label": "Cymbal Line",
+     "url": "/partituras/la-faldita/la-faldita-cymbal-line.pdf"
+    },
+    {
+     "instrumento": "redoblante",
+     "label": "Snare Line",
+     "url": "/partituras/la-faldita/la-faldita-snare-line.pdf"
+    },
+    {
+     "instrumento": "multitenor",
+     "label": "Tenor Line",
+     "url": "/partituras/la-faldita/la-faldita-tenor-line.pdf"
+    }
+   ]
+  },
+  {
+   "id": "seed-temporada-carita-de-luna",
+   "slug": "carita-de-luna",
+   "titulo": "Carita de Luna",
+   "numeroMarcacion": 4,
+   "categoria": "temporada",
+   "partituras": [
+    {
+     "instrumento": "melofono",
+     "label": "Melofono",
+     "url": "/partituras/carita-de-luna/documento-de-melofono.pdf"
+    },
+    {
+     "instrumento": "sax-alto",
+     "label": "Alto Sax",
+     "url": "/partituras/carita-de-luna/carita-de-luna-alto-sax-mus.pdf"
+    },
+    {
+     "instrumento": "bombos",
+     "label": "Bass Drums",
+     "url": "/partituras/carita-de-luna/carita-de-luna-bass-drums-mus.pdf"
+    },
+    {
+     "instrumento": "clarinete-1",
+     "label": "Clarinet in Bb 1",
+     "url": "/partituras/carita-de-luna/carita-de-luna-clarinet-in-bb-1-mus.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "Clarinet in Bb 2",
+     "url": "/partituras/carita-de-luna/carita-de-luna-clarinet-in-bb-2-mus.pdf"
+    },
+    {
+     "instrumento": "platillos",
+     "label": "Cymbal Line",
+     "url": "/partituras/carita-de-luna/carita-de-luna-cymbal-line-mus.pdf"
+    },
+    {
+     "instrumento": "redoblante",
+     "label": "Snareline",
+     "url": "/partituras/carita-de-luna/carita-de-luna-snareline-mus.pdf"
+    },
+    {
+     "instrumento": "sax-tenor",
+     "label": "Tenor Sax",
+     "url": "/partituras/carita-de-luna/carita-de-luna-tenor-sax-mus.pdf"
+    },
+    {
+     "instrumento": "multitenor",
+     "label": "Tenorline",
+     "url": "/partituras/carita-de-luna/carita-de-luna-tenorline-mus.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "Trombone 1",
+     "url": "/partituras/carita-de-luna/carita-de-luna-trombone-1-mus.pdf"
+    },
+    {
+     "instrumento": "trombon-2",
+     "label": "Trombone 2",
+     "url": "/partituras/carita-de-luna/carita-de-luna-trombone-2-mus.pdf"
+    },
+    {
+     "instrumento": "trompeta-1",
+     "label": "Trumpet in Bb 1",
+     "url": "/partituras/carita-de-luna/carita-de-luna-trumpet-in-bb-1-mus.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "Trumpet in Bb 2",
+     "url": "/partituras/carita-de-luna/carita-de-luna-trumpet-in-bb-2-mus.pdf"
+    },
+    {
+     "instrumento": "tuba",
+     "label": "Tuba",
+     "url": "/partituras/carita-de-luna/carita-de-luna-tuba-mus.pdf"
+    },
+    {
+     "instrumento": "sax-soprano",
+     "label": "Soprano Sax",
+     "url": "/partituras/carita-de-luna/carita-de-luna-2026-soprano-sax.pdf"
+    }
+   ]
+  },
+  {
+   "id": "seed-temporada-la-nene",
+   "slug": "la-nene",
+   "titulo": "La Nene",
+   "numeroMarcacion": 5,
+   "categoria": "temporada",
+   "partituras": [
+    {
+     "instrumento": "sax-soprano",
+     "label": "Soprano Sax",
+     "url": "/partituras/la-nene/la-nene-bsgra-soprano-sax.pdf"
+    },
+    {
+     "instrumento": "sax-baritono",
+     "label": "baritono",
+     "url": "/partituras/la-nene/la-nene-baritono.pdf"
+    },
+    {
+     "instrumento": "bombos",
+     "label": "bombo",
+     "url": "/partituras/la-nene/la-nene-bombo.pdf"
+    },
+    {
+     "instrumento": "clarinete-1",
+     "label": "clarinete 1",
+     "url": "/partituras/la-nene/la-nene-clarinete-1.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "clarinete 2",
+     "url": "/partituras/la-nene/la-nene-clarinete-2.pdf"
+    },
+    {
+     "instrumento": "flauta",
+     "label": "flauta",
+     "url": "/partituras/la-nene/la-nene-flauta.pdf"
+    },
+    {
+     "instrumento": "melofono",
+     "label": "melofono",
+     "url": "/partituras/la-nene/la-nene-melofono.pdf"
+    },
+    {
+     "instrumento": "multitenor",
+     "label": "multitenor",
+     "url": "/partituras/la-nene/la-nene-multitenor.pdf"
+    },
+    {
+     "instrumento": "platillos",
+     "label": "platillos",
+     "url": "/partituras/la-nene/la-nene-platillos.pdf"
+    },
+    {
+     "instrumento": "sax-alto",
+     "label": "sax alto",
+     "url": "/partituras/la-nene/la-nene-sax-alto.pdf"
+    },
+    {
+     "instrumento": "sax-tenor",
+     "label": "sax tenor",
+     "url": "/partituras/la-nene/la-nene-sax-tenor.pdf"
+    },
+    {
+     "instrumento": "redoblante",
+     "label": "snare",
+     "url": "/partituras/la-nene/la-nene-snare.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "trombon",
+     "url": "/partituras/la-nene/la-nene-trombon.pdf"
+    },
+    {
+     "instrumento": "trompeta-1",
+     "label": "trompeta 1",
+     "url": "/partituras/la-nene/la-nene-trompeta-1.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "trompeta 2",
+     "url": "/partituras/la-nene/la-nene-trompeta-2.pdf"
+    },
+    {
+     "instrumento": "tuba",
+     "label": "tuba",
+     "url": "/partituras/la-nene/la-nene-tuba.pdf"
+    }
+   ]
+  },
+  {
+   "id": "seed-temporada-noches-de-fantasia",
+   "slug": "noches-de-fantasia",
+   "titulo": "Noches de Fantasía",
+   "numeroMarcacion": 6,
+   "categoria": "temporada",
+   "partituras": [
+    {
+     "instrumento": "sax-alto",
+     "label": "Alto Sax",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-alto-sax.pdf"
+    },
+    {
+     "instrumento": "sax-baritono",
+     "label": "Baritone (B.C.)",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-baritone-b-c.pdf"
+    },
+    {
+     "instrumento": "sax-baritono",
+     "label": "Baritone Sax",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-baritone-sax.pdf"
+    },
+    {
+     "instrumento": "bombos",
+     "label": "Bass Drums",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-bass-drums.pdf"
+    },
+    {
+     "instrumento": "clarinete-1",
+     "label": "Clarinet in Bb 1",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-clarinet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "Clarinet in Bb 2",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-clarinet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "platillos",
+     "label": "Cymbal Line",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-cymbal-line.pdf"
+    },
+    {
+     "instrumento": "flauta",
+     "label": "Flute",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-flute.pdf"
+    },
+    {
+     "instrumento": "melofono",
+     "label": "Mellophone",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-mellophone.pdf"
+    },
+    {
+     "instrumento": "percusion-lat",
+     "label": "Percussion latina",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-percussion-latina.pdf"
+    },
+    {
+     "instrumento": "piccolo",
+     "label": "Piccolo",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-piccolo.pdf"
+    },
+    {
+     "instrumento": "redoblante",
+     "label": "Snareline",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-snareline.pdf"
+    },
+    {
+     "instrumento": "sax-soprano",
+     "label": "Soprano Sax",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-soprano-sax.pdf"
+    },
+    {
+     "instrumento": "sax-tenor",
+     "label": "Tenor Sax",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-tenor-sax.pdf"
+    },
+    {
+     "instrumento": "multitenor",
+     "label": "Tenorline",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-tenorline.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "Trombone 1",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-trombone-1.pdf"
+    },
+    {
+     "instrumento": "trombon-2",
+     "label": "Trombone 2",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-trombone-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-1",
+     "label": "Trumpet in Bb 1",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-trumpet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "Trumpet in Bb 2",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-trumpet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "tuba-sib",
+     "label": "Tuba Bb",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-tuba-bb.pdf"
+    },
+    {
+     "instrumento": "tuba",
+     "label": "Tuba",
+     "url": "/partituras/noches-de-fantasia/noches-de-fantasia-bsgra-2026-tuba.pdf"
+    }
+   ]
+  },
+  {
+   "id": "seed-temporada-cumbia-en-do",
+   "slug": "cumbia-en-do",
+   "titulo": "Cumbia en Do",
+   "numeroMarcacion": 7,
+   "categoria": "temporada",
+   "partituras": [
+    {
+     "instrumento": "sax-soprano",
+     "label": "soprano sax",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-soprano-sax.pdf"
+    },
+    {
+     "instrumento": "sax-alto",
+     "label": "alto sax",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-alto-sax.pdf"
+    },
+    {
+     "instrumento": "sax-baritono",
+     "label": "baritono t.c",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-baritono-t-c.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "calrinete2",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-calrinete2.pdf"
+    },
+    {
+     "instrumento": "clarinete-1",
+     "label": "clarinete 1",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-clarinete-1.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "clarinete 2",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-clarinete-2.pdf"
+    },
+    {
+     "instrumento": "clarinete-3",
+     "label": "clarinete 3",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-clarinete-3.pdf"
+    },
+    {
+     "instrumento": "flauta",
+     "label": "flauta",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-flauta.pdf"
+    },
+    {
+     "instrumento": "melofono",
+     "label": "melafono",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-melafono.pdf"
+    },
+    {
+     "instrumento": "sax-alto",
+     "label": "sax alto",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-sax-alto.pdf"
+    },
+    {
+     "instrumento": "sax-tenor",
+     "label": "tenor sax",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-tenor-sax.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "tormeptas 2 y 3",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-tormeptas-2-y-3.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "trombon 1",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-trombon-1.pdf"
+    },
+    {
+     "instrumento": "trombon-2",
+     "label": "trombon 2",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-trombon-2.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "trombon1",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-trombon1.pdf"
+    },
+    {
+     "instrumento": "trompeta-1",
+     "label": "trompeta 1",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-trompeta-1.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "trompeta2-3",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-trompeta2-3.pdf"
+    },
+    {
+     "instrumento": "tuba",
+     "label": "tuba",
+     "url": "/partituras/cumbia-en-do/cumbia-en-do-tuba.pdf"
+    }
+   ]
+  },
+  {
+   "id": "seed-temporada-calentamiento",
+   "slug": "calentamiento",
+   "titulo": "Calentamiento",
+   "numeroMarcacion": null,
+   "categoria": "temporada",
+   "partituras": [
+    {
+     "instrumento": "sax-alto",
+     "label": "Alto Sax",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-alto-sax.pdf"
+    },
+    {
+     "instrumento": "sax-baritono",
+     "label": "Baritone Sax",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-baritone-sax.pdf"
+    },
+    {
+     "instrumento": "bombos",
+     "label": "Bass Drums",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-bass-drums.pdf"
+    },
+    {
+     "instrumento": "clarinete-1",
+     "label": "Clarinet in Bb 1",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-clarinet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "Clarinet in Bb 2",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-clarinet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "platillos",
+     "label": "Cymbal Line",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-cymbal-line.pdf"
+    },
+    {
+     "instrumento": "flauta",
+     "label": "Flute",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-flute.pdf"
+    },
+    {
+     "instrumento": "melofono",
+     "label": "Mellophone",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-mellophone.pdf"
+    },
+    {
+     "instrumento": "piccolo",
+     "label": "Piccolo",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-piccolo.pdf"
+    },
+    {
+     "instrumento": "redoblante",
+     "label": "Snareline",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-snareline.pdf"
+    },
+    {
+     "instrumento": "sax-soprano",
+     "label": "Soprano Sax",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-soprano-sax.pdf"
+    },
+    {
+     "instrumento": "sax-tenor",
+     "label": "Tenor Sax",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-tenor-sax.pdf"
+    },
+    {
+     "instrumento": "multitenor",
+     "label": "Tenorline",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-tenorline.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "Trombone 1",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-trombone-1.pdf"
+    },
+    {
+     "instrumento": "trombon-2",
+     "label": "Trombone 2",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-trombone-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-1",
+     "label": "Trumpet in Bb 1",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-trumpet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "Trumpet in Bb 2",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-trumpet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-3",
+     "label": "Trumpet in Bb 3",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-trumpet-in-bb-3.pdf"
+    },
+    {
+     "instrumento": "tuba",
+     "label": "Tuba",
+     "url": "/partituras/calentamiento/dragon-ball-z-calentamiento-bsgra-2026-tuba.pdf"
+    }
+   ]
+  }
+ ],
+ "semanaSanta": [
+  {
+   "id": "seed-semana-santa-jerusalen",
+   "slug": "jerusalen",
+   "titulo": "Jerusalén",
+   "numeroMarcacion": 1,
+   "categoria": "semana-santa",
+   "partituras": [
+    {
+     "instrumento": "sax-alto",
+     "label": "Alto Sax",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-alto-sax.pdf"
+    },
+    {
+     "instrumento": "sax-baritono",
+     "label": "Baritone Sax",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-baritone-sax.pdf"
+    },
+    {
+     "instrumento": "bombos",
+     "label": "Bass Drums",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-bass-drums.pdf"
+    },
+    {
+     "instrumento": "clarinete-1",
+     "label": "Clarinet in Bb 1",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-clarinet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "Clarinet in Bb 2",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-clarinet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "platillos",
+     "label": "Cymbal Line",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-cymbal-line.pdf"
+    },
+    {
+     "instrumento": "flauta",
+     "label": "Flute",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-flute.pdf"
+    },
+    {
+     "instrumento": "melofono",
+     "label": "Mellophone",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-mellophone.pdf"
+    },
+    {
+     "instrumento": "piccolo",
+     "label": "Piccolo and  flute 2",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-piccolo-and-flute-2.pdf"
+    },
+    {
+     "instrumento": "redoblante",
+     "label": "Snareline",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-snareline.pdf"
+    },
+    {
+     "instrumento": "sax-soprano",
+     "label": "Soprano Sax",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-soprano-sax.pdf"
+    },
+    {
+     "instrumento": "sax-tenor",
+     "label": "Tenor Sax",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-tenor-sax.pdf"
+    },
+    {
+     "instrumento": "multitenor",
+     "label": "Tenorline",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-tenorline.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "Trombone 1",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-trombone-1.pdf"
+    },
+    {
+     "instrumento": "trombon-2",
+     "label": "Trombone 2",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-trombone-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-1",
+     "label": "Trumpet in Bb 1",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-trumpet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "Trumpet in Bb 2",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-trumpet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-3",
+     "label": "Trumpet in Bb 3",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-trumpet-in-bb-3.pdf"
+    },
+    {
+     "instrumento": "tuba-sib",
+     "label": "Tuba Bb",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-tuba-bb.pdf"
+    },
+    {
+     "instrumento": "tuba",
+     "label": "Tuba",
+     "url": "/partituras/jerusalen/jerusalen-bsgra-2026-tuba.pdf"
+    }
+   ]
+  },
+  {
+   "id": "seed-semana-santa-procesion-sardar",
+   "slug": "procesion-sardar",
+   "titulo": "Procesión del Sardar",
+   "numeroMarcacion": 2,
+   "categoria": "semana-santa",
+   "partituras": [
+    {
+     "instrumento": "sax-alto",
+     "label": "Alto Sax",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-alto-sax.pdf"
+    },
+    {
+     "instrumento": "sax-baritono",
+     "label": "Baritone Sax",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-baritone-sax.pdf"
+    },
+    {
+     "instrumento": "bombos",
+     "label": "Bass Drums",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-bass-drums.pdf"
+    },
+    {
+     "instrumento": "clarinete-1",
+     "label": "Clarinet in Bb 1",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-clarinet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "Clarinet in Bb 2",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-clarinet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "platillos",
+     "label": "Cymbal Line",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-cymbal-line.pdf"
+    },
+    {
+     "instrumento": "flauta",
+     "label": "Flute",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-flute.pdf"
+    },
+    {
+     "instrumento": "melofono",
+     "label": "Mellophone",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-mellophone.pdf"
+    },
+    {
+     "instrumento": "piccolo",
+     "label": "Piccolo",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-piccolo.pdf"
+    },
+    {
+     "instrumento": "redoblante",
+     "label": "Snareline",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-snareline.pdf"
+    },
+    {
+     "instrumento": "sax-soprano",
+     "label": "Soprano Sax",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-soprano-sax.pdf"
+    },
+    {
+     "instrumento": "sax-tenor",
+     "label": "Tenor Sax",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-tenor-sax.pdf"
+    },
+    {
+     "instrumento": "multitenor",
+     "label": "Tenorline",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-tenorline.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "Trombone 1",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-trombone-1.pdf"
+    },
+    {
+     "instrumento": "trombon-2",
+     "label": "Trombone 2",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-trombone-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-1",
+     "label": "Trumpet in Bb 1",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-trumpet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "Trumpet in Bb 2",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-trumpet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-3",
+     "label": "Trumpet in Bb 3",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-trumpet-in-bb-3.pdf"
+    },
+    {
+     "instrumento": "tuba-sib",
+     "label": "Tuba Bb",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-tuba-bb.pdf"
+    },
+    {
+     "instrumento": "tuba",
+     "label": "Tuba",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-tuba.pdf"
+    },
+    {
+     "instrumento": "partitura-gral",
+     "label": "SCORE",
+     "url": "/partituras/procesion-sardar/procession-of-the-sardar-bsgra-2026-director-score.pdf"
+    }
+   ]
+  },
+  {
+   "id": "seed-semana-santa-soy-pecador",
+   "slug": "soy-pecador",
+   "titulo": "Señor, Soy Pecador",
+   "numeroMarcacion": 3,
+   "categoria": "semana-santa",
+   "partituras": [
+    {
+     "instrumento": "sax-alto",
+     "label": "Alto Sax",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-alto-sax.pdf"
+    },
+    {
+     "instrumento": "sax-baritono",
+     "label": "Baritone Sax",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-baritone-sax.pdf"
+    },
+    {
+     "instrumento": "clarinete-1",
+     "label": "Clarinet in Bb 1",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-clarinet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "Clarinet in Bb 2",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-clarinet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "flauta",
+     "label": "Flute",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-flute.pdf"
+    },
+    {
+     "instrumento": "melofono",
+     "label": "Mellophone",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-mellophone.pdf"
+    },
+    {
+     "instrumento": "partitura-gral",
+     "label": "Score",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-score.pdf"
+    },
+    {
+     "instrumento": "sax-soprano",
+     "label": "Soprano Sax",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-soprano-sax.pdf"
+    },
+    {
+     "instrumento": "sax-tenor",
+     "label": "Tenor Sax",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-tenor-sax.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "Trombone 1",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-trombone-1.pdf"
+    },
+    {
+     "instrumento": "trombon-2",
+     "label": "Trombone 2",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-trombone-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-1",
+     "label": "Trumpet in Bb 1",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-trumpet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "Trumpet in Bb 2",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-trumpet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-3",
+     "label": "Trumpet in Bb 3",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-trumpet-in-bb-3.pdf"
+    },
+    {
+     "instrumento": "tuba-sib",
+     "label": "Tuba Bb",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-tuba-bb.pdf"
+    },
+    {
+     "instrumento": "tuba",
+     "label": "Tuba",
+     "url": "/partituras/soy-pecador/senor-soy-pecador-bsgra-tuba.pdf"
+    }
+   ]
+  },
+  {
+   "id": "seed-semana-santa-ten-piedad",
+   "slug": "ten-piedad",
+   "titulo": "Ten Piedad de Mí",
+   "numeroMarcacion": 4,
+   "categoria": "semana-santa",
+   "partituras": [
+    {
+     "instrumento": "sax-alto",
+     "label": "Alto Sax",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-alto-sax.pdf"
+    },
+    {
+     "instrumento": "sax-baritono",
+     "label": "Baritone Sax",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-baritone-sax.pdf"
+    },
+    {
+     "instrumento": "clarinete-1",
+     "label": "Clarinet in Bb 1",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-clarinet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "clarinete-2",
+     "label": "Clarinet in Bb 2",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-clarinet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "flauta",
+     "label": "Flute",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-flute.pdf"
+    },
+    {
+     "instrumento": "melofono",
+     "label": "Mellophone",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-mellophone.pdf"
+    },
+    {
+     "instrumento": "partitura-gral",
+     "label": "Score",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-score.pdf"
+    },
+    {
+     "instrumento": "sax-soprano",
+     "label": "Soprano Sax",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-soprano-sax.pdf"
+    },
+    {
+     "instrumento": "sax-tenor",
+     "label": "Tenor Sax",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-tenor-sax.pdf"
+    },
+    {
+     "instrumento": "trombon-1",
+     "label": "Trombone 1",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-trombone-1.pdf"
+    },
+    {
+     "instrumento": "trombon-2",
+     "label": "Trombone 2",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-trombone-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-1",
+     "label": "Trumpet in Bb 1",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-trumpet-in-bb-1.pdf"
+    },
+    {
+     "instrumento": "trompeta-2",
+     "label": "Trumpet in Bb 2",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-trumpet-in-bb-2.pdf"
+    },
+    {
+     "instrumento": "trompeta-3",
+     "label": "Trumpet in Bb 3",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-trumpet-in-bb-3.pdf"
+    },
+    {
+     "instrumento": "tuba-sib",
+     "label": "Tuba Bb",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-tuba-bb.pdf"
+    },
+    {
+     "instrumento": "tuba",
+     "label": "Tuba",
+     "url": "/partituras/ten-piedad/ten-piedad-de-mi-bsgra-tuba.pdf"
+    }
+   ]
+  }
+ ]
+}
