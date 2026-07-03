@@ -57,8 +57,11 @@ Reglas: **miembros leen · admin y directores escriben**.
 > **Semana Santa** va en una **categoría aparte** dentro de la misma pestaña
 > (botón "✝️ Semana Santa"): Jerusalén, Procesión del Sardar, Señor Soy Pecador, Ten Piedad de Mí.
 > Fuente de datos: `src/lib/repertorio-data.json` (generado desde los PDF). PDFs en `/public/partituras/`.
-> Metadatos por completar (compositor, arreglista, tonalidad, tempo): los llena el director con
-> "Editar datos" o se pasan para agregarlos al seed. No se subieron los "ejercicios técnicos".
+> Metadatos por tema en `META` de `src/lib/repertorio.ts` (extraídos del encabezado de las
+> partituras): **arreglista, compositor conocido, género, tempo y notas** ya cargados.
+> Arreglistas: Rodrigo Bolívar (RodroGass) en la mayoría; Justin May (Carita de Luna, La Nene);
+> Faber Restrepo (Cumbia en Do). Falta confirmar con el director: **tonalidad, tempo (BPM),
+> duración y dificultad** de la mayoría. No se subieron los "ejercicios técnicos".
 
 ### Canción #8 — Mambo #5
 - **Compositor:** Dámaso Pérez Prado
