@@ -49,7 +49,11 @@ export default function UniformesAdminPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setItems(await getAllIntegrantes()) }
+    try {
+      // El Color Guard no usa esta chaqueta: se excluye del censo.
+      const todos = await getAllIntegrantes()
+      setItems(todos.filter(i => i.familia !== 'colorguard'))
+    }
     catch { toast.error('Error al cargar los integrantes') }
     finally { setLoading(false) }
   }, [])
@@ -143,7 +147,8 @@ export default function UniformesAdminPage() {
           <h1 className="font-display text-white text-2xl font-bold uppercase tracking-wider">Chaquetas</h1>
           <p className="text-gray-300 text-sm mt-1 max-w-lg">
             Censo de quién tiene la chaqueta. Marca en persona, y cuando no puedas, solicita al
-            integrante que confirme y firme desde su portal.
+            integrante que confirme y firme desde su portal. El Color Guard no usa esta chaqueta,
+            por eso no aparece en la lista.
           </p>
         </div>
       </div>
@@ -164,7 +169,7 @@ export default function UniformesAdminPage() {
         </div>
         <select value={fam} onChange={e => setFam(e.target.value as FamiliaKey | 'all')} className="input max-w-[190px]">
           <option value="all">Todas las familias</option>
-          {(Object.keys(FAMILIAS) as FamiliaKey[]).map(fk => <option key={fk} value={fk}>{FAMILIAS[fk].emoji} {FAMILIAS[fk].label}</option>)}
+          {(Object.keys(FAMILIAS) as FamiliaKey[]).filter(fk => fk !== 'colorguard').map(fk => <option key={fk} value={fk}>{FAMILIAS[fk].emoji} {FAMILIAS[fk].label}</option>)}
         </select>
         <select value={estado} onChange={e => setEstado(e.target.value as EstadoFilter)} className="input max-w-[190px]">
           <option value="all">Todos los estados</option>
