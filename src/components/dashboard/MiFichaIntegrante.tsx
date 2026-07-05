@@ -265,20 +265,25 @@ function InstrumentoHero({ slug, label }: { slug?: string; label: string }) {
   const [ok, setOk] = useState(true)
   if (!slug || !ok) return null
   return (
-    <div className="relative h-36 sm:h-44 rounded-2xl overflow-hidden bg-navy">
-      <Image
-        src={instrumentoImage(slug)}
-        alt={label}
-        fill
-        onError={() => setOk(false)}
-        className="object-cover"
-        sizes="(max-width: 640px) 100vw, 700px"
-        priority
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/30 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-4">
-        <span className="inline-block text-[10px] font-bold uppercase tracking-widest text-navy bg-gold rounded-full px-2 py-0.5 mb-1">Tu instrumento</span>
-        <p className="font-display text-white text-xl font-bold uppercase tracking-wide leading-tight drop-shadow">{label}</p>
+    <div className="relative h-40 sm:h-48 rounded-2xl overflow-hidden bg-gradient-to-br from-navy via-navy to-[#0a2350]">
+      {/* Instrumento completo a la derecha */}
+      <div className="absolute right-0 top-0 bottom-0 w-[62%] sm:w-1/2">
+        <Image
+          src={instrumentoImage(slug)}
+          alt={label}
+          fill
+          onError={() => setOk(false)}
+          className="object-contain object-right"
+          sizes="(max-width: 640px) 62vw, 360px"
+          priority
+        />
+        {/* Velo para fundir con el texto de la izquierda */}
+        <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/40 to-transparent" />
+      </div>
+      {/* Texto */}
+      <div className="relative z-10 h-full flex flex-col justify-center p-5 sm:p-7">
+        <span className="inline-block w-fit text-[10px] font-bold uppercase tracking-widest text-navy bg-gold rounded-full px-2.5 py-0.5 mb-2">Tu instrumento</span>
+        <p className="font-display text-white text-2xl sm:text-3xl font-bold uppercase tracking-wide leading-tight drop-shadow">{label}</p>
       </div>
     </div>
   )

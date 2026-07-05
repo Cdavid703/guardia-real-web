@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { toast } from 'sonner'
 import { Music2, Phone, Users2, ChevronRight, X } from 'lucide-react'
 import { getRosterSeccion, type IntegranteBase } from '@/lib/firebase'
-import { SECCIONES_POR_FAMILIA, getSeccion, seccionImage } from '@/lib/secciones'
+import { SECCIONES_POR_FAMILIA, getSeccion, instrumentoImage } from '@/lib/secciones'
 import MiFichaIntegrante from '@/components/dashboard/MiFichaIntegrante'
 import CumpleanosBanda from '@/components/dashboard/CumpleanosBanda'
 
@@ -97,7 +97,7 @@ function RosterModal({ seccionKey, roster, loading, onClose }: {
     <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="relative h-32 bg-navy shrink-0">
-          <Image src={seccionImage(sec?.slug ?? '')} alt={sec?.label ?? ''} fill className="object-cover opacity-50" />
+          <Image src={instrumentoImage(sec?.slug ?? '')} alt={sec?.label ?? ''} fill className="object-cover opacity-60" />
           <div className="absolute inset-0 bg-gradient-to-t from-navy to-transparent" />
           <button onClick={onClose} className="absolute top-3 right-3 text-white/80 hover:text-white bg-white/10 rounded-full p-1.5"><X size={18} /></button>
           <div className="absolute bottom-3 left-4">
@@ -147,11 +147,11 @@ function SeccionCover({ slug, emoji }: { slug: string; emoji: string }) {
       </div>
       {ok && (
         <Image
-          src={seccionImage(slug)}
+          src={instrumentoImage(slug)}
           alt=""
           fill
           onError={() => setOk(false)}
-          className="object-cover opacity-70 group-hover:opacity-85 group-hover:scale-105 transition-all duration-500"
+          className="object-cover opacity-80 group-hover:opacity-95 group-hover:scale-105 transition-all duration-500"
           sizes="(max-width: 640px) 50vw, 25vw"
         />
       )}
