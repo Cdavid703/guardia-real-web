@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
   ClipboardCheck, QrCode, Search, Camera, CameraOff, CheckCircle2, X, FileDown, Users2,
+  MonitorSmartphone, ScanLine,
 } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getAllEnsayos, getAllIntegrantes, getAsistencia, marcarAsistencia, quitarAsistencia,
@@ -29,8 +31,12 @@ export default function AsistenciaPage() {
   const [presentes, setPresentes] = useState<Record<string, AsistenciaEntry>>({})
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(false)
+  const [kiosco, setKiosco] = useState(false)
+  const [showQr, setShowQr] = useState(false)
+  const [ultimo, setUltimo] = useState('')
   const [search, setSearch] = useState('')
   const ultimoScan = useRef<{ id: string; t: number }>({ id: '', t: 0 })
+  const selfUrl = typeof window !== 'undefined' && ensayoId ? `${window.location.origin}/asistencia/${ensayoId}` : ''
 
   useEffect(() => {
     if (profile && profile.role !== 'admin' && profile.role !== 'director') router.replace('/dashboard')
@@ -52,14 +58,23 @@ export default function AsistenciaPage() {
     getAsistencia(ensayoId).then(setPresentes).catch(() => setPresentes({}))
   }, [ensayoId])
 
+  // Refresca mientras se muestra el QR o el escáner (para ver auto-registros)
+  useEffect(() => {
+    if (!ensayoId || !(showQr || scanning)) return
+    const t = setInterval(() => { getAsistencia(ensayoId).then(setPresentes).catch(() => {}) }, 15000)
+    return () => clearInterval(t)
+  }, [ensayoId, showQr, scanning])
+
   const rosterById = useMemo(() => new Map(roster.map(i => [i.id, i])), [roster])
   const totalPresentes = Object.keys(presentes).length
 
   const marcar = useCallback(async (i: IntegranteBase, via: 'qr' | 'manual') => {
     if (!ensayoId) { toast.error('Primero selecciona un ensayo'); return }
     if (presentes[i.id]) return
-    setPresentes(p => ({ ...p, [i.id]: { nombre: `${i.nombre} ${i.apellidos}`.trim(), en: new Date().toISOString(), via } }))
-    try { await marcarAsistencia(ensayoId, i.id, `${i.nombre} ${i.apellidos}`.trim(), via) }
+    const nombre = `${i.nombre} ${i.apellidos}`.trim()
+    setPresentes(p => ({ ...p, [i.id]: { nombre, en: new Date().toISOString(), via } }))
+    setUltimo(nombre)
+    try { await marcarAsistencia(ensayoId, i.id, nombre, via) }
     catch { toast.error('No se pudo guardar'); setPresentes(p => { const n = { ...p }; delete n[i.id]; return n }) }
   }, [ensayoId, presentes])
 
@@ -98,7 +113,7 @@ export default function AsistenciaPage() {
         const i = rosterById.get(id); const p = presentes[id]
         return [
           i?.apellidos ?? '', i?.nombre ?? p.nombre, getSeccion(i?.seccion)?.label ?? i?.seccion ?? '',
-          new Date(p.en).toLocaleString('es-CO'), p.via === 'qr' ? 'QR' : 'Manual',
+          new Date(p.en).toLocaleString('es-CO'), p.via === 'qr' ? 'QR' : p.via === 'auto' ? 'Auto-registro' : 'Manual',
         ]
       }))
     toast.success(`Asistencia de ${ids.length} exportada`)
@@ -129,19 +144,44 @@ export default function AsistenciaPage() {
               <span className="font-display text-2xl font-bold text-green-600">{totalPresentes}</span>
               <span className="text-xs text-gray-400 ml-1.5">de {roster.length} presentes</span>
             </div>
-            <button onClick={() => setScanning(s => !s)} className={cn('btn btn-md', scanning ? 'btn-ghost text-red-500' : 'btn-primary')}>
+            <button onClick={() => { setScanning(s => !s); setKiosco(false) }} className={cn('btn btn-md', scanning ? 'btn-ghost text-red-500' : 'btn-primary')}>
               {scanning ? <><CameraOff size={16} /> Detener cámara</> : <><QrCode size={16} /> Escanear QR</>}
+            </button>
+            <button onClick={() => { setKiosco(true); setScanning(true) }} className="btn btn-ghost btn-md">
+              <MonitorSmartphone size={16} /> Modo kiosco
+            </button>
+            <button onClick={() => setShowQr(true)} className="btn btn-ghost btn-md">
+              <ScanLine size={16} /> QR del ensayo
             </button>
             <button onClick={exportar} className="btn btn-ghost btn-md ml-auto"><FileDown size={15} /> Exportar</button>
           </div>
 
           {/* Escáner */}
           {scanning && (
-            <div className="card p-4 mb-5">
-              <div className="flex items-center gap-2 text-sm text-royal mb-3"><Camera size={15} /> Apunta al código QR del carné del integrante</div>
-              <div className="max-w-sm mx-auto">
+            <div className={cn('card p-4 mb-5', kiosco && 'border-2 border-royal')}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 text-sm text-royal"><Camera size={15} /> {kiosco ? 'Modo kiosco: cada integrante pasa su carné' : 'Apunta al código QR del carné del integrante'}</div>
+                {kiosco && <button onClick={() => { setKiosco(false); setScanning(false) }} className="text-xs text-red-500 hover:underline">Salir del kiosco</button>}
+              </div>
+              <div className={cn('mx-auto', kiosco ? 'max-w-md' : 'max-w-sm')}>
                 <QrScanner onScan={onScan} onError={() => toast.error('No se pudo iniciar la cámara. Revisa los permisos.')} />
               </div>
+              {kiosco && (
+                <div className="mt-4 text-center">
+                  {ultimo ? (
+                    <div className="inline-flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-6 py-4">
+                      <CheckCircle2 size={32} className="text-green-600" />
+                      <div className="text-left">
+                        <p className="text-[11px] uppercase tracking-wide text-green-600 font-bold">Último registrado</p>
+                        <p className="font-serif font-bold text-navy text-xl leading-tight">{ultimo}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400">Esperando el primer carné…</p>
+                  )}
+                  <p className="text-2xl font-display font-bold text-navy mt-3">{totalPresentes} <span className="text-sm text-gray-400 font-sans">presentes</span></p>
+                </div>
+              )}
             </div>
           )}
 
@@ -160,7 +200,7 @@ export default function AsistenciaPage() {
                     <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
                     <p className="text-xs text-gray-400 truncate">
                       {getSeccion(i.seccion)?.label ?? i.seccion}
-                      {p && <span className="text-green-600"> · {p.via === 'qr' ? 'QR' : 'manual'} {new Date(p.en).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span>}
+                      {p && <span className="text-green-600"> · {p.via === 'qr' ? 'QR' : p.via === 'auto' ? 'auto-registro' : 'manual'} {new Date(p.en).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span>}
                     </p>
                   </div>
                   {p ? (
@@ -179,6 +219,26 @@ export default function AsistenciaPage() {
         <div className="card text-center py-14 text-gray-400">
           <Users2 size={34} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm">Selecciona un ensayo para empezar a tomar asistencia.</p>
+        </div>
+      )}
+
+      {/* QR del ensayo para auto-registro */}
+      {showQr && (
+        <div className="fixed inset-0 z-[999] bg-black/70 flex items-center justify-center p-4" onClick={() => setShowQr(false)}>
+          <div className="bg-white rounded-2xl max-w-sm w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-navy px-5 py-4 flex items-center justify-between">
+              <p className="font-serif font-bold text-white">Auto-registro de asistencia</p>
+              <button onClick={() => setShowQr(false)} className="text-white/70 hover:text-white"><X size={18} /></button>
+            </div>
+            <div className="p-6 text-center">
+              <p className="text-sm text-gray-500 mb-4">Proyecta o muestra este código. Cada integrante lo escanea con su celular y marca su propia asistencia.</p>
+              <div className="bg-white border-4 border-navy rounded-2xl p-4 inline-block">
+                {selfUrl && <QRCodeSVG value={selfUrl} size={220} level="M" fgColor="#0a1a3f" />}
+              </div>
+              <p className="text-[11px] text-gray-400 mt-4 break-all">{selfUrl}</p>
+              <p className="text-xs text-gray-500 mt-2">Los que se registren aparecen automáticamente en la lista (se actualiza sola).</p>
+            </div>
+          </div>
         </div>
       )}
     </div>

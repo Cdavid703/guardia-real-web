@@ -87,7 +87,11 @@
       "Bash(node -e \"require\\('sharp'\\); console.log\\('sharp OK', require\\('sharp/package.json'\\).version\\)\")",
       "Bash(node -e \"const p=require\\('./package.json'\\); const d={...p.dependencies,...p.devDependencies}; console.log\\('QR libs:', Object.keys\\(d\\).filter\\(k=>/qr|zxing|scanner|html5/i.test\\(k\\)\\).join\\(', '\\)||'ninguna'\\)\")",
       "Bash(npm install *)",
-      "Bash(node -e \"console.log\\(require\\('html5-qrcode/package.json'\\).version\\)\")"
+      "Bash(node -e \"console.log\\(require\\('html5-qrcode/package.json'\\).version\\)\")",
+      "Bash(node -e \"console.log\\(JSON.stringify\\(require\\('./package.json'\\).scripts,null,1\\)\\)\")",
+      "Bash(npx eslint *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(git commit --allow-empty -q -m 'chore: forzar redeploy \\(ruta de asistencia\\) *)"
     ]
   }
 }

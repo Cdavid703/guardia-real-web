@@ -583,22 +583,44 @@ export async function deleteGira(id: string): Promise<void> {
 }
 
 // ── Asistencia a ensayos ───────────────────────────────────────────
-export interface AsistenciaEntry { nombre: string; en: string; via: 'qr' | 'manual' }
+// Se guarda en subcolección asistencias/{ensayoId}/presentes/{integranteId}
+// para que cada integrante pueda auto-registrar SOLO su propia asistencia
+// (validado por reglas contra los linkedUids de su ficha).
+export interface AsistenciaEntry { nombre: string; en: string; via: 'qr' | 'manual' | 'auto' }
 
 /** Presentes de un ensayo: mapa integranteId → datos. */
 export async function getAsistencia(ensayoId: string): Promise<Record<string, AsistenciaEntry>> {
-  const s = await getDoc(doc(db, 'asistencias', ensayoId))
-  return s.exists() ? ((s.data().presentes as Record<string, AsistenciaEntry>) ?? {}) : {}
+  const snap = await getDocs(collection(db, 'asistencias', ensayoId, 'presentes'))
+  const out: Record<string, AsistenciaEntry> = {}
+  snap.forEach(d => { out[d.id] = d.data() as AsistenciaEntry })
+  return out
 }
 
-export async function marcarAsistencia(ensayoId: string, integranteId: string, nombre: string, via: 'qr' | 'manual' = 'manual'): Promise<void> {
-  await setDoc(doc(db, 'asistencias', ensayoId),
-    { presentes: { [integranteId]: { nombre, en: new Date().toISOString(), via } }, updatedAt: serverTimestamp() },
-    { merge: true })
+export async function marcarAsistencia(ensayoId: string, integranteId: string, nombre: string, via: AsistenciaEntry['via'] = 'manual'): Promise<void> {
+  await setDoc(doc(db, 'asistencias', ensayoId, 'presentes', integranteId),
+    { nombre, en: new Date().toISOString(), via })
 }
 
 export async function quitarAsistencia(ensayoId: string, integranteId: string): Promise<void> {
-  await updateDoc(doc(db, 'asistencias', ensayoId), { [`presentes.${integranteId}`]: deleteField(), updatedAt: serverTimestamp() })
+  await deleteDoc(doc(db, 'asistencias', ensayoId, 'presentes', integranteId))
+}
+
+/** Integrante: marca SU propia asistencia (auto-registro por QR del ensayo). */
+export async function marcarMiAsistencia(ensayoId: string, uid: string): Promise<{ nombre: string; yaEstaba: boolean }> {
+  const mi = await getMiIntegrante(uid)
+  if (!mi) throw new Error('sin-ficha')
+  const yaEstaba = (await getDoc(doc(db, 'asistencias', ensayoId, 'presentes', mi.id))).exists()
+  const nombre = `${mi.nombre} ${mi.apellidos}`.trim()
+  if (!yaEstaba) await marcarAsistencia(ensayoId, mi.id, nombre, 'auto')
+  return { nombre, yaEstaba }
+}
+
+/** Datos básicos de un ensayo (para la pantalla de auto-registro). */
+export async function getEnsayo(id: string): Promise<{ id: string; title: string; date: string; startTime?: string; location?: string } | null> {
+  const s = await getDoc(doc(db, 'ensayos', id))
+  if (!s.exists()) return null
+  const d = s.data()
+  return { id: s.id, title: (d.title as string) ?? '', date: (d.date as string) ?? '', startTime: d.startTime as string, location: d.location as string }
 }
 
 /**
