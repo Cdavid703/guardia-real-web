@@ -85,7 +85,9 @@
       "Bash(python -c \"import pymupdf; print\\('OK', pymupdf.__version__\\)\")",
       "Bash(node -e \"const p=require\\('./package.json'\\); const d={...p.dependencies,...p.devDependencies}; console.log\\('PDF/related:', Object.keys\\(d\\).filter\\(k=>/pdf|jspdf|resend|nodemailer|mail|html2|canvas/i.test\\(k\\)\\).join\\(', '\\)||'ninguna'\\)\")",
       "Bash(node -e \"require\\('sharp'\\); console.log\\('sharp OK', require\\('sharp/package.json'\\).version\\)\")",
-      "Bash(node -e \"const p=require\\('./package.json'\\); const d={...p.dependencies,...p.devDependencies}; console.log\\('QR libs:', Object.keys\\(d\\).filter\\(k=>/qr|zxing|scanner|html5/i.test\\(k\\)\\).join\\(', '\\)||'ninguna'\\)\")"
+      "Bash(node -e \"const p=require\\('./package.json'\\); const d={...p.dependencies,...p.devDependencies}; console.log\\('QR libs:', Object.keys\\(d\\).filter\\(k=>/qr|zxing|scanner|html5/i.test\\(k\\)\\).join\\(', '\\)||'ninguna'\\)\")",
+      "Bash(npm install *)",
+      "Bash(node -e \"console.log\\(require\\('html5-qrcode/package.json'\\).version\\)\")"
     ]
   }
 }

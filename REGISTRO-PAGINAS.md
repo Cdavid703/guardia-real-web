@@ -41,6 +41,7 @@ y **mascota (el gato)** (`/images/mascota.png`) — deben aparecer en cada pági
 | Secciones (roster + cumpleaños + mi ficha) | `/dashboard/secciones` | Miembros | ✅ |
 | Mi portal (integrante) | `/dashboard/integrante` | Integrante/admin | ✅ |
 | Repertorio (director) | `/dashboard/director` | Admin/director | ✅ (base) |
+| Asistencia a ensayos (QR + manual) | `/dashboard/director/asistencia` | Admin/director | ✅ |
 
 ---
 

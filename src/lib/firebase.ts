@@ -582,6 +582,25 @@ export async function deleteGira(id: string): Promise<void> {
   await deleteDoc(doc(db, 'giras', id))
 }
 
+// ── Asistencia a ensayos ───────────────────────────────────────────
+export interface AsistenciaEntry { nombre: string; en: string; via: 'qr' | 'manual' }
+
+/** Presentes de un ensayo: mapa integranteId → datos. */
+export async function getAsistencia(ensayoId: string): Promise<Record<string, AsistenciaEntry>> {
+  const s = await getDoc(doc(db, 'asistencias', ensayoId))
+  return s.exists() ? ((s.data().presentes as Record<string, AsistenciaEntry>) ?? {}) : {}
+}
+
+export async function marcarAsistencia(ensayoId: string, integranteId: string, nombre: string, via: 'qr' | 'manual' = 'manual'): Promise<void> {
+  await setDoc(doc(db, 'asistencias', ensayoId),
+    { presentes: { [integranteId]: { nombre, en: new Date().toISOString(), via } }, updatedAt: serverTimestamp() },
+    { merge: true })
+}
+
+export async function quitarAsistencia(ensayoId: string, integranteId: string): Promise<void> {
+  await updateDoc(doc(db, 'asistencias', ensayoId), { [`presentes.${integranteId}`]: deleteField(), updatedAt: serverTimestamp() })
+}
+
 /**
  * Importación masiva idempotente desde el Excel limpio.
  * Match por numDoc (o correo) para no duplicar. Escribe en ambas colecciones.

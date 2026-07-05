@@ -111,6 +111,12 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    // Asistencia a ensayos — admin y directores toman y consultan
+    match /asistencias/{id} {
+      allow read:  if isAuth() && myRole() in ['admin', 'director'];
+      allow write: if isAuth() && myRole() in ['admin', 'director'];
+    }
+
     // Donaciones — formulario público crea; solo admin ve
     match /donations/{id} {
       allow create: if true;
