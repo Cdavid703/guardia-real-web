@@ -100,9 +100,11 @@ export default function UniformesAdminPage() {
       // Empuje por WhatsApp si hay número
       const tel = (i.whatsapp || '').replace(/\D/g, '')
       if (tel) {
+        const nombre = `${i.nombre} ${i.apellidos}`.trim()
+        const link = `${window.location.origin}/integrantes?tab=uniformes`
         const msg = encodeURIComponent(
-          `Hola ${i.nombre}, desde la Guardia Real de Antioquia. Por favor ingresa a tu portal de integrantes ` +
-          `(pestaña Uniformes) y confirma con tu firma si tienes la chaqueta azul con blanco de la banda. ¡Gracias!`,
+          `Hola ${nombre}, desde la Guardia Real de Antioquia. Por favor confirma con tu firma si tienes ` +
+          `la chaqueta azul con blanco de la banda. Ingresa aquí (pestaña Uniformes):\n${link}\n¡Gracias!`,
         )
         window.open(`https://wa.me/57${tel}?text=${msg}`, '_blank', 'noopener')
       } else {
