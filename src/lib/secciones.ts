@@ -62,6 +62,11 @@ export function seccionImage(slug: string): string {
   return `/images/secciones/${slug}.jpg`
 }
 
+/** Ruta de la imagen profesional del instrumento (ficha del integrante y carné). */
+export function instrumentoImage(slug: string): string {
+  return `/images/instrumentos/${slug}.png`
+}
+
 /** Agrupa una lista de secciones por familia, en orden de catálogo. */
 export const SECCIONES_POR_FAMILIA: { familia: Familia; secciones: Seccion[] }[] =
   (Object.keys(FAMILIAS) as FamiliaKey[]).map(fk => ({

@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import { X, Printer, Download, Droplet, Shield, IdCard } from 'lucide-react'
-import { getSeccion } from '@/lib/secciones'
+import { getSeccion, instrumentoImage } from '@/lib/secciones'
 import QrIntegrante from '@/components/dashboard/QrIntegrante'
 import type { Integrante } from '@/types'
 
@@ -13,6 +13,7 @@ export default function CarneIntegrante({ ficha, onClose }: { ficha: Integrante;
   const sec = getSeccion(ficha.seccion)
   const cardRef = useRef<HTMLDivElement>(null)
   const [downloading, setDownloading] = useState(false)
+  const [instrOk, setInstrOk] = useState(true)
 
   const descargarPDF = async () => {
     const node = cardRef.current
@@ -47,9 +48,20 @@ export default function CarneIntegrante({ ficha, onClose }: { ficha: Integrante;
         {/* Tarjeta */}
         <div ref={cardRef} className="carne-printable bg-white rounded-2xl overflow-hidden shadow-2xl border border-gray-200">
           {/* Cabecera navy */}
-          <div className="bg-navy relative px-5 pt-5 pb-4">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gold" />
-            <div className="flex items-center gap-3">
+          <div className="bg-navy relative px-5 pt-5 pb-4 overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gold z-10" />
+            {/* Motivo del instrumento (translúcido) */}
+            {sec?.slug && instrOk && (
+              <Image
+                src={instrumentoImage(sec.slug)}
+                alt=""
+                width={120}
+                height={120}
+                onError={() => setInstrOk(false)}
+                className="absolute -right-3 -bottom-4 w-28 h-28 object-contain opacity-20 pointer-events-none"
+              />
+            )}
+            <div className="relative flex items-center gap-3">
               <div className="w-11 h-11 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
                 <Image src="/images/escudo.png" alt="" width={30} height={30} className="object-contain" />
               </div>

@@ -10,7 +10,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { getMiIntegrante, updateMiIntegrante, createMiFicha, getIntegranteByCorreoAutorizado, storage } from '@/lib/firebase'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { SECCIONES_LIST, getSeccion } from '@/lib/secciones'
+import { SECCIONES_LIST, getSeccion, instrumentoImage } from '@/lib/secciones'
 import { camposFaltantes } from '@/lib/integrantes-utils'
 import type { Integrante } from '@/types'
 import { cn } from '@/lib/utils'
@@ -141,6 +141,8 @@ export default function MiFichaIntegrante() {
           </div>
         )}
 
+        <InstrumentoHero slug={sec?.slug} label={sec?.label ?? ficha.seccion} />
+
         <div className="card p-6 border-l-4 border-royal">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -254,6 +256,30 @@ export default function MiFichaIntegrante() {
         <Shield size={13} className="shrink-0 mt-0.5" />
         Tus datos sensibles (documento, dirección, salud) solo son visibles para ti y la administración.
       </p>
+    </div>
+  )
+}
+
+/** Banner con la imagen profesional del instrumento del integrante. Se oculta si no existe la imagen. */
+function InstrumentoHero({ slug, label }: { slug?: string; label: string }) {
+  const [ok, setOk] = useState(true)
+  if (!slug || !ok) return null
+  return (
+    <div className="relative h-36 sm:h-44 rounded-2xl overflow-hidden bg-navy">
+      <Image
+        src={instrumentoImage(slug)}
+        alt={label}
+        fill
+        onError={() => setOk(false)}
+        className="object-cover"
+        sizes="(max-width: 640px) 100vw, 700px"
+        priority
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 p-4">
+        <span className="inline-block text-[10px] font-bold uppercase tracking-widest text-navy bg-gold rounded-full px-2 py-0.5 mb-1">Tu instrumento</span>
+        <p className="font-display text-white text-xl font-bold uppercase tracking-wide leading-tight drop-shadow">{label}</p>
+      </div>
     </div>
   )
 }
