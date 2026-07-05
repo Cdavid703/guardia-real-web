@@ -33,7 +33,7 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import type { UserProfile, UserRole, Integrante, Tema, Partitura, ChaquetaInfo, PrendaKey } from '@/types'
+import type { UserProfile, UserRole, Integrante, Tema, Partitura, ChaquetaInfo, PrendaKey, AutorizacionMenor } from '@/types'
 import { camposFaltantes, diaMesCumple, esMenorDeEdad } from '@/lib/integrantes-utils'
 
 const firebaseConfig = {
@@ -207,6 +207,7 @@ export interface IntegranteBase {
   tienePasaporte?: boolean
   chaqueta?: ChaquetaInfo
   kepis?:    ChaquetaInfo
+  autorizacionMenor?: AutorizacionMenor
   activo:    boolean
   createdAt: Date
   updatedAt: Date
@@ -236,6 +237,7 @@ function mapBase(id: string, d: Record<string, unknown>): IntegranteBase {
     tienePasaporte: (d.tienePasaporte as boolean) ?? undefined,
     chaqueta:  (d.chaqueta as ChaquetaInfo) ?? undefined,
     kepis:     (d.kepis as ChaquetaInfo) ?? undefined,
+    autorizacionMenor: (d.autorizacionMenor as AutorizacionMenor) ?? undefined,
     activo:    (d.activo as boolean) ?? true,
     createdAt: (d.createdAt as Timestamp)?.toDate() ?? new Date(),
     updatedAt: (d.updatedAt as Timestamp)?.toDate() ?? new Date(),
@@ -508,6 +510,37 @@ export async function responderNoPrenda(id: string, prenda: PrendaKey, uid: stri
 export async function getPrendaFirma(id: string, prenda: PrendaKey): Promise<string | null> {
   const s = await getDoc(doc(db, 'integrantesPrivado', id))
   return s.exists() ? ((s.data()[`${prenda}Firma`] as string) ?? null) : null
+}
+
+// ── Autorización del acudiente (menores de edad) ───────────────────
+
+/** Acudiente: firma la autorización del menor desde el portal del integrante. */
+export async function firmarAutorizacionMenor(
+  id: string, uid: string,
+  datos: { acudienteNombre: string; parentesco: string; acudienteDoc: string; acudienteTel?: string },
+  firmaDataUrl: string,
+): Promise<void> {
+  const now = new Date().toISOString()
+  const info: AutorizacionMenor = {
+    estado: 'firmada',
+    acudienteNombre: datos.acudienteNombre,
+    parentesco: datos.parentesco,
+    acudienteDoc: datos.acudienteDoc,
+    acudienteTel: datos.acudienteTel ?? '',
+    firmadaEn: now,
+    firmadaPorUid: uid,
+  }
+  await Promise.all([
+    updateDoc(doc(db, 'integrantes', id), { autorizacionMenor: info, updatedAt: serverTimestamp() }),
+    setDoc(doc(db, 'integrantesPrivado', id),
+      { autorizacionMenorFirma: firmaDataUrl, updatedAt: serverTimestamp() }, { merge: true }),
+  ])
+}
+
+/** Admin/dueño: obtiene la imagen de la firma de la autorización del menor. */
+export async function getAutorizacionMenorFirma(id: string): Promise<string | null> {
+  const s = await getDoc(doc(db, 'integrantesPrivado', id))
+  return s.exists() ? ((s.data().autorizacionMenorFirma as string) ?? null) : null
 }
 
 /**

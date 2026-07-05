@@ -15,6 +15,7 @@ import { camposFaltantes } from '@/lib/integrantes-utils'
 import type { Integrante } from '@/types'
 import { cn } from '@/lib/utils'
 import CarneIntegrante from '@/components/dashboard/CarneIntegrante'
+import AutorizacionMenor from '@/components/dashboard/AutorizacionMenor'
 import FotoCropper from '@/components/dashboard/FotoCropper'
 import QrIntegrante from '@/components/dashboard/QrIntegrante'
 
@@ -140,6 +141,8 @@ export default function MiFichaIntegrante() {
             </div>
           </div>
         )}
+
+        {profile && <AutorizacionMenor ficha={ficha} uid={profile.uid} onDone={load} />}
 
         <InstrumentoHero slug={sec?.slug} label={sec?.label ?? ficha.seccion} />
 

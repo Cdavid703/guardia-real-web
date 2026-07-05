@@ -59,6 +59,8 @@ export interface Integrante {
   // Control de prendas del uniforme
   chaqueta?:          ChaquetaInfo
   kepis?:             ChaquetaInfo
+  // Autorización del acudiente (solo menores de edad)
+  autorizacionMenor?: AutorizacionMenor
   // Consentimiento de tratamiento de datos (Ley 1581 / Habeas Data)
   consentimientoDatos?: boolean
   consentimientoFecha?: string  // ISO de cuándo aceptó
@@ -103,6 +105,18 @@ export interface ChaquetaInfo {
   // Bitácora de eventos (auditoría)
   historial?:           PrendaEvento[]
   // La imagen de la firma (PNG base64) NO va aquí: se guarda en integrantesPrivado.
+}
+
+// Autorización del acudiente para un integrante menor de edad (firma digital)
+export interface AutorizacionMenor {
+  estado:          'firmada'
+  acudienteNombre: string
+  parentesco:      string
+  acudienteDoc:    string    // documento del acudiente
+  acudienteTel?:   string
+  firmadaEn:       string    // ISO
+  firmadaPorUid?:  string
+  // La imagen de la firma va en integrantesPrivado.autorizacionMenorFirma
 }
 
 // ──────────────────────────────────────────────────────────────────

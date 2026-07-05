@@ -640,6 +640,9 @@ function ExpandedRow({ id, base }: { id: string; base: IntegranteBase }) {
     ['Contacto emergencia', priv.contactoEmergencia || '—'],
     ['Condición médica', priv.diagnostico || '—'],
     ['Consentimiento datos', base.consentimientoDatos ? `Aceptado${base.consentimientoFecha ? ` (${base.consentimientoFecha})` : ''}` : 'Pendiente'],
+    ...(base.esMenor ? [['Autorización menor', base.autorizacionMenor?.estado === 'firmada'
+      ? `Firmada por ${base.autorizacionMenor.acudienteNombre} (${base.autorizacionMenor.parentesco})`
+      : 'Pendiente'] as [string, string]] : []),
   ]
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5 text-sm">
