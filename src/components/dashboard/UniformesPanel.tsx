@@ -6,6 +6,7 @@ import {
   AlertCircle, CheckCircle2, Shirt,
 } from 'lucide-react'
 import Accordion from '@/components/ui/Accordion'
+import ChaquetaConfirmacion from '@/components/dashboard/ChaquetaConfirmacion'
 
 // ── Types ──────────────────────────────────────────────────────────
 interface UniformItem {
@@ -287,6 +288,9 @@ export default function UniformesPanel() {
           Guía de uniformes, proveedores y normas de presentación — personal de la banda
         </p>
       </div>
+
+      {/* Solicitud de confirmación de chaqueta (solo si la administración la pidió) */}
+      <ChaquetaConfirmacion />
 
       <Accordion items={items} singleOpen defaultOpenIds={['lista']} />
 

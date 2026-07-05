@@ -33,7 +33,7 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import type { UserProfile, UserRole, Integrante, Tema, Partitura } from '@/types'
+import type { UserProfile, UserRole, Integrante, Tema, Partitura, ChaquetaInfo } from '@/types'
 import { camposFaltantes, diaMesCumple, esMenorDeEdad } from '@/lib/integrantes-utils'
 
 const firebaseConfig = {
@@ -205,6 +205,7 @@ export interface IntegranteBase {
   cumpleMes?: number
   esMenor?:  boolean
   tienePasaporte?: boolean
+  chaqueta?: ChaquetaInfo
   activo:    boolean
   createdAt: Date
   updatedAt: Date
@@ -232,6 +233,7 @@ function mapBase(id: string, d: Record<string, unknown>): IntegranteBase {
     cumpleMes: (d.cumpleMes as number) ?? undefined,
     esMenor:   (d.esMenor as boolean) ?? undefined,
     tienePasaporte: (d.tienePasaporte as boolean) ?? undefined,
+    chaqueta:  (d.chaqueta as ChaquetaInfo) ?? undefined,
     activo:    (d.activo as boolean) ?? true,
     createdAt: (d.createdAt as Timestamp)?.toDate() ?? new Date(),
     updatedAt: (d.updatedAt as Timestamp)?.toDate() ?? new Date(),
@@ -418,6 +420,55 @@ export async function deleteIntegrante(id: string): Promise<void> {
     deleteDoc(doc(db, 'integrantes', id)),
     deleteDoc(doc(db, 'integrantesPrivado', id)),
   ])
+}
+
+// ── Control de chaquetas ───────────────────────────────────────────
+// La firma (imagen PNG) vive en integrantesPrivado (solo admin/dueño).
+// El estado y las fechas viven en la base para el grid del admin.
+
+/** Admin: marca/desmarca que el integrante tiene la chaqueta (censo presencial). */
+export async function setChaquetaTiene(id: string, tiene: boolean, uid: string): Promise<void> {
+  await updateDoc(doc(db, 'integrantes', id), {
+    'chaqueta.tiene': tiene,
+    updatedAt: serverTimestamp(), updatedBy: uid,
+  })
+}
+
+/** Admin: solicita al integrante que confirme y firme que tiene la chaqueta. */
+export async function solicitarConfirmacionChaqueta(id: string, adminUid: string, adminNombre: string): Promise<void> {
+  await updateDoc(doc(db, 'integrantes', id), {
+    'chaqueta.estado': 'solicitada',
+    'chaqueta.solicitadaEn': new Date().toISOString(),
+    'chaqueta.solicitadaPorUid': adminUid,
+    'chaqueta.solicitadaPorNombre': adminNombre,
+    updatedAt: serverTimestamp(),
+  })
+}
+
+/** Integrante: confirma y firma que tiene la chaqueta desde su portal. */
+export async function confirmarChaquetaFirmada(
+  id: string, uid: string, firmaDataUrl: string, firmaNombre: string,
+): Promise<void> {
+  const now = new Date().toISOString()
+  await Promise.all([
+    updateDoc(doc(db, 'integrantes', id), {
+      'chaqueta.tiene': true,
+      'chaqueta.estado': 'confirmada',
+      'chaqueta.confirmadaEn': now,
+      'chaqueta.firmaNombre': firmaNombre,
+      'chaqueta.confirmadaPorUid': uid,
+      updatedAt: serverTimestamp(),
+    }),
+    setDoc(doc(db, 'integrantesPrivado', id),
+      { chaquetaFirma: firmaDataUrl, chaquetaFirmaEn: now, updatedAt: serverTimestamp() },
+      { merge: true }),
+  ])
+}
+
+/** Admin/dueño: obtiene la imagen de la firma de la chaqueta para validarla. */
+export async function getChaquetaFirma(id: string): Promise<string | null> {
+  const s = await getDoc(doc(db, 'integrantesPrivado', id))
+  return s.exists() ? ((s.data().chaquetaFirma as string) ?? null) : null
 }
 
 /**

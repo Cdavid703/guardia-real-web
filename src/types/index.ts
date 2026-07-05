@@ -56,6 +56,8 @@ export interface Integrante {
   correosAutorizados?: string[] // correos que pueden acceder/reclamar esta ficha
   // Perfil
   fotoURL?:           string
+  // Control de chaquetas del uniforme
+  chaqueta?:          ChaquetaInfo
   // Consentimiento de tratamiento de datos (Ley 1581 / Habeas Data)
   consentimientoDatos?: boolean
   consentimientoFecha?: string  // ISO de cuándo aceptó
@@ -67,6 +69,21 @@ export interface Integrante {
   createdAt:          Date
   updatedAt:          Date
   updatedBy?:         string   // uid de quien actualizó por última vez
+}
+
+// Control de chaquetas del uniforme (mapeo admin + confirmación firmada)
+export interface ChaquetaInfo {
+  tiene:                boolean   // el integrante tiene la chaqueta (marcado por admin o al firmar)
+  estado:              'sin_registrar' | 'solicitada' | 'confirmada'
+  // Solicitud de confirmación enviada por la administración
+  solicitadaEn?:        string   // ISO
+  solicitadaPorUid?:    string
+  solicitadaPorNombre?: string
+  // Aceptación firmada por el integrante
+  confirmadaEn?:        string   // ISO fecha/hora
+  firmaNombre?:         string   // nombre con el que firmó
+  confirmadaPorUid?:    string   // uid del integrante que firmó
+  // La imagen de la firma (PNG base64) NO va aquí: se guarda en integrantesPrivado.
 }
 
 // ──────────────────────────────────────────────────────────────────

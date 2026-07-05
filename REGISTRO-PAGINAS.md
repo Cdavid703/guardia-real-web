@@ -29,16 +29,29 @@ y **mascota (el gato)** (`/images/mascota.png`) — deben aparecer en cada pági
 | Ensayos | `EquipoEnsayosPanel` | idem | ✅ |
 | Historia (archivo de viajes) | `HistoriaPanel` | idem | ✅ |
 | **Partituras / Repertorio** | `RepertorioPanel` | Ven: todos los miembros · Suben: **admin + director musical** | ✅ |
+| Confirmación de chaqueta (dentro de Uniformes) | `ChaquetaConfirmacion` + `SignaturePad` | El integrante confirma y firma cuando el admin lo solicita | ✅ |
 
 ## Panel (dashboard)
 | Página | Ruta | Quién accede | Estado |
 |---|---|---|---|
 | Gestión de usuarios (Resumen/Integrantes/Solicitudes/Cuentas) | `/dashboard/admin` | Admin | ✅ |
+| Uniformes — control de chaquetas | `/dashboard/admin/uniformes` | Admin | ✅ |
 | Secciones (roster + cumpleaños + mi ficha) | `/dashboard/secciones` | Miembros | ✅ |
 | Mi portal (integrante) | `/dashboard/integrante` | Integrante/admin | ✅ |
 | Repertorio (director) | `/dashboard/director` | Admin/director | ✅ (base) |
 
 ---
+
+## 🎽 Control de chaquetas (uniformes)
+
+- **Admin** en `/dashboard/admin/uniformes`: censo con checkbox "tiene chaqueta",
+  botón **Solicitar** (marca la solicitud + abre WhatsApp prellenado), estado por
+  integrante (Sin registrar / Solicitada / Confirmada) y **Ver firma**.
+- **Integrante** en `/integrantes` → pestaña **Uniformes**: si hay solicitud, aparece
+  el banner y puede **firmar con el dedo** (`SignaturePad`) y confirmar.
+- Datos: `integrantes.chaqueta` = `{ tiene, estado, solicitadaEn/Por, confirmadaEn, firmaNombre }`
+  (visible en el grid). La **imagen de la firma** va en `integrantesPrivado.chaquetaFirma`
+  (solo admin/dueño por reglas — no expone la firma al resto de miembros). Reglas SIN cambios.
 
 ## 🎼 Repertorio — canciones y datos
 
