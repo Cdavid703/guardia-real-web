@@ -44,17 +44,20 @@ y **mascota (el gato)** (`/images/mascota.png`) — deben aparecer en cada pági
 
 ## 🎽 Control de uniformes (chaquetas y kepis)
 
-- **Admin** en `/dashboard/admin/uniformes`: **dos pestañas** (Chaquetas / Kepis, `?tab=`),
-  cada una con el mismo grid (`PrendaPanel`): checkbox "tiene", botón **Solicitar**
-  (marca la solicitud + abre WhatsApp prellenado con link directo), estado por integrante
-  (Sin registrar / Solicitada / Confirmada / **No la tiene**), **Ver firma** y CSV.
-  Si respondió que no, el botón pasa a **Volver a preguntar**.
-- **Integrante** en `/integrantes` → pestaña **Uniformes**: por cada prenda solicitada
-  aparece un banner con **Sí (firma con el dedo, `SignaturePad`)** o **No la tengo**.
-- Datos: `integrantes.chaqueta` y `integrantes.kepis` = `{ tiene, estado, solicitadaEn/Por,
-  confirmadaEn, firmaNombre, respondidaEn }` (para el grid). La **imagen de la firma** va en
-  `integrantesPrivado.{chaqueta|kepis}Firma` (solo admin/dueño). El **Color Guard** se
-  excluye de ambas. Reglas de Firestore SIN cambios.
+- **Admin** en `/dashboard/admin/uniformes`: **tres pestañas** (`?tab=`):
+  - **Resumen** (`ResumenUniformes`): tabla con ambas prendas por integrante de un vistazo
+    + tallas, contadores y CSV.
+  - **Chaquetas** y **Kepis** (`PrendaPanel`, mismo grid genérico): checkbox "tiene", botón
+    **Solicitar** (marca solicitud + WhatsApp con link directo), estados (Sin registrar /
+    Solicitada / Confirmada / **No la tiene** → **Volver a preguntar**), **selección múltiple
+    para solicitar en lote** (modal con enlaces de WhatsApp), **inventario** por integrante
+    (n.º de prenda, entrega y devolución con fecha), **Ver firma** y CSV.
+- **Integrante** en `/integrantes` → pestaña **Uniformes**: por cada prenda solicitada, banner
+  con **Sí** (indica **talla** + firma con el dedo, `SignaturePad`) o **No la tengo**.
+- Datos: `integrantes.chaqueta` y `integrantes.kepis` = `{ tiene, estado, talla, numero,
+  entregadaEn, devueltaEn, solicitadaEn/Por, confirmadaEn, firmaNombre, respondidaEn }`.
+  La **imagen de la firma** va en `integrantesPrivado.{chaqueta|kepis}Firma` (solo admin/dueño).
+  El **Color Guard** se excluye de ambas. Reglas de Firestore SIN cambios.
 
 ## 🎼 Repertorio — canciones y datos
 

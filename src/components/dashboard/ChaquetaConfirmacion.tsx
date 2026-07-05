@@ -82,14 +82,16 @@ function PrendaConfirm({ texto, mi, uid, onDone }: { texto: PrendaTexto; mi: Int
   const [abrir, setAbrir] = useState(false)
   const [firma, setFirma] = useState('')
   const [nombre, setNombre] = useState(`${mi.nombre} ${mi.apellidos}`.trim())
+  const [talla, setTalla] = useState(info?.talla ?? '')
   const [guardando, setGuardando] = useState(false)
 
   const confirmar = async () => {
     if (!nombre.trim()) { toast.error('Escribe tu nombre'); return }
+    if (!talla.trim()) { toast.error('Indica tu talla'); return }
     if (!firma) { toast.error('Falta tu firma'); return }
     setGuardando(true)
     try {
-      await confirmarPrendaFirmada(mi.id, texto.prenda, uid, firma, nombre.trim())
+      await confirmarPrendaFirmada(mi.id, texto.prenda, uid, firma, nombre.trim(), talla.trim())
       toast.success('¡Gracias! Tu confirmación quedó firmada.')
       setAbrir(false); setFirma('')
       onDone()
@@ -155,9 +157,18 @@ function PrendaConfirm({ texto, mi, uid, onDone }: { texto: PrendaTexto; mi: Int
             <ShieldCheck size={16} className="text-royal shrink-0 mt-0.5" />
             <p className="text-sm text-gray-600 leading-relaxed">{texto.aceptacion}</p>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-dark mb-1">Tu nombre completo</label>
-            <input className="input" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Nombre y apellidos" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-dark mb-1">Tu nombre completo</label>
+              <input className="input" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Nombre y apellidos" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-dark mb-1">Tu talla</label>
+              <input className="input" list={`tallas-${texto.prenda}`} value={talla} onChange={e => setTalla(e.target.value)} placeholder="Ej: M, L, 12, 34..." />
+              <datalist id={`tallas-${texto.prenda}`}>
+                {['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(t => <option key={t} value={t} />)}
+              </datalist>
+            </div>
           </div>
           <div>
             <label className="block text-xs font-semibold text-dark mb-1 flex items-center gap-1">

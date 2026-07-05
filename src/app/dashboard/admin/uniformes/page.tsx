@@ -2,10 +2,13 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Shirt } from 'lucide-react'
+import { Shirt, LayoutGrid } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import Tabs from '@/components/ui/Tabs'
 import PrendaPanel, { type PrendaConfig } from '@/components/dashboard/uniformes/PrendaPanel'
+import ResumenUniformes from '@/components/dashboard/uniformes/ResumenUniformes'
+
+type TabId = 'resumen' | 'chaquetas' | 'kepis'
 
 const CONFIGS: Record<'chaquetas' | 'kepis', PrendaConfig> = {
   chaquetas: {
@@ -31,6 +34,7 @@ const CONFIGS: Record<'chaquetas' | 'kepis', PrendaConfig> = {
 }
 
 const TABS = [
+  { id: 'resumen',   label: 'Resumen',   icon: LayoutGrid },
   { id: 'chaquetas', label: 'Chaquetas', icon: Shirt },
   { id: 'kepis',     label: 'Kepis',     icon: Shirt },
 ]
@@ -39,7 +43,7 @@ function UniformesHub() {
   const { profile } = useAuth()
   const router = useRouter()
   const params = useSearchParams()
-  const [tab, setTab] = useState<'chaquetas' | 'kepis'>('chaquetas')
+  const [tab, setTab] = useState<TabId>('resumen')
 
   useEffect(() => {
     if (profile && profile.role !== 'admin') router.replace('/dashboard')
@@ -47,11 +51,11 @@ function UniformesHub() {
 
   useEffect(() => {
     const t = params.get('tab')
-    if (t === 'chaquetas' || t === 'kepis') setTab(t)
+    if (t === 'resumen' || t === 'chaquetas' || t === 'kepis') setTab(t)
   }, [params])
 
   const changeTab = (id: string) => {
-    setTab(id as 'chaquetas' | 'kepis')
+    setTab(id as TabId)
     router.replace(`/dashboard/admin/uniformes?tab=${id}`, { scroll: false })
   }
 
@@ -64,7 +68,7 @@ function UniformesHub() {
 
       <Tabs tabs={TABS} activeTab={tab} onChange={changeTab} className="justify-start mb-6" />
 
-      <PrendaPanel config={CONFIGS[tab]} />
+      {tab === 'resumen' ? <ResumenUniformes /> : <PrendaPanel config={CONFIGS[tab]} />}
     </div>
   )
 }

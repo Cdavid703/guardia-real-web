@@ -5,12 +5,12 @@ import Image from 'next/image'
 import { toast } from 'sonner'
 import {
   Search, Send, MessageCircle, CheckCircle2, Clock, Circle, XCircle,
-  X, PenLine, FileDown, ShieldCheck,
+  X, PenLine, FileDown, ShieldCheck, Package, Ruler, Users2, Boxes,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getAllIntegrantes, setPrendaTiene, solicitarConfirmacionPrenda,
-  getPrendaFirma, type IntegranteBase,
+  getPrendaFirma, setPrendaInventario, type IntegranteBase,
 } from '@/lib/firebase'
 import { FAMILIAS, getSeccion, type FamiliaKey } from '@/lib/secciones'
 import { descargarCSV } from '@/lib/integrantes-utils'
@@ -35,6 +35,11 @@ function fechaLegible(iso?: string) {
   try { return new Date(iso).toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }
   catch { return iso }
 }
+function fechaCorta(iso?: string) {
+  if (!iso) return ''
+  try { return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) }
+  catch { return iso }
+}
 
 export default function PrendaPanel({ config }: { config: PrendaConfig }) {
   const { prenda } = config
@@ -46,7 +51,10 @@ export default function PrendaPanel({ config }: { config: PrendaConfig }) {
   const [search, setSearch] = useState('')
   const [fam, setFam] = useState<FamiliaKey | 'all'>('all')
   const [estado, setEstado] = useState<EstadoFilter>('all')
+  const [sel, setSel] = useState<Set<string>>(new Set())
   const [firmaModal, setFirmaModal] = useState<IntegranteBase | null>(null)
+  const [invModal, setInvModal] = useState<IntegranteBase | null>(null)
+  const [batchModal, setBatchModal] = useState<IntegranteBase[] | null>(null)
 
   const infoDe = (i: IntegranteBase) => i[prenda]
   const estadoDe = (i: IntegranteBase): EstadoPrenda => infoDe(i)?.estado ?? 'sin_registrar'
@@ -62,6 +70,9 @@ export default function PrendaPanel({ config }: { config: PrendaConfig }) {
     finally { setLoading(false) }
   }, [])
   useEffect(() => { load() }, [load])
+
+  // Al cambiar de prenda (pestaña), limpia selección.
+  useEffect(() => { setSel(new Set()) }, [prenda])
 
   const stats = useMemo(() => ({
     total: items.length,
@@ -92,6 +103,10 @@ export default function PrendaPanel({ config }: { config: PrendaConfig }) {
       ? { ...i, [prenda]: { tiene: false, estado: 'sin_registrar', ...infoDe(i), ...patch } }
       : i))
 
+  const toggleSel = (id: string) => setSel(prev => {
+    const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
+  })
+
   const toggleTiene = async (i: IntegranteBase) => {
     if (!profile) return
     const nuevo = !infoDe(i)?.tiene
@@ -100,32 +115,65 @@ export default function PrendaPanel({ config }: { config: PrendaConfig }) {
     catch { toast.error('No se pudo guardar'); patchLocal(i.id, { tiene: !nuevo }) }
   }
 
+  const marcarSolicitada = async (i: IntegranteBase) => {
+    await solicitarConfirmacionPrenda(i.id, prenda, profile!.uid, profile!.displayName || 'Administración')
+    patchLocal(i.id, { estado: 'solicitada', solicitadaEn: new Date().toISOString(), solicitadaPorNombre: profile!.displayName })
+  }
+
+  const waLink = (i: IntegranteBase): string | null => {
+    const tel = (i.whatsapp || '').replace(/\D/g, '')
+    if (!tel) return null
+    const nombre = `${i.nombre} ${i.apellidos}`.trim()
+    const link = `${window.location.origin}/integrantes?tab=uniformes`
+    const msg = encodeURIComponent(
+      `Hola ${nombre}, desde la Guardia Real de Antioquia. Por favor confirma con tu firma si tienes ` +
+      `${config.mensajeItem}. Ingresa aquí (pestaña Uniformes):\n${link}\n¡Gracias!`,
+    )
+    return `https://wa.me/57${tel}?text=${msg}`
+  }
+
   const solicitar = async (i: IntegranteBase) => {
     if (!profile) return
     setBusy(i.id)
     try {
-      await solicitarConfirmacionPrenda(i.id, prenda, profile.uid, profile.displayName || 'Administración')
-      patchLocal(i.id, { estado: 'solicitada', solicitadaEn: new Date().toISOString(), solicitadaPorNombre: profile.displayName })
+      await marcarSolicitada(i)
       toast.success(`Solicitud registrada para ${i.nombre}`)
-      const tel = (i.whatsapp || '').replace(/\D/g, '')
-      if (tel) {
-        const nombre = `${i.nombre} ${i.apellidos}`.trim()
-        const link = `${window.location.origin}/integrantes?tab=uniformes`
-        const msg = encodeURIComponent(
-          `Hola ${nombre}, desde la Guardia Real de Antioquia. Por favor confirma con tu firma si tienes ` +
-          `${config.mensajeItem}. Ingresa aquí (pestaña Uniformes):\n${link}\n¡Gracias!`,
-        )
-        window.open(`https://wa.me/57${tel}?text=${msg}`, '_blank', 'noopener')
-      } else {
-        toast.info(`${i.nombre} no tiene WhatsApp registrado; el aviso quedó en su portal.`)
-      }
+      const link = waLink(i)
+      if (link) window.open(link, '_blank', 'noopener')
+      else toast.info(`${i.nombre} no tiene WhatsApp registrado; el aviso quedó en su portal.`)
     } catch { toast.error('No se pudo registrar la solicitud') }
     finally { setBusy(null) }
   }
 
+  const solicitarLote = async () => {
+    if (!profile || sel.size === 0) return
+    const elegidos = items.filter(i => sel.has(i.id))
+    setBusy('lote')
+    try {
+      for (const i of elegidos) await marcarSolicitada(i)
+      toast.success(`${elegidos.length} solicitud(es) registradas`)
+      setBatchModal(elegidos)   // modal con los enlaces de WhatsApp para enviar uno por uno
+      setSel(new Set())
+    } catch { toast.error('No se pudieron registrar todas las solicitudes') }
+    finally { setBusy(null) }
+  }
+
+  const guardarInventario = async (
+    i: IntegranteBase,
+    patch: { numero?: string | null; entregadaEn?: string | null; devueltaEn?: string | null },
+  ) => {
+    await setPrendaInventario(i.id, prenda, patch, profile!.uid)
+    // Refleja en el grid (null → undefined para el tipo local).
+    const local: Partial<IntegranteBase['chaqueta']> = {}
+    if ('numero' in patch)      local!.numero      = patch.numero ?? undefined
+    if ('entregadaEn' in patch) local!.entregadaEn = patch.entregadaEn ?? undefined
+    if ('devueltaEn' in patch)  local!.devueltaEn  = patch.devueltaEn ?? undefined
+    patchLocal(i.id, local)
+  }
+
   const exportCSV = () => {
     descargarCSV(`control-${prenda}s`,
-      ['Apellidos', 'Nombre', 'Sección', `Tiene ${config.singular}`, 'Estado', 'Solicitada', 'Confirmada', 'Firmó como'],
+      ['Apellidos', 'Nombre', 'Sección', `Tiene ${config.singular}`, 'Estado', 'Talla', 'N.º prenda', 'Entregada', 'Devuelta', 'Solicitada', 'Confirmada', 'Firmó como'],
       items.map(i => {
         const c = infoDe(i)
         const e = estadoDe(i)
@@ -133,6 +181,7 @@ export default function PrendaPanel({ config }: { config: PrendaConfig }) {
           i.apellidos, i.nombre, getSeccion(i.seccion)?.label ?? i.seccion,
           c?.tiene ? 'Sí' : 'No',
           e === 'confirmada' ? 'Confirmada' : e === 'solicitada' ? 'Solicitada' : e === 'no_tiene' ? 'Respondió que no' : 'Sin registrar',
+          c?.talla ?? '', c?.numero ?? '', fechaCorta(c?.entregadaEn), fechaCorta(c?.devueltaEn),
           fechaLegible(c?.solicitadaEn), fechaLegible(c?.confirmadaEn), c?.firmaNombre ?? '',
         ]
       }))
@@ -183,20 +232,43 @@ export default function PrendaPanel({ config }: { config: PrendaConfig }) {
         <button onClick={exportCSV} className="btn btn-ghost btn-sm"><FileDown size={14} /> Exportar</button>
       </div>
 
+      {/* Barra de selección múltiple */}
+      {sel.size > 0 && (
+        <div className="flex items-center gap-3 mb-3 px-4 py-2.5 bg-royal/10 border border-royal/20 rounded-xl">
+          <span className="text-sm font-semibold text-royal">{sel.size} seleccionado(s)</span>
+          <button onClick={solicitarLote} disabled={busy === 'lote'} className="btn btn-primary btn-sm disabled:opacity-60">
+            <Users2 size={13} /> {busy === 'lote' ? 'Enviando...' : 'Solicitar confirmación'}
+          </button>
+          <button onClick={() => setSel(new Set())} className="text-xs text-gray-500 hover:text-navy ml-auto">Limpiar selección</button>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-16"><div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" /></div>
       ) : filtered.length === 0 ? (
         <div className="card text-center py-14 text-gray-400 text-sm">Sin resultados.</div>
       ) : (
         <div className="space-y-1.5">
-          <p className="text-xs text-gray-400 mb-1">Mostrando <strong className="text-gray-600">{filtered.length}</strong> de {items.length}</p>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <p className="text-xs text-gray-400">Mostrando <strong className="text-gray-600">{filtered.length}</strong> de {items.length}</p>
+            <button
+              onClick={() => setSel(prev => prev.size === filtered.length ? new Set() : new Set(filtered.map(i => i.id)))}
+              className="text-xs text-royal hover:underline">
+              {sel.size === filtered.length ? 'Quitar todos' : 'Seleccionar todos'}
+            </button>
+          </div>
           {filtered.map(i => {
             const e = estadoDe(i)
+            const c = infoDe(i)
             const sec = getSeccion(i.seccion)
             return (
-              <div key={i.id} className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl p-3">
+              <div key={i.id} className={cn('flex items-center gap-2.5 bg-white border rounded-xl p-3', sel.has(i.id) ? 'border-royal/40 bg-royal/5' : 'border-gray-100')}>
+                {/* Selección para lote */}
+                <input type="checkbox" checked={sel.has(i.id)} onChange={() => toggleSel(i.id)} title="Seleccionar para solicitar en lote"
+                  className="w-4 h-4 accent-royal shrink-0" />
+                {/* Tiene la prenda */}
                 <label className="flex items-center shrink-0 cursor-pointer" title={`Tiene ${config.singular}`}>
-                  <input type="checkbox" checked={!!infoDe(i)?.tiene} onChange={() => toggleTiene(i)} className="w-5 h-5 accent-green-600" />
+                  <input type="checkbox" checked={!!c?.tiene} onChange={() => toggleTiene(i)} className="w-5 h-5 accent-green-600" />
                 </label>
                 {i.fotoURL ? (
                   <Image src={i.fotoURL} alt="" width={36} height={36} className="rounded-full w-9 h-9 object-cover shrink-0" />
@@ -205,10 +277,20 @@ export default function PrendaPanel({ config }: { config: PrendaConfig }) {
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
-                  <p className="text-xs text-gray-400 truncate">{sec?.label ?? i.seccion}</p>
+                  <p className="text-xs text-gray-400 truncate flex items-center gap-1.5">
+                    {sec?.label ?? i.seccion}
+                    {c?.talla && <span className="inline-flex items-center gap-0.5 text-[10px] bg-navy/8 text-navy rounded-full px-1.5 py-0.5"><Ruler size={9} /> {c.talla}</span>}
+                    {c?.numero && <span className="inline-flex items-center gap-0.5 text-[10px] bg-navy/8 text-navy rounded-full px-1.5 py-0.5"><Package size={9} /> #{c.numero}</span>}
+                    {c?.entregadaEn && !c?.devueltaEn && <span className="text-[10px] bg-blue-100 text-blue-600 rounded-full px-1.5 py-0.5">Entregada</span>}
+                    {c?.devueltaEn && <span className="text-[10px] bg-gray-100 text-gray-500 rounded-full px-1.5 py-0.5">Devuelta</span>}
+                  </p>
                 </div>
 
                 <EstadoChip estado={e} />
+
+                <button onClick={() => setInvModal(i)} title="Inventario / entrega" className="w-8 h-8 rounded-lg text-navy hover:bg-navy/10 flex items-center justify-center shrink-0">
+                  <Boxes size={15} />
+                </button>
 
                 {e === 'confirmada' ? (
                   <button onClick={() => setFirmaModal(i)} className="btn btn-ghost btn-sm text-royal shrink-0">
@@ -227,6 +309,8 @@ export default function PrendaPanel({ config }: { config: PrendaConfig }) {
       )}
 
       {firmaModal && <FirmaModal integrante={firmaModal} prenda={prenda} onClose={() => setFirmaModal(null)} />}
+      {invModal && <InventarioModal integrante={invModal} prenda={prenda} singular={config.singular} onGuardar={guardarInventario} onClose={() => setInvModal(null)} />}
+      {batchModal && <BatchModal integrantes={batchModal} waLink={waLink} onClose={() => setBatchModal(null)} />}
     </div>
   )
 }
@@ -259,9 +343,9 @@ function FirmaModal({ integrante, prenda, onClose }: { integrante: IntegranteBas
         <div className="p-5 space-y-3">
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Info label="Firmó como" value={c?.firmaNombre ?? '—'} />
+            <Info label="Talla" value={c?.talla ?? '—'} />
             <Info label="Fecha y hora" value={c?.confirmadaEn ? fechaLegible(c.confirmadaEn) : '—'} />
             <Info label="Solicitada por" value={c?.solicitadaPorNombre ?? '—'} />
-            <Info label="Solicitada el" value={c?.solicitadaEn ? fechaLegible(c.solicitadaEn) : '—'} />
           </div>
           <div>
             <p className="text-[11px] text-gray-400 uppercase tracking-wide mb-1">Firma</p>
@@ -274,6 +358,126 @@ function FirmaModal({ integrante, prenda, onClose }: { integrante: IntegranteBas
               <p className="text-sm text-gray-400 text-center py-8 border border-gray-100 rounded-xl">No se encontró la imagen de la firma.</p>
             )}
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function InventarioModal({ integrante, prenda, singular, onGuardar, onClose }: {
+  integrante: IntegranteBase; prenda: PrendaKey; singular: string
+  onGuardar: (i: IntegranteBase, patch: { numero?: string | null; entregadaEn?: string | null; devueltaEn?: string | null }) => Promise<void>
+  onClose: () => void
+}) {
+  const c = integrante[prenda]
+  const [numero, setNumero] = useState(c?.numero ?? '')
+  const [entregadaEn, setEntregadaEn] = useState<string | null>(c?.entregadaEn ?? null)
+  const [devueltaEn, setDevueltaEn] = useState<string | null>(c?.devueltaEn ?? null)
+  const [guardando, setGuardando] = useState(false)
+
+  const accion = async (patch: { numero?: string | null; entregadaEn?: string | null; devueltaEn?: string | null }) => {
+    setGuardando(true)
+    try {
+      await onGuardar(integrante, patch)
+      if ('entregadaEn' in patch) setEntregadaEn(patch.entregadaEn ?? null)
+      if ('devueltaEn' in patch)  setDevueltaEn(patch.devueltaEn ?? null)
+      toast.success('Inventario actualizado')
+    }
+    catch { toast.error('No se pudo guardar') }
+    finally { setGuardando(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="bg-navy px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-white">
+            <Boxes size={18} className="text-gold" />
+            <div>
+              <p className="font-serif font-bold leading-tight">{integrante.nombre} {integrante.apellidos}</p>
+              <p className="text-gray-300 text-xs">Inventario de {singular}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white"><X size={18} /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          {/* Número físico */}
+          <div>
+            <label className="block text-xs font-semibold text-dark mb-1">N.º de la prenda física</label>
+            <div className="flex gap-2">
+              <input className="input" value={numero} onChange={e => setNumero(e.target.value)} placeholder="Ej: 042" />
+              <button onClick={() => accion({ numero: numero.trim() || null })} disabled={guardando} className="btn btn-ghost btn-sm shrink-0">Guardar n.º</button>
+            </div>
+          </div>
+
+          {/* Entrega */}
+          <div className="rounded-xl border border-gray-100 p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-dark">Entrega</p>
+                <p className="text-xs text-gray-400">{entregadaEn ? `Entregada el ${fechaLegible(entregadaEn)}` : 'Aún no entregada'}</p>
+              </div>
+              {entregadaEn ? (
+                <button onClick={() => accion({ entregadaEn: null })} disabled={guardando} className="btn btn-ghost btn-sm text-red-500">Quitar</button>
+              ) : (
+                <button onClick={() => accion({ entregadaEn: new Date().toISOString() })} disabled={guardando} className="btn btn-primary btn-sm">Marcar entregada</button>
+              )}
+            </div>
+          </div>
+
+          {/* Devolución */}
+          <div className="rounded-xl border border-gray-100 p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-dark">Devolución</p>
+                <p className="text-xs text-gray-400">{devueltaEn ? `Devuelta el ${fechaLegible(devueltaEn)}` : 'Aún no devuelta'}</p>
+              </div>
+              {devueltaEn ? (
+                <button onClick={() => accion({ devueltaEn: null })} disabled={guardando} className="btn btn-ghost btn-sm text-red-500">Quitar</button>
+              ) : (
+                <button onClick={() => accion({ devueltaEn: new Date().toISOString() })} disabled={guardando} className="btn btn-ghost btn-sm">Marcar devuelta</button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BatchModal({ integrantes, waLink, onClose }: {
+  integrantes: IntegranteBase[]; waLink: (i: IntegranteBase) => string | null; onClose: () => void
+}) {
+  const conWa = integrantes.filter(i => waLink(i))
+  const sinWa = integrantes.filter(i => !waLink(i))
+  return (
+    <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-md w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-navy px-5 py-4 flex items-center justify-between">
+          <div className="text-white">
+            <p className="font-serif font-bold">Enviar por WhatsApp</p>
+            <p className="text-gray-300 text-xs">La solicitud ya quedó registrada. Toca cada uno para enviarle el mensaje.</p>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white"><X size={18} /></button>
+        </div>
+        <div className="p-4 space-y-1.5">
+          {conWa.map(i => (
+            <a key={i.id} href={waLink(i)!} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 hover:border-[#25D366] hover:bg-[#25D366]/5 transition-colors">
+              <div className="w-8 h-8 rounded-full bg-[#25D366]/10 text-[#1ebd5a] flex items-center justify-center shrink-0"><MessageCircle size={15} /></div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
+                <p className="text-xs text-gray-400">{i.whatsapp}</p>
+              </div>
+              <span className="text-xs text-[#1ebd5a] font-semibold shrink-0">Enviar →</span>
+            </a>
+          ))}
+          {sinWa.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <p className="text-[11px] text-gray-400 mb-1">Sin WhatsApp registrado (el aviso quedó en su portal):</p>
+              {sinWa.map(i => <p key={i.id} className="text-sm text-gray-500">{i.nombre} {i.apellidos}</p>)}
+            </div>
+          )}
         </div>
       </div>
     </div>

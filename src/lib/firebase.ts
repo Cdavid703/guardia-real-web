@@ -449,22 +449,37 @@ export async function solicitarConfirmacionPrenda(id: string, prenda: PrendaKey,
 
 /** Integrante: confirma y firma que tiene la prenda desde su portal. */
 export async function confirmarPrendaFirmada(
-  id: string, prenda: PrendaKey, uid: string, firmaDataUrl: string, firmaNombre: string,
+  id: string, prenda: PrendaKey, uid: string, firmaDataUrl: string, firmaNombre: string, talla?: string,
 ): Promise<void> {
   const now = new Date().toISOString()
+  const baseUpd: Record<string, unknown> = {
+    [`${prenda}.tiene`]: true,
+    [`${prenda}.estado`]: 'confirmada',
+    [`${prenda}.confirmadaEn`]: now,
+    [`${prenda}.firmaNombre`]: firmaNombre,
+    [`${prenda}.confirmadaPorUid`]: uid,
+    updatedAt: serverTimestamp(),
+  }
+  if (talla && talla.trim()) baseUpd[`${prenda}.talla`] = talla.trim()
   await Promise.all([
-    updateDoc(doc(db, 'integrantes', id), {
-      [`${prenda}.tiene`]: true,
-      [`${prenda}.estado`]: 'confirmada',
-      [`${prenda}.confirmadaEn`]: now,
-      [`${prenda}.firmaNombre`]: firmaNombre,
-      [`${prenda}.confirmadaPorUid`]: uid,
-      updatedAt: serverTimestamp(),
-    }),
+    updateDoc(doc(db, 'integrantes', id), baseUpd),
     setDoc(doc(db, 'integrantesPrivado', id),
       { [`${prenda}Firma`]: firmaDataUrl, [`${prenda}FirmaEn`]: now, updatedAt: serverTimestamp() },
       { merge: true }),
   ])
+}
+
+/** Admin: control de inventario/préstamo de la prenda (número, entrega, devolución). */
+export async function setPrendaInventario(
+  id: string, prenda: PrendaKey,
+  patch: { numero?: string | null; entregadaEn?: string | null; devueltaEn?: string | null },
+  uid: string,
+): Promise<void> {
+  const upd: Record<string, unknown> = { updatedAt: serverTimestamp(), updatedBy: uid }
+  if ('numero' in patch)      upd[`${prenda}.numero`]      = patch.numero ?? null
+  if ('entregadaEn' in patch) upd[`${prenda}.entregadaEn`] = patch.entregadaEn ?? null
+  if ('devueltaEn' in patch)  upd[`${prenda}.devueltaEn`]  = patch.devueltaEn ?? null
+  await updateDoc(doc(db, 'integrantes', id), upd)
 }
 
 /** Integrante: responde que NO tiene la prenda (deja habilitado volver a preguntar). */

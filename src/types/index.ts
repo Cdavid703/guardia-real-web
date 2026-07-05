@@ -88,6 +88,12 @@ export interface ChaquetaInfo {
   confirmadaPorUid?:    string   // uid del integrante que respondió
   // Respuesta "no la tengo" (deja habilitado volver a preguntar)
   respondidaEn?:        string   // ISO
+  // Talla que declara el integrante al confirmar
+  talla?:               string
+  // Control de inventario / préstamo (gestiona el admin)
+  numero?:              string   // número físico de la prenda entregada
+  entregadaEn?:         string   // ISO: cuándo se entregó
+  devueltaEn?:          string   // ISO: cuándo se devolvió
   // La imagen de la firma (PNG base64) NO va aquí: se guarda en integrantesPrivado.
 }
 
