@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { getAllIntegrantes } from '@/lib/firebase'
 import {
   LayoutDashboard, Users, Newspaper, Image as ImageIcon,
   Music, Music2, Calendar, FileText, MessageSquare, IdCard,
@@ -42,11 +43,23 @@ interface Props {
 
 export default function DashboardSidebar({ role, onClose }: Props) {
   const [collapsed, setCollapsed] = useState(false)
+  const [uniformesPend, setUniformesPend] = useState(0)
   const pathname  = usePathname()
   const { logout } = useAuth()
   const router    = useRouter()
 
   const visibleItems = NAV_ITEMS.filter(item => item.roles.includes(role))
+
+  // Solicitudes de uniformes pendientes de respuesta (solo admin).
+  useEffect(() => {
+    if (role !== 'admin') return
+    getAllIntegrantes()
+      .then(list => setUniformesPend(
+        list.filter(i => i.chaqueta?.estado === 'solicitada').length +
+        list.filter(i => i.kepis?.estado === 'solicitada').length,
+      ))
+      .catch(() => {})
+  }, [role])
 
   const handleLogout = async () => {
     await logout()
@@ -105,7 +118,13 @@ export default function DashboardSidebar({ role, onClose }: Props) {
                 >
                   <Icon size={17} className="shrink-0" />
                   {!collapsed && <span className="truncate">{label}</span>}
-                  {active && !collapsed && (
+                  {href === '/dashboard/admin/uniformes' && uniformesPend > 0 && (
+                    <span title={`${uniformesPend} solicitud(es) pendientes de respuesta`}
+                      className={cn('ml-auto shrink-0 bg-gold text-navy text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center', collapsed && 'absolute left-8 top-1.5')}>
+                      {uniformesPend}
+                    </span>
+                  )}
+                  {active && !collapsed && !(href === '/dashboard/admin/uniformes' && uniformesPend > 0) && (
                     <div className="ml-auto w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
                   )}
                 </Link>

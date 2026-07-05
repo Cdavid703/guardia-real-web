@@ -82,7 +82,8 @@
       "Bash(python -c \"import fitz; print\\('fitz OK'\\)\")",
       "Bash(python -c \"import pymupdf; print\\('pymupdf OK', pymupdf.__version__\\)\")",
       "Bash(python -m pip install --force-reinstall PyMuPDF)",
-      "Bash(python -c \"import pymupdf; print\\('OK', pymupdf.__version__\\)\")"
+      "Bash(python -c \"import pymupdf; print\\('OK', pymupdf.__version__\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); const d={...p.dependencies,...p.devDependencies}; console.log\\('PDF/related:', Object.keys\\(d\\).filter\\(k=>/pdf|jspdf|resend|nodemailer|mail|html2|canvas/i.test\\(k\\)\\).join\\(', '\\)||'ninguna'\\)\")"
     ]
   }
 }

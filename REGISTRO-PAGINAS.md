@@ -58,6 +58,11 @@ y **mascota (el gato)** (`/images/mascota.png`) — deben aparecer en cada pági
   entregadaEn, devueltaEn, solicitadaEn/Por, confirmadaEn, firmaNombre, respondidaEn }`.
   La **imagen de la firma** va en `integrantesPrivado.{chaqueta|kepis}Firma` (solo admin/dueño).
   El **Color Guard** se excluye de ambas. Reglas de Firestore SIN cambios.
+- **Extras**: **constancia en PDF** por integrante (admin en Ver firma; integrante en su
+  tarjeta confirmada) vía `src/lib/constancia.ts` (jsPDF). **Reporte de tallas** agregado en
+  Resumen. **Historial/bitácora** por prenda (`historial[]`) visible en el modal de inventario.
+  **Badge** de solicitudes pendientes en el menú lateral. **Aviso por correo** al admin cuando
+  alguien firma o responde que no (`/api/uniformes/notify`, Resend).
 
 ## 🎼 Repertorio — canciones y datos
 

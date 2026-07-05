@@ -75,6 +75,12 @@ export interface Integrante {
 // Control de prendas del uniforme (chaqueta, kepis) — mapeo admin + confirmación firmada
 export type PrendaKey = 'chaqueta' | 'kepis'
 
+export interface PrendaEvento {
+  tipo: 'solicitada' | 'confirmada' | 'no_tiene' | 'entregada' | 'devuelta' | 'entrega_anulada' | 'devolucion_anulada'
+  en:   string   // ISO
+  por?: string   // nombre de quien lo hizo
+}
+
 export interface ChaquetaInfo {
   tiene:                boolean   // el integrante tiene la prenda (marcado por admin o al firmar)
   estado:              'sin_registrar' | 'solicitada' | 'confirmada' | 'no_tiene'
@@ -94,6 +100,8 @@ export interface ChaquetaInfo {
   numero?:              string   // número físico de la prenda entregada
   entregadaEn?:         string   // ISO: cuándo se entregó
   devueltaEn?:          string   // ISO: cuándo se devolvió
+  // Bitácora de eventos (auditoría)
+  historial?:           PrendaEvento[]
   // La imagen de la firma (PNG base64) NO va aquí: se guarda en integrantesPrivado.
 }
 

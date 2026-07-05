@@ -14,6 +14,7 @@ import {
 } from '@/lib/firebase'
 import { FAMILIAS, getSeccion, type FamiliaKey } from '@/lib/secciones'
 import { descargarCSV } from '@/lib/integrantes-utils'
+import { descargarConstancia } from '@/lib/constancia'
 import { cn } from '@/lib/utils'
 import type { PrendaKey } from '@/types'
 
@@ -162,7 +163,7 @@ export default function PrendaPanel({ config }: { config: PrendaConfig }) {
     i: IntegranteBase,
     patch: { numero?: string | null; entregadaEn?: string | null; devueltaEn?: string | null },
   ) => {
-    await setPrendaInventario(i.id, prenda, patch, profile!.uid)
+    await setPrendaInventario(i.id, prenda, patch, profile!.uid, profile!.displayName || 'Administración')
     // Refleja en el grid (null → undefined para el tipo local).
     const local: Partial<IntegranteBase['chaqueta']> = {}
     if ('numero' in patch)      local!.numero      = patch.numero ?? undefined
@@ -358,6 +359,17 @@ function FirmaModal({ integrante, prenda, onClose }: { integrante: IntegranteBas
               <p className="text-sm text-gray-400 text-center py-8 border border-gray-100 rounded-xl">No se encontró la imagen de la firma.</p>
             )}
           </div>
+          <button
+            onClick={() => descargarConstancia({
+              nombre: `${integrante.nombre} ${integrante.apellidos}`.trim(),
+              seccion: getSeccion(integrante.seccion)?.label ?? integrante.seccion,
+              prenda, talla: c?.talla, numero: c?.numero,
+              firmaDataUrl: typeof firma === 'string' ? firma : null,
+              confirmadaEn: c?.confirmadaEn, solicitadaPorNombre: c?.solicitadaPorNombre,
+            })}
+            className="btn btn-primary btn-md w-full">
+            <FileDown size={15} /> Descargar constancia (PDF)
+          </button>
         </div>
       </div>
     </div>
@@ -439,8 +451,40 @@ function InventarioModal({ integrante, prenda, singular, onGuardar, onClose }: {
               )}
             </div>
           </div>
+
+          {/* Historial */}
+          <Historial eventos={c?.historial} />
         </div>
       </div>
+    </div>
+  )
+}
+
+const EVENTO_LABEL: Record<string, string> = {
+  solicitada: 'Se solicitó confirmación',
+  confirmada: 'Confirmó y firmó',
+  no_tiene: 'Respondió que no la tiene',
+  entregada: 'Se marcó entregada',
+  devuelta: 'Se marcó devuelta',
+  entrega_anulada: 'Se anuló la entrega',
+  devolucion_anulada: 'Se anuló la devolución',
+}
+
+function Historial({ eventos }: { eventos?: { tipo: string; en: string; por?: string }[] }) {
+  if (!eventos || eventos.length === 0) return null
+  const orden = [...eventos].sort((a, b) => (b.en ?? '').localeCompare(a.en ?? ''))
+  return (
+    <div>
+      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Historial</p>
+      <ol className="relative border-l border-gray-200 ml-1 space-y-3">
+        {orden.map((e, idx) => (
+          <li key={idx} className="ml-4">
+            <span className="absolute -left-[5px] w-2.5 h-2.5 rounded-full bg-royal" />
+            <p className="text-sm text-dark leading-tight">{EVENTO_LABEL[e.tipo] ?? e.tipo}</p>
+            <p className="text-[11px] text-gray-400">{fechaLegible(e.en)}{e.por ? ` · ${e.por}` : ''}</p>
+          </li>
+        ))}
+      </ol>
     </div>
   )
 }

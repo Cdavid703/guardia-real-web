@@ -49,6 +49,18 @@ export default function ResumenUniformes() {
     ninguna: items.filter(i => !i.chaqueta?.tiene && !i.kepis?.tiene).length,
   }), [items])
 
+  // Reporte de tallas por prenda (para fabricar/reponer)
+  const tallas = useMemo(() => {
+    const acc: Record<'chaqueta' | 'kepis', Record<string, number>> = { chaqueta: {}, kepis: {} }
+    for (const i of items) {
+      for (const p of ['chaqueta', 'kepis'] as const) {
+        const t = i[p]?.talla?.trim().toUpperCase()
+        if (t) acc[p][t] = (acc[p][t] ?? 0) + 1
+      }
+    }
+    return acc
+  }, [items])
+
   const exportCSV = () => {
     const est = (c?: ChaquetaInfo) => c?.estado === 'confirmada' ? 'Confirmada' : c?.estado === 'solicitada' ? 'Solicitada' : c?.estado === 'no_tiene' ? 'No la tiene' : c?.tiene ? 'Tiene' : 'Sin registrar'
     descargarCSV('resumen-uniformes',
@@ -67,6 +79,17 @@ export default function ResumenUniformes() {
         <Stat label="Con ambas confirmadas" value={stats.completos} color="text-green-600" />
         <Stat label="Sin ninguna prenda" value={stats.ninguna} color="text-red-500" />
       </div>
+
+      {/* Reporte de tallas */}
+      {(Object.keys(tallas.chaqueta).length > 0 || Object.keys(tallas.kepis).length > 0) && (
+        <div className="card p-4 mb-5">
+          <p className="text-sm font-serif font-bold text-navy mb-3 flex items-center gap-1.5"><Ruler size={15} className="text-royal" /> Tallas registradas (para fabricar / reponer)</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <TallasFila titulo="👔 Chaqueta" conteo={tallas.chaqueta} />
+            <TallasFila titulo="🎩 Kepis" conteo={tallas.kepis} />
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2 mb-4">
         <div className="relative flex-1 min-w-[200px]">
@@ -120,6 +143,34 @@ export default function ResumenUniformes() {
       <p className="text-xs text-gray-400 mt-4 flex items-center gap-1.5">
         <Ruler size={12} /> Las tallas aparecen junto a cada prenda confirmada. Para gestionar cada una usa las pestañas Chaquetas y Kepis.
       </p>
+    </div>
+  )
+}
+
+const ORDEN_TALLA = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+function TallasFila({ titulo, conteo }: { titulo: string; conteo: Record<string, number> }) {
+  const claves = Object.keys(conteo).sort((a, b) => {
+    const ia = ORDEN_TALLA.indexOf(a), ib = ORDEN_TALLA.indexOf(b)
+    if (ia === -1 && ib === -1) return a.localeCompare(b)
+    if (ia === -1) return 1
+    if (ib === -1) return -1
+    return ia - ib
+  })
+  const total = Object.values(conteo).reduce((a, b) => a + b, 0)
+  return (
+    <div>
+      <p className="text-xs font-semibold text-dark mb-2">{titulo} <span className="text-gray-400 font-normal">· {total} con talla</span></p>
+      {claves.length === 0 ? (
+        <p className="text-xs text-gray-400">Aún sin tallas registradas.</p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {claves.map(t => (
+            <span key={t} className="text-xs bg-navy/8 text-navy rounded-lg px-2.5 py-1 font-medium">
+              {t} <span className="text-royal font-bold">×{conteo[t]}</span>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

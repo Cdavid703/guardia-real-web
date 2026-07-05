@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Shirt, CheckCircle2, PenLine, ShieldCheck, XCircle } from 'lucide-react'
+import { Shirt, CheckCircle2, PenLine, ShieldCheck, XCircle, FileDown } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getMiIntegrante, confirmarPrendaFirmada, responderNoPrenda } from '@/lib/firebase'
+import { getMiIntegrante, confirmarPrendaFirmada, responderNoPrenda, getPrendaFirma } from '@/lib/firebase'
+import { descargarConstancia } from '@/lib/constancia'
+import { getSeccion } from '@/lib/secciones'
 import SignaturePad from '@/components/dashboard/SignaturePad'
 import type { Integrante, PrendaKey } from '@/types'
 
@@ -41,6 +43,15 @@ const TEXTOS: PrendaTexto[] = [
     confirmada: 'tienes el kepis de la banda',
   },
 ]
+
+/** Notifica al admin por correo (sin bloquear la UI). */
+function avisarAdmin(texto: PrendaTexto, integrante: string, tipo: 'confirmada' | 'no_tiene', talla?: string) {
+  fetch('/api/uniformes/notify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prenda: texto.prenda, prendaLabel: texto.prenda === 'kepis' ? 'kepis' : 'chaqueta', integrante, tipo, talla }),
+  }).catch(() => {})
+}
 
 function fechaLegible(iso?: string) {
   if (!iso) return ''
@@ -92,6 +103,7 @@ function PrendaConfirm({ texto, mi, uid, onDone }: { texto: PrendaTexto; mi: Int
     setGuardando(true)
     try {
       await confirmarPrendaFirmada(mi.id, texto.prenda, uid, firma, nombre.trim(), talla.trim())
+      avisarAdmin(texto, `${mi.nombre} ${mi.apellidos}`.trim(), 'confirmada', talla.trim())
       toast.success('¡Gracias! Tu confirmación quedó firmada.')
       setAbrir(false); setFirma('')
       onDone()
@@ -102,7 +114,8 @@ function PrendaConfirm({ texto, mi, uid, onDone }: { texto: PrendaTexto; mi: Int
   const responderNo = async () => {
     setGuardando(true)
     try {
-      await responderNoPrenda(mi.id, texto.prenda, uid)
+      await responderNoPrenda(mi.id, texto.prenda, uid, `${mi.nombre} ${mi.apellidos}`.trim())
+      avisarAdmin(texto, `${mi.nombre} ${mi.apellidos}`.trim(), 'no_tiene')
       toast.success('Registramos que no la tienes. ¡Gracias por responder!')
       onDone()
     } catch { toast.error('No se pudo guardar tu respuesta') }
@@ -111,14 +124,26 @@ function PrendaConfirm({ texto, mi, uid, onDone }: { texto: PrendaTexto; mi: Int
 
   // Ya confirmada → tarjeta verde
   if (info?.estado === 'confirmada') {
+    const descargar = async () => {
+      const firma = await getPrendaFirma(mi.id, texto.prenda).catch(() => null)
+      descargarConstancia({
+        nombre: `${mi.nombre} ${mi.apellidos}`.trim(),
+        seccion: getSeccion(mi.seccion)?.label ?? mi.seccion,
+        prenda: texto.prenda, talla: info.talla, numero: info.numero,
+        firmaDataUrl: firma, confirmadaEn: info.confirmadaEn, solicitadaPorNombre: info.solicitadaPorNombre,
+      })
+    }
     return (
       <div className="rounded-2xl border border-green-200 bg-green-50 p-4 flex items-start gap-3">
         <CheckCircle2 size={22} className="text-green-600 shrink-0 mt-0.5" />
-        <div>
+        <div className="flex-1">
           <p className="font-semibold text-green-800">Confirmado ✅</p>
           <p className="text-sm text-green-700">
             Confirmaste que {texto.confirmada}{info.confirmadaEn ? ` el ${fechaLegible(info.confirmadaEn)}` : ''}.
           </p>
+          <button onClick={descargar} className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 hover:text-green-900">
+            <FileDown size={13} /> Descargar mi constancia (PDF)
+          </button>
         </div>
       </div>
     )

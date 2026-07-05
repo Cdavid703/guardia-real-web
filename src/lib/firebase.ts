@@ -438,11 +438,13 @@ export async function setPrendaTiene(id: string, prenda: PrendaKey, tiene: boole
 
 /** Admin: solicita al integrante que confirme y firme que tiene la prenda. */
 export async function solicitarConfirmacionPrenda(id: string, prenda: PrendaKey, adminUid: string, adminNombre: string): Promise<void> {
+  const now = new Date().toISOString()
   await updateDoc(doc(db, 'integrantes', id), {
     [`${prenda}.estado`]: 'solicitada',
-    [`${prenda}.solicitadaEn`]: new Date().toISOString(),
+    [`${prenda}.solicitadaEn`]: now,
     [`${prenda}.solicitadaPorUid`]: adminUid,
     [`${prenda}.solicitadaPorNombre`]: adminNombre,
+    [`${prenda}.historial`]: arrayUnion({ tipo: 'solicitada', en: now, por: adminNombre }),
     updatedAt: serverTimestamp(),
   })
 }
@@ -458,6 +460,7 @@ export async function confirmarPrendaFirmada(
     [`${prenda}.confirmadaEn`]: now,
     [`${prenda}.firmaNombre`]: firmaNombre,
     [`${prenda}.confirmadaPorUid`]: uid,
+    [`${prenda}.historial`]: arrayUnion({ tipo: 'confirmada', en: now, por: firmaNombre }),
     updatedAt: serverTimestamp(),
   }
   if (talla && talla.trim()) baseUpd[`${prenda}.talla`] = talla.trim()
@@ -473,22 +476,30 @@ export async function confirmarPrendaFirmada(
 export async function setPrendaInventario(
   id: string, prenda: PrendaKey,
   patch: { numero?: string | null; entregadaEn?: string | null; devueltaEn?: string | null },
-  uid: string,
+  uid: string, porNombre?: string,
 ): Promise<void> {
   const upd: Record<string, unknown> = { updatedAt: serverTimestamp(), updatedBy: uid }
   if ('numero' in patch)      upd[`${prenda}.numero`]      = patch.numero ?? null
   if ('entregadaEn' in patch) upd[`${prenda}.entregadaEn`] = patch.entregadaEn ?? null
   if ('devueltaEn' in patch)  upd[`${prenda}.devueltaEn`]  = patch.devueltaEn ?? null
+  // Bitácora
+  const now = new Date().toISOString()
+  const eventos: { tipo: string; en: string; por: string }[] = []
+  if ('entregadaEn' in patch) eventos.push({ tipo: patch.entregadaEn ? 'entregada' : 'entrega_anulada', en: now, por: porNombre ?? '' })
+  if ('devueltaEn' in patch)  eventos.push({ tipo: patch.devueltaEn ? 'devuelta' : 'devolucion_anulada', en: now, por: porNombre ?? '' })
+  if (eventos.length) upd[`${prenda}.historial`] = arrayUnion(...eventos)
   await updateDoc(doc(db, 'integrantes', id), upd)
 }
 
 /** Integrante: responde que NO tiene la prenda (deja habilitado volver a preguntar). */
-export async function responderNoPrenda(id: string, prenda: PrendaKey, uid: string): Promise<void> {
+export async function responderNoPrenda(id: string, prenda: PrendaKey, uid: string, porNombre?: string): Promise<void> {
+  const now = new Date().toISOString()
   await updateDoc(doc(db, 'integrantes', id), {
     [`${prenda}.tiene`]: false,
     [`${prenda}.estado`]: 'no_tiene',
-    [`${prenda}.respondidaEn`]: new Date().toISOString(),
+    [`${prenda}.respondidaEn`]: now,
     [`${prenda}.confirmadaPorUid`]: uid,
+    [`${prenda}.historial`]: arrayUnion({ tipo: 'no_tiene', en: now, por: porNombre ?? '' }),
     updatedAt: serverTimestamp(),
   })
 }
