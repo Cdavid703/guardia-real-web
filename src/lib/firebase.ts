@@ -33,7 +33,7 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import type { UserProfile, UserRole, Integrante, Tema, Partitura, ChaquetaInfo } from '@/types'
+import type { UserProfile, UserRole, Integrante, Tema, Partitura, ChaquetaInfo, PrendaKey } from '@/types'
 import { camposFaltantes, diaMesCumple, esMenorDeEdad } from '@/lib/integrantes-utils'
 
 const firebaseConfig = {
@@ -206,6 +206,7 @@ export interface IntegranteBase {
   esMenor?:  boolean
   tienePasaporte?: boolean
   chaqueta?: ChaquetaInfo
+  kepis?:    ChaquetaInfo
   activo:    boolean
   createdAt: Date
   updatedAt: Date
@@ -234,6 +235,7 @@ function mapBase(id: string, d: Record<string, unknown>): IntegranteBase {
     esMenor:   (d.esMenor as boolean) ?? undefined,
     tienePasaporte: (d.tienePasaporte as boolean) ?? undefined,
     chaqueta:  (d.chaqueta as ChaquetaInfo) ?? undefined,
+    kepis:     (d.kepis as ChaquetaInfo) ?? undefined,
     activo:    (d.activo as boolean) ?? true,
     createdAt: (d.createdAt as Timestamp)?.toDate() ?? new Date(),
     updatedAt: (d.updatedAt as Timestamp)?.toDate() ?? new Date(),
@@ -422,53 +424,64 @@ export async function deleteIntegrante(id: string): Promise<void> {
   ])
 }
 
-// ── Control de chaquetas ───────────────────────────────────────────
+// ── Control de prendas del uniforme (chaqueta, kepis) ──────────────
 // La firma (imagen PNG) vive en integrantesPrivado (solo admin/dueño).
 // El estado y las fechas viven en la base para el grid del admin.
 
-/** Admin: marca/desmarca que el integrante tiene la chaqueta (censo presencial). */
-export async function setChaquetaTiene(id: string, tiene: boolean, uid: string): Promise<void> {
+/** Admin: marca/desmarca que el integrante tiene la prenda (censo presencial). */
+export async function setPrendaTiene(id: string, prenda: PrendaKey, tiene: boolean, uid: string): Promise<void> {
   await updateDoc(doc(db, 'integrantes', id), {
-    'chaqueta.tiene': tiene,
+    [`${prenda}.tiene`]: tiene,
     updatedAt: serverTimestamp(), updatedBy: uid,
   })
 }
 
-/** Admin: solicita al integrante que confirme y firme que tiene la chaqueta. */
-export async function solicitarConfirmacionChaqueta(id: string, adminUid: string, adminNombre: string): Promise<void> {
+/** Admin: solicita al integrante que confirme y firme que tiene la prenda. */
+export async function solicitarConfirmacionPrenda(id: string, prenda: PrendaKey, adminUid: string, adminNombre: string): Promise<void> {
   await updateDoc(doc(db, 'integrantes', id), {
-    'chaqueta.estado': 'solicitada',
-    'chaqueta.solicitadaEn': new Date().toISOString(),
-    'chaqueta.solicitadaPorUid': adminUid,
-    'chaqueta.solicitadaPorNombre': adminNombre,
+    [`${prenda}.estado`]: 'solicitada',
+    [`${prenda}.solicitadaEn`]: new Date().toISOString(),
+    [`${prenda}.solicitadaPorUid`]: adminUid,
+    [`${prenda}.solicitadaPorNombre`]: adminNombre,
     updatedAt: serverTimestamp(),
   })
 }
 
-/** Integrante: confirma y firma que tiene la chaqueta desde su portal. */
-export async function confirmarChaquetaFirmada(
-  id: string, uid: string, firmaDataUrl: string, firmaNombre: string,
+/** Integrante: confirma y firma que tiene la prenda desde su portal. */
+export async function confirmarPrendaFirmada(
+  id: string, prenda: PrendaKey, uid: string, firmaDataUrl: string, firmaNombre: string,
 ): Promise<void> {
   const now = new Date().toISOString()
   await Promise.all([
     updateDoc(doc(db, 'integrantes', id), {
-      'chaqueta.tiene': true,
-      'chaqueta.estado': 'confirmada',
-      'chaqueta.confirmadaEn': now,
-      'chaqueta.firmaNombre': firmaNombre,
-      'chaqueta.confirmadaPorUid': uid,
+      [`${prenda}.tiene`]: true,
+      [`${prenda}.estado`]: 'confirmada',
+      [`${prenda}.confirmadaEn`]: now,
+      [`${prenda}.firmaNombre`]: firmaNombre,
+      [`${prenda}.confirmadaPorUid`]: uid,
       updatedAt: serverTimestamp(),
     }),
     setDoc(doc(db, 'integrantesPrivado', id),
-      { chaquetaFirma: firmaDataUrl, chaquetaFirmaEn: now, updatedAt: serverTimestamp() },
+      { [`${prenda}Firma`]: firmaDataUrl, [`${prenda}FirmaEn`]: now, updatedAt: serverTimestamp() },
       { merge: true }),
   ])
 }
 
-/** Admin/dueño: obtiene la imagen de la firma de la chaqueta para validarla. */
-export async function getChaquetaFirma(id: string): Promise<string | null> {
+/** Integrante: responde que NO tiene la prenda (deja habilitado volver a preguntar). */
+export async function responderNoPrenda(id: string, prenda: PrendaKey, uid: string): Promise<void> {
+  await updateDoc(doc(db, 'integrantes', id), {
+    [`${prenda}.tiene`]: false,
+    [`${prenda}.estado`]: 'no_tiene',
+    [`${prenda}.respondidaEn`]: new Date().toISOString(),
+    [`${prenda}.confirmadaPorUid`]: uid,
+    updatedAt: serverTimestamp(),
+  })
+}
+
+/** Admin/dueño: obtiene la imagen de la firma de la prenda para validarla. */
+export async function getPrendaFirma(id: string, prenda: PrendaKey): Promise<string | null> {
   const s = await getDoc(doc(db, 'integrantesPrivado', id))
-  return s.exists() ? ((s.data().chaquetaFirma as string) ?? null) : null
+  return s.exists() ? ((s.data()[`${prenda}Firma`] as string) ?? null) : null
 }
 
 /**

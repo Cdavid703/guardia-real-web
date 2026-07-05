@@ -56,8 +56,9 @@ export interface Integrante {
   correosAutorizados?: string[] // correos que pueden acceder/reclamar esta ficha
   // Perfil
   fotoURL?:           string
-  // Control de chaquetas del uniforme
+  // Control de prendas del uniforme
   chaqueta?:          ChaquetaInfo
+  kepis?:             ChaquetaInfo
   // Consentimiento de tratamiento de datos (Ley 1581 / Habeas Data)
   consentimientoDatos?: boolean
   consentimientoFecha?: string  // ISO de cuándo aceptó
@@ -71,10 +72,12 @@ export interface Integrante {
   updatedBy?:         string   // uid de quien actualizó por última vez
 }
 
-// Control de chaquetas del uniforme (mapeo admin + confirmación firmada)
+// Control de prendas del uniforme (chaqueta, kepis) — mapeo admin + confirmación firmada
+export type PrendaKey = 'chaqueta' | 'kepis'
+
 export interface ChaquetaInfo {
-  tiene:                boolean   // el integrante tiene la chaqueta (marcado por admin o al firmar)
-  estado:              'sin_registrar' | 'solicitada' | 'confirmada'
+  tiene:                boolean   // el integrante tiene la prenda (marcado por admin o al firmar)
+  estado:              'sin_registrar' | 'solicitada' | 'confirmada' | 'no_tiene'
   // Solicitud de confirmación enviada por la administración
   solicitadaEn?:        string   // ISO
   solicitadaPorUid?:    string
@@ -82,7 +85,9 @@ export interface ChaquetaInfo {
   // Aceptación firmada por el integrante
   confirmadaEn?:        string   // ISO fecha/hora
   firmaNombre?:         string   // nombre con el que firmó
-  confirmadaPorUid?:    string   // uid del integrante que firmó
+  confirmadaPorUid?:    string   // uid del integrante que respondió
+  // Respuesta "no la tengo" (deja habilitado volver a preguntar)
+  respondidaEn?:        string   // ISO
   // La imagen de la firma (PNG base64) NO va aquí: se guarda en integrantesPrivado.
 }
 

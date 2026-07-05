@@ -35,23 +35,26 @@ y **mascota (el gato)** (`/images/mascota.png`) — deben aparecer en cada pági
 | Página | Ruta | Quién accede | Estado |
 |---|---|---|---|
 | Gestión de usuarios (Resumen/Integrantes/Solicitudes/Cuentas) | `/dashboard/admin` | Admin | ✅ |
-| Uniformes — control de chaquetas | `/dashboard/admin/uniformes` | Admin | ✅ |
+| Uniformes — control (Chaquetas / Kepis) | `/dashboard/admin/uniformes` | Admin | ✅ |
 | Secciones (roster + cumpleaños + mi ficha) | `/dashboard/secciones` | Miembros | ✅ |
 | Mi portal (integrante) | `/dashboard/integrante` | Integrante/admin | ✅ |
 | Repertorio (director) | `/dashboard/director` | Admin/director | ✅ (base) |
 
 ---
 
-## 🎽 Control de chaquetas (uniformes)
+## 🎽 Control de uniformes (chaquetas y kepis)
 
-- **Admin** en `/dashboard/admin/uniformes`: censo con checkbox "tiene chaqueta",
-  botón **Solicitar** (marca la solicitud + abre WhatsApp prellenado), estado por
-  integrante (Sin registrar / Solicitada / Confirmada) y **Ver firma**.
-- **Integrante** en `/integrantes` → pestaña **Uniformes**: si hay solicitud, aparece
-  el banner y puede **firmar con el dedo** (`SignaturePad`) y confirmar.
-- Datos: `integrantes.chaqueta` = `{ tiene, estado, solicitadaEn/Por, confirmadaEn, firmaNombre }`
-  (visible en el grid). La **imagen de la firma** va en `integrantesPrivado.chaquetaFirma`
-  (solo admin/dueño por reglas — no expone la firma al resto de miembros). Reglas SIN cambios.
+- **Admin** en `/dashboard/admin/uniformes`: **dos pestañas** (Chaquetas / Kepis, `?tab=`),
+  cada una con el mismo grid (`PrendaPanel`): checkbox "tiene", botón **Solicitar**
+  (marca la solicitud + abre WhatsApp prellenado con link directo), estado por integrante
+  (Sin registrar / Solicitada / Confirmada / **No la tiene**), **Ver firma** y CSV.
+  Si respondió que no, el botón pasa a **Volver a preguntar**.
+- **Integrante** en `/integrantes` → pestaña **Uniformes**: por cada prenda solicitada
+  aparece un banner con **Sí (firma con el dedo, `SignaturePad`)** o **No la tengo**.
+- Datos: `integrantes.chaqueta` y `integrantes.kepis` = `{ tiene, estado, solicitadaEn/Por,
+  confirmadaEn, firmaNombre, respondidaEn }` (para el grid). La **imagen de la firma** va en
+  `integrantesPrivado.{chaqueta|kepis}Firma` (solo admin/dueño). El **Color Guard** se
+  excluye de ambas. Reglas de Firestore SIN cambios.
 
 ## 🎼 Repertorio — canciones y datos
 
