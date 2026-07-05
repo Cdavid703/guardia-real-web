@@ -36,6 +36,8 @@ y **mascota (el gato)** (`/images/mascota.png`) — deben aparecer en cada pági
 |---|---|---|---|
 | Gestión de usuarios (Resumen/Integrantes/Solicitudes/Cuentas) | `/dashboard/admin` | Admin | ✅ |
 | Uniformes — control (Chaquetas / Kepis) | `/dashboard/admin/uniformes` | Admin | ✅ |
+| Giras y viajes (inscritos + CSV) | `/dashboard/admin/giras` | Admin | ✅ |
+| Autorización de menores (firma del acudiente) | Mi ficha → `AutorizacionMenor` | Integrante menor de edad | ✅ |
 | Secciones (roster + cumpleaños + mi ficha) | `/dashboard/secciones` | Miembros | ✅ |
 | Mi portal (integrante) | `/dashboard/integrante` | Integrante/admin | ✅ |
 | Repertorio (director) | `/dashboard/director` | Admin/director | ✅ (base) |

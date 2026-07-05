@@ -283,6 +283,20 @@ export interface BandEvent {
   notified?: boolean
 }
 
+// ── Giras / viajes ─────────────────────────────────────────────────
+export interface Gira {
+  id:          string
+  titulo:      string
+  destino:     string
+  fechaInicio: string   // YYYY-MM-DD
+  fechaFin?:   string
+  descripcion?: string
+  inscritos:   string[] // ids de integrantes inscritos
+  createdBy:   string
+  createdAt:   Date
+  updatedAt?:  Date
+}
+
 // ── Ensayos ────────────────────────────────────────────────────────
 export interface Ensayo {
   id: string

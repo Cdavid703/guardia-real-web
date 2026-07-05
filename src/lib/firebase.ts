@@ -33,7 +33,7 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import type { UserProfile, UserRole, Integrante, Tema, Partitura, ChaquetaInfo, PrendaKey, AutorizacionMenor } from '@/types'
+import type { UserProfile, UserRole, Integrante, Tema, Partitura, ChaquetaInfo, PrendaKey, AutorizacionMenor, Gira } from '@/types'
 import { camposFaltantes, diaMesCumple, esMenorDeEdad } from '@/lib/integrantes-utils'
 
 const firebaseConfig = {
@@ -541,6 +541,45 @@ export async function firmarAutorizacionMenor(
 export async function getAutorizacionMenorFirma(id: string): Promise<string | null> {
   const s = await getDoc(doc(db, 'integrantesPrivado', id))
   return s.exists() ? ((s.data().autorizacionMenorFirma as string) ?? null) : null
+}
+
+// ── Giras / viajes ─────────────────────────────────────────────────
+function mapGira(id: string, d: Record<string, unknown>): Gira {
+  return {
+    id,
+    titulo:      (d.titulo as string) ?? '',
+    destino:     (d.destino as string) ?? '',
+    fechaInicio: (d.fechaInicio as string) ?? '',
+    fechaFin:    (d.fechaFin as string) ?? undefined,
+    descripcion: (d.descripcion as string) ?? undefined,
+    inscritos:   (d.inscritos as string[]) ?? [],
+    createdBy:   (d.createdBy as string) ?? '',
+    createdAt:   (d.createdAt as Timestamp)?.toDate() ?? new Date(),
+    updatedAt:   (d.updatedAt as Timestamp)?.toDate() ?? undefined,
+  }
+}
+
+export async function getGiras(): Promise<Gira[]> {
+  const snap = await getDocs(collection(db, 'giras'))
+  return snap.docs.map(d => mapGira(d.id, d.data()))
+    .sort((a, b) => (b.fechaInicio ?? '').localeCompare(a.fechaInicio ?? ''))
+}
+
+export async function createGira(data: Partial<Gira>, uid: string): Promise<string> {
+  const ref = await addDoc(collection(db, 'giras'), {
+    ...data, inscritos: data.inscritos ?? [], createdBy: uid,
+    createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+  })
+  return ref.id
+}
+
+export async function updateGira(id: string, data: Partial<Gira>): Promise<void> {
+  const clean = { ...data }; delete (clean as Record<string, unknown>).id; delete (clean as Record<string, unknown>).createdAt
+  await updateDoc(doc(db, 'giras', id), { ...clean, updatedAt: serverTimestamp() })
+}
+
+export async function deleteGira(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'giras', id))
 }
 
 /**

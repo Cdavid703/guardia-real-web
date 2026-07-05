@@ -105,6 +105,12 @@ service cloud.firestore {
       allow write: if isAuth() && myRole() in ['admin', 'director'];
     }
 
+    // Giras / viajes — miembros leen; staff (admin/director/junta) gestiona
+    match /giras/{id} {
+      allow read:  if isMiembro();
+      allow write: if isStaff();
+    }
+
     // Donaciones — formulario público crea; solo admin ve
     match /donations/{id} {
       allow create: if true;
