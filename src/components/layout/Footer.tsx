@@ -68,7 +68,7 @@ export default function Footer() {
           <ul className="space-y-3 text-sm">
             <li className="flex items-start gap-2">
               <MapPin size={15} className="text-gold shrink-0 mt-0.5" />
-              <span>Cra. 48 # 73–36, Campo Valdés,<br/>Medellín, Antioquia</span>
+              <span>Cra. 48 A # 73–36, Campo Valdés,<br/>Medellín, Antioquia</span>
             </li>
             <li className="flex items-center gap-2">
               <Phone size={15} className="text-gold shrink-0" />

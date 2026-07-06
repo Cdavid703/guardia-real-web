@@ -393,7 +393,7 @@ export default function CalarcaPanel() {
           </a>
         </div>
         <p className="text-xs text-gray-400 mt-4 flex items-center justify-center gap-1.5">
-          <Music2 size={12} /> Carrera 48a #73-36, Campo Valdés, Medellín
+          <Music2 size={12} /> Cra. 48 A #73-36, Campo Valdés, Medellín
         </p>
       </div>
 

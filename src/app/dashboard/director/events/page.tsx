@@ -288,7 +288,7 @@ export default function EnsayosPage() {
               <div>
                 <label className="block text-sm font-semibold text-dark mb-1.5">Lugar</label>
                 <input value={form.location} onChange={e => setForm({...form, location: e.target.value})}
-                  className="input" placeholder="Sede de ensayos, Cra. 48 #73-36" />
+                  className="input" placeholder="Sede de ensayos, Cra. 48 A #73-36" />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-semibold text-dark mb-1.5">Objetivo del ensayo</label>

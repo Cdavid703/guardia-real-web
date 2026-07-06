@@ -109,7 +109,7 @@ export default function ContactoTab() {
             <div className="space-y-3 pt-4 border-t border-gray-100">
               {[
                 { icon: Mail,  title: 'Email',     detail: 'bandashowguardiareal@outlook.com', href: 'mailto:bandashowguardiareal@outlook.com' },
-                { icon: MapPin,title: 'Ubicación', detail: 'Cra. 48 #73–36\nCampo Valdés, Medellín', href: '#' },
+                { icon: MapPin,title: 'Ubicación', detail: 'Cra. 48 A #73–36\nCampo Valdés, Medellín', href: '#' },
               ].map(({ icon: Icon, title, detail, href }) => (
                 <a key={title} href={href} className="flex gap-3 group">
                   <div className="w-9 h-9 rounded-lg bg-navy/10 flex items-center justify-center shrink-0 group-hover:bg-navy transition-all">

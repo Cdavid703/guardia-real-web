@@ -23,7 +23,7 @@ export default function ContactCTASection() {
                 { icon: Phone, label: '319 773 5052', href: 'tel:+573197735052' },
                 { icon: Phone, label: '310 509 4658', href: 'tel:+573105094658' },
                 { icon: Mail,  label: 'bandashowguardiareal@outlook.com', href: 'mailto:bandashowguardiareal@outlook.com' },
-                { icon: MapPin,label: 'Cra. 48 #73–36, Campo Valdés, Medellín', href: '#' },
+                { icon: MapPin,label: 'Cra. 48 A #73–36, Campo Valdés, Medellín', href: '#' },
               ].map(({ icon: Icon, label, href }) => (
                 <a
                   key={label}

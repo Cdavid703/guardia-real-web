@@ -24,7 +24,7 @@ export default function PrivacidadPage() {
             <h2 className="font-serif text-navy text-xl font-bold mb-2">1. Responsable del tratamiento</h2>
             <p>
               La <strong>Corporación Musical Guardia Real de Antioquia</strong>, entidad cultural sin
-              ánimo de lucro con domicilio en Cra. 48 #73–36, Campo Valdés, Medellín, Colombia, es la
+              ánimo de lucro con domicilio en Cra. 48 A #73–36, Campo Valdés, Medellín, Colombia, es la
               responsable del tratamiento de los datos personales recolectados a través de este sitio web.
               Contacto: <a href="mailto:bandashowguardiareal@outlook.com" className="text-royal hover:underline">bandashowguardiareal@outlook.com</a>.
             </p>

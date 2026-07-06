@@ -332,7 +332,7 @@ export default function IntegrantePage() {
           <h3 className="font-serif font-bold text-navy text-lg mb-4">Información rápida</h3>
           <div className="space-y-3 text-sm">
             {[
-              { label: 'Sede de ensayos', value: 'Cra. 48 #73–36, Campo Valdés' },
+              { label: 'Sede de ensayos', value: 'Cra. 48 A #73–36, Campo Valdés' },
               { label: 'Contacto director', value: '319 773 5052' },
               { label: 'Email corporación', value: 'bandashowguardiareal\n@outlook.com' },
             ].map(({ label, value }) => (

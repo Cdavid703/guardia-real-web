@@ -248,7 +248,7 @@ function BrochureDocument() {
           createElement(Text, { style: s.contactItem }, '📞  312 817 9516'),
           createElement(Text, { style: s.contactItem }, '📧  bandashowguardiareal@outlook.com'),
         ),
-        createElement(Text, { style: s.contactItem }, '📍  Cra. 48 #73–36, Campo Valdés, Medellín, Antioquia'),
+        createElement(Text, { style: s.contactItem }, '📍  Cra. 48 A #73–36, Campo Valdés, Medellín, Antioquia'),
         createElement(Text, { style: s.footerUrl }, SITE),
         createElement(Text, { style: s.footerNote }, 'NIT. 811028220 — Corporación sin ánimo de lucro — Personería Jurídica vigente'),
       ),
