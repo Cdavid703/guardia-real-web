@@ -127,6 +127,11 @@ service cloud.firestore {
       }
     }
 
+    // Pagos / mensualidades — dato financiero: solo admin
+    match /pagos/{id} {
+      allow read, write: if isAdmin();
+    }
+
     // Donaciones — formulario público crea; solo admin ve
     match /donations/{id} {
       allow create: if true;

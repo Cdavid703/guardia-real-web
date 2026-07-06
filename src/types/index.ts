@@ -283,6 +283,20 @@ export interface BandEvent {
   notified?: boolean
 }
 
+// ── Pagos / mensualidades ──────────────────────────────────────────
+export interface Pago {
+  id:               string
+  integranteId:     string
+  integranteNombre?: string
+  periodo:          string   // YYYY-MM
+  pagado:           boolean
+  monto?:           number
+  fecha?:           string   // ISO (cuándo pagó)
+  metodo?:          string
+  registradoPor?:   string
+  createdAt:        Date
+}
+
 // ── Giras / viajes ─────────────────────────────────────────────────
 export interface Gira {
   id:          string

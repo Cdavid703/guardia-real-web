@@ -33,7 +33,7 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import type { UserProfile, UserRole, Integrante, Tema, Partitura, ChaquetaInfo, PrendaKey, AutorizacionMenor, Gira } from '@/types'
+import type { UserProfile, UserRole, Integrante, Tema, Partitura, ChaquetaInfo, PrendaKey, AutorizacionMenor, Gira, Pago } from '@/types'
 import { camposFaltantes, diaMesCumple, esMenorDeEdad } from '@/lib/integrantes-utils'
 
 const firebaseConfig = {
@@ -580,6 +580,41 @@ export async function updateGira(id: string, data: Partial<Gira>): Promise<void>
 
 export async function deleteGira(id: string): Promise<void> {
   await deleteDoc(doc(db, 'giras', id))
+}
+
+// ── Pagos / mensualidades ──────────────────────────────────────────
+const pagoDocId = (integranteId: string, periodo: string) => `${integranteId}_${periodo}`
+
+/** Pagos de un periodo (YYYY-MM): mapa integranteId → Pago. */
+export async function getPagosPeriodo(periodo: string): Promise<Record<string, Pago>> {
+  const snap = await getDocs(query(collection(db, 'pagos'), where('periodo', '==', periodo)))
+  const out: Record<string, Pago> = {}
+  snap.forEach(d => {
+    const data = d.data()
+    out[data.integranteId as string] = {
+      id: d.id, integranteId: data.integranteId as string, integranteNombre: data.integranteNombre as string,
+      periodo: data.periodo as string, pagado: (data.pagado as boolean) ?? true,
+      monto: data.monto as number, fecha: data.fecha as string, metodo: data.metodo as string,
+      registradoPor: data.registradoPor as string, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date(),
+    }
+  })
+  return out
+}
+
+export async function setPago(
+  integranteId: string, periodo: string,
+  data: { integranteNombre?: string; monto?: number; fecha?: string; metodo?: string }, uid: string,
+): Promise<void> {
+  await setDoc(doc(db, 'pagos', pagoDocId(integranteId, periodo)), {
+    integranteId, periodo, pagado: true,
+    integranteNombre: data.integranteNombre ?? '',
+    monto: data.monto ?? null, fecha: data.fecha ?? new Date().toISOString().slice(0, 10),
+    metodo: data.metodo ?? '', registradoPor: uid, createdAt: serverTimestamp(),
+  }, { merge: true })
+}
+
+export async function deletePago(integranteId: string, periodo: string): Promise<void> {
+  await deleteDoc(doc(db, 'pagos', pagoDocId(integranteId, periodo)))
 }
 
 // ── Asistencia a ensayos ───────────────────────────────────────────

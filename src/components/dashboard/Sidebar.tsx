@@ -8,7 +8,7 @@ import { getAllIntegrantes } from '@/lib/firebase'
 import {
   LayoutDashboard, Users, Newspaper, Image as ImageIcon,
   Music, Music2, Calendar, FileText, MessageSquare, IdCard,
-  ChevronLeft, ChevronRight, LogOut, ClipboardList, Globe, X, Heart, Shirt, Plane, ClipboardCheck,
+  ChevronLeft, ChevronRight, LogOut, ClipboardList, Globe, X, Heart, Shirt, Plane, ClipboardCheck, Wallet,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -23,6 +23,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/admin',             label: 'Gestión de usuarios', icon: Users,          roles: ['admin'] },
   { href: '/dashboard/admin/uniformes',   label: 'Uniformes',         icon: Shirt,           roles: ['admin'] },
   { href: '/dashboard/admin/giras',       label: 'Giras y viajes',    icon: Plane,           roles: ['admin'] },
+  { href: '/dashboard/admin/pagos',        label: 'Pagos',             icon: Wallet,          roles: ['admin'] },
   { href: '/dashboard/admin/noticias',    label: 'Noticias',          icon: Newspaper,       roles: ['admin'] },
   { href: '/dashboard/admin/events',      label: 'Eventos',           icon: Calendar,        roles: ['admin'] },
   { href: '/dashboard/admin/gallery',     label: 'Galería (admin)',   icon: ImageIcon,       roles: ['admin'] },
