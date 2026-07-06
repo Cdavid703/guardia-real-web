@@ -116,8 +116,10 @@ service cloud.firestore {
     match /asistencias/{ensayoId}/presentes/{integranteId} {
       allow read:   if isAuth() && myRole() in ['admin', 'director'];
       allow write:  if (isAuth() && myRole() in ['admin', 'director'])
-                    || (isAuth() && request.auth.uid in
-                        get(/databases/$(database)/documents/integrantes/$(integranteId)).data.get('linkedUids', []));
+                    || (isAuth() && (
+                        request.auth.uid in get(/databases/$(database)/documents/integrantes/$(integranteId)).data.get('linkedUids', [])
+                        || get(/databases/$(database)/documents/integrantes/$(integranteId)).data.get('linkedUid', '') == request.auth.uid
+                      ));
     }
     match /asistencias/{ensayoId} {
       allow read:  if isAuth() && myRole() in ['admin', 'director'];

@@ -609,10 +609,10 @@ export async function quitarAsistencia(ensayoId: string, integranteId: string): 
 export async function marcarMiAsistencia(ensayoId: string, uid: string): Promise<{ nombre: string; yaEstaba: boolean }> {
   const mi = await getMiIntegrante(uid)
   if (!mi) throw new Error('sin-ficha')
-  const yaEstaba = (await getDoc(doc(db, 'asistencias', ensayoId, 'presentes', mi.id))).exists()
   const nombre = `${mi.nombre} ${mi.apellidos}`.trim()
-  if (!yaEstaba) await marcarAsistencia(ensayoId, mi.id, nombre, 'auto')
-  return { nombre, yaEstaba }
+  // Escritura idempotente: no leemos antes (la lectura es solo admin/director).
+  await marcarAsistencia(ensayoId, mi.id, nombre, 'auto')
+  return { nombre, yaEstaba: false }
 }
 
 /** Datos básicos de un ensayo (para la pantalla de auto-registro). */
