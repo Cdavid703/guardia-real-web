@@ -3,6 +3,7 @@ import { Cinzel, Playfair_Display, Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Toaster } from 'sonner'
+import { Analytics } from '@vercel/analytics/next'
 
 const cinzel = Cinzel({
   subsets: ['latin'],
@@ -55,20 +56,12 @@ export const metadata: Metadata = {
     url:         'https://www.guardiarealdeantioquia.com',
     title:       'Corporación Musical Guardia Real de Antioquia',
     description: 'Banda Show con más de 42 años — Disciplina, progreso y honor',
-    images: [
-      {
-        url:    '/images/escudo.png',
-        width:  512,
-        height: 512,
-        alt:    'Escudo Guardia Real de Antioquia',
-      },
-    ],
+    // La imagen OG se genera dinámicamente en src/app/opengraph-image.tsx
   },
   twitter: {
     card:        'summary_large_image',
     title:       'Guardia Real de Antioquia',
     description: 'Banda Show con más de 42 años — Disciplina, progreso y honor',
-    images:      ['/images/escudo.png'],
   },
   robots: {
     index:  true,
@@ -89,6 +82,7 @@ export default function RootLayout({
       <body className="min-h-screen">
         <AuthProvider>
           {children}
+          <Analytics />
           <Toaster
             position="top-right"
             toastOptions={{

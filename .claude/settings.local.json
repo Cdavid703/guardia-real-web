@@ -91,7 +91,8 @@
       "Bash(node -e \"console.log\\(JSON.stringify\\(require\\('./package.json'\\).scripts,null,1\\)\\)\")",
       "Bash(npx eslint *)",
       "Bash(echo \"exit: $?\")",
-      "Bash(git commit --allow-empty -q -m 'chore: forzar redeploy \\(ruta de asistencia\\) *)"
+      "Bash(git commit --allow-empty -q -m 'chore: forzar redeploy \\(ruta de asistencia\\) *)",
+      "Bash(node -e \"const e=require\\('@vercel/analytics/package.json'\\).exports; console.log\\(Object.keys\\(e\\)\\)\")"
     ]
   }
 }
