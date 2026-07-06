@@ -113,17 +113,18 @@ service cloud.firestore {
 
     // Asistencia a ensayos — admin/director gestionan; cada integrante puede
     // auto-registrar SOLO su propia asistencia (validado contra su ficha).
-    match /asistencias/{ensayoId}/presentes/{integranteId} {
-      allow read:   if isAuth() && myRole() in ['admin', 'director'];
-      allow write:  if (isAuth() && myRole() in ['admin', 'director'])
-                    || (isAuth() && (
-                        request.auth.uid in get(/databases/$(database)/documents/integrantes/$(integranteId)).data.get('linkedUids', [])
-                        || get(/databases/$(database)/documents/integrantes/$(integranteId)).data.get('linkedUid', '') == request.auth.uid
-                      ));
-    }
     match /asistencias/{ensayoId} {
       allow read:  if isAuth() && myRole() in ['admin', 'director'];
       allow write: if isAuth() && myRole() in ['admin', 'director'];
+
+      match /presentes/{integranteId} {
+        allow read:  if isAuth() && myRole() in ['admin', 'director'];
+        allow write: if (isAuth() && myRole() in ['admin', 'director'])
+                     || (isAuth() && (
+                         request.auth.uid in get(/databases/$(database)/documents/integrantes/$(integranteId)).data.get('linkedUids', [])
+                         || get(/databases/$(database)/documents/integrantes/$(integranteId)).data.get('linkedUid', '') == request.auth.uid
+                       ));
+      }
     }
 
     // Donaciones — formulario público crea; solo admin ve
