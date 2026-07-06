@@ -5,10 +5,17 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
   ClipboardCheck, QrCode, Search, Camera, CameraOff, CheckCircle2, X, FileDown, Users2,
-  MonitorSmartphone, ScanLine,
+  MonitorSmartphone, ScanLine, BarChart3,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useAuth } from '@/contexts/AuthContext'
+import Tabs from '@/components/ui/Tabs'
+import ReportesAsistencia from '@/components/dashboard/ReportesAsistencia'
+
+const VISTAS = [
+  { id: 'tomar',    label: 'Tomar asistencia', icon: ClipboardCheck },
+  { id: 'reportes', label: 'Reportes',         icon: BarChart3 },
+]
 import {
   getAllEnsayos, getAllIntegrantes, getAsistencia, marcarAsistencia, quitarAsistencia,
   type IntegranteBase, type AsistenciaEntry,
@@ -30,6 +37,7 @@ export default function AsistenciaPage() {
   const [ensayoId, setEnsayoId] = useState('')
   const [presentes, setPresentes] = useState<Record<string, AsistenciaEntry>>({})
   const [loading, setLoading] = useState(true)
+  const [vista, setVista] = useState<'tomar' | 'reportes'>('tomar')
   const [scanning, setScanning] = useState(false)
   const [kiosco, setKiosco] = useState(false)
   const [showQr, setShowQr] = useState(false)
@@ -126,6 +134,10 @@ export default function AsistenciaPage() {
         <p className="text-gray-400 text-sm mt-1">Escanea el carné (QR) de cada integrante o márcalo a mano. Se guarda por ensayo.</p>
       </div>
 
+      <Tabs tabs={VISTAS} activeTab={vista} onChange={v => setVista(v as 'tomar' | 'reportes')} className="justify-start mb-6" />
+
+      {vista === 'reportes' ? <ReportesAsistencia /> : (
+      <>
       {/* Selección de ensayo */}
       <div className="card p-4 mb-5">
         <label className="block text-xs font-semibold text-dark mb-1">Ensayo</label>
@@ -240,6 +252,8 @@ export default function AsistenciaPage() {
             </div>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   )
