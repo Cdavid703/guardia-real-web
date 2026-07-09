@@ -118,7 +118,11 @@ service cloud.firestore {
       allow write: if isAuth() && myRole() in ['admin', 'director'];
 
       match /presentes/{integranteId} {
-        allow read:  if isAuth() && myRole() in ['admin', 'director'];
+        allow read:  if (isAuth() && myRole() in ['admin', 'director'])
+                     || (isAuth() && (
+                         request.auth.uid in get(/databases/$(database)/documents/integrantes/$(integranteId)).data.get('linkedUids', [])
+                         || get(/databases/$(database)/documents/integrantes/$(integranteId)).data.get('linkedUid', '') == request.auth.uid
+                       ));
         allow write: if (isAuth() && myRole() in ['admin', 'director'])
                      || (isAuth() && (
                          request.auth.uid in get(/databases/$(database)/documents/integrantes/$(integranteId)).data.get('linkedUids', [])
@@ -127,9 +131,14 @@ service cloud.firestore {
       }
     }
 
-    // Pagos / mensualidades — dato financiero: solo admin
+    // Pagos / mensualidades — admin gestiona; el integrante ve solo los suyos
     match /pagos/{id} {
-      allow read, write: if isAdmin();
+      allow read:  if isAdmin()
+                   || (isAuth() && (
+                       request.auth.uid in get(/databases/$(database)/documents/integrantes/$(resource.data.integranteId)).data.get('linkedUids', [])
+                       || get(/databases/$(database)/documents/integrantes/$(resource.data.integranteId)).data.get('linkedUid', '') == request.auth.uid
+                     ));
+      allow write: if isAdmin();
     }
 
     // Donaciones — formulario público crea; solo admin ve

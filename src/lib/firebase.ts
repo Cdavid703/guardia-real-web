@@ -617,6 +617,31 @@ export async function deletePago(integranteId: string, periodo: string): Promise
   await deleteDoc(doc(db, 'pagos', pagoDocId(integranteId, periodo)))
 }
 
+/** Integrante: sus propios pagos (requiere regla de lectura por dueño). */
+export async function getMisPagos(integranteId: string): Promise<Pago[]> {
+  const snap = await getDocs(query(collection(db, 'pagos'), where('integranteId', '==', integranteId)))
+  return snap.docs
+    .map(d => {
+      const data = d.data()
+      return {
+        id: d.id, integranteId: data.integranteId as string, integranteNombre: data.integranteNombre as string,
+        periodo: data.periodo as string, pagado: (data.pagado as boolean) ?? true,
+        monto: data.monto as number, fecha: data.fecha as string, metodo: data.metodo as string,
+        registradoPor: data.registradoPor as string, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date(),
+      } as Pago
+    })
+    .sort((a, b) => (b.periodo ?? '').localeCompare(a.periodo ?? ''))
+}
+
+/** Integrante: resumen de su asistencia sobre los últimos ensayos ya realizados. */
+export async function getMiAsistenciaResumen(integranteId: string, role: string): Promise<{ asistidos: number; total: number }> {
+  const ensayos = await getEnsayosForRole(role)
+  const hoy = new Date().toISOString().slice(0, 10)
+  const pasados = ensayos.filter(e => String(e.date ?? '') <= hoy).slice(-20)
+  const checks = await Promise.all(pasados.map(e => getDoc(doc(db, 'asistencias', e.id, 'presentes', integranteId))))
+  return { asistidos: checks.filter(s => s.exists()).length, total: pasados.length }
+}
+
 // ── Asistencia a ensayos ───────────────────────────────────────────
 // Se guarda en subcolección asistencias/{ensayoId}/presentes/{integranteId}
 // para que cada integrante pueda auto-registrar SOLO su propia asistencia
