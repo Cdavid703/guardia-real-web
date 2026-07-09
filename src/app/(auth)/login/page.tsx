@@ -72,7 +72,7 @@ function LoginContent() {
     try {
       await loginWithGoogle()
       toast.success('¡Bienvenido!')
-      window.location.href = '/dashboard'
+      // El redirect según el rol lo hace el efecto de arriba (getRoleDashboard).
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code ?? ''
       const msg  = err instanceof Error ? err.message : 'Error desconocido'
@@ -93,7 +93,7 @@ function LoginContent() {
     try {
       await loginWithMicrosoft()
       toast.success('¡Bienvenido!')
-      window.location.href = '/dashboard'
+      // El redirect según el rol lo hace el efecto de arriba (getRoleDashboard).
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code ?? ''
       const msg  = err instanceof Error ? err.message : 'Error desconocido'
@@ -115,7 +115,7 @@ function LoginContent() {
     try {
       await loginWithEmail(email, password)
       toast.success('¡Bienvenido!')
-      window.location.href = '/dashboard'
+      // El redirect según el rol lo hace el efecto de arriba (getRoleDashboard).
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code ?? ''
       let msg = 'Error al iniciar sesión'

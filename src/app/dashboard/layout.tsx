@@ -1,15 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { getRoleDashboard, PANEL_ROLES } from '@/lib/utils'
 import DashboardSidebar from '@/components/dashboard/Sidebar'
 import DashboardTopbar  from '@/components/dashboard/Topbar'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const router = useRouter()
 
-  if (loading) {
+  // Solo admin/director/CM tienen panel. El resto gestiona todo desde /integrantes.
+  const sinPanel = !!profile && !PANEL_ROLES.includes(profile.role)
+  useEffect(() => {
+    if (sinPanel && profile) router.replace(getRoleDashboard(profile.role))
+  }, [sinPanel, profile, router])
+
+  if (loading || sinPanel) {
     return (
       <div className="min-h-screen bg-gradient-hero flex flex-col items-center justify-center gap-4">
         <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />

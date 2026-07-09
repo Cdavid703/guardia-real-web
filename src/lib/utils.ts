@@ -6,14 +6,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** Roles con panel (dashboard) propio. El resto gestiona todo desde /integrantes. */
+export const PANEL_ROLES: UserRole[] = ['admin', 'director', 'cm']
+
 export function getRoleDashboard(role: UserRole): string {
   const map: Record<UserRole, string> = {
     admin:      '/dashboard/admin',
     director:   '/dashboard/director',
-    integrante: '/dashboard/integrante',
-    junta:      '/dashboard/junta',
     cm:         '/dashboard/cm',
-    visitante:  '/dashboard/visitante',
+    // Sin panel propio: gestionan todo desde la pestaña "Integrantes" del sitio.
+    integrante: '/integrantes',
+    junta:      '/integrantes',
+    visitante:  '/',
     pending:    '/pending',
   }
   return map[role] ?? '/pending'

@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { getAllIntegrantes } from '@/lib/firebase'
 import {
-  LayoutDashboard, Users, Newspaper, Image as ImageIcon,
+  Users, Newspaper, Image as ImageIcon,
   Music, Music2, Calendar, FileText, MessageSquare, IdCard,
   ChevronLeft, ChevronRight, LogOut, ClipboardList, Globe, X, Heart, Shirt, Plane, ClipboardCheck, Wallet,
 } from 'lucide-react'
@@ -18,8 +18,7 @@ import type { UserRole } from '@/types'
 type NavItem = { href: string; label: string; icon: React.ElementType; roles: UserRole[] }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard',                   label: 'Panel principal',   icon: LayoutDashboard, roles: ['admin','director','integrante','junta','cm'] },
-  { href: '/dashboard/secciones',         label: 'Secciones',          icon: Music2,          roles: ['admin','director','integrante','junta','cm'] },
+  { href: '/dashboard/secciones',         label: 'Secciones',          icon: Music2,          roles: ['admin','director'] },
   { href: '/dashboard/admin',             label: 'Gestión de usuarios', icon: Users,          roles: ['admin'] },
   { href: '/dashboard/admin/uniformes',   label: 'Uniformes',         icon: Shirt,           roles: ['admin'] },
   { href: '/dashboard/admin/giras',       label: 'Giras y viajes',    icon: Plane,           roles: ['admin'] },

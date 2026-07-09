@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { Menu, X, LogIn, User, LogOut, LayoutDashboard } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getRoleDashboard, getRoleLabel } from '@/lib/utils'
+import { getRoleDashboard, getRoleLabel, PANEL_ROLES } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import type { UserRole } from '@/types'
 
@@ -149,7 +149,7 @@ export default function Navbar() {
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     <LayoutDashboard size={15} />
-                    Mi panel
+                    {PANEL_ROLES.includes(profile.role) ? 'Mi panel' : 'Área de integrantes'}
                   </Link>
                   <button
                     onClick={handleLogout}
