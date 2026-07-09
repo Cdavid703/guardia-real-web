@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 import {
-  Wallet, ClipboardCheck, CalendarDays, CheckCircle2, Clock, Plane, Music2, MapPin,
+  Wallet, ClipboardCheck, CalendarDays, CheckCircle2, Clock, Plane, Music2, MapPin, BellRing,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -71,6 +71,12 @@ export default function MiResumen({ role }: { role: UserRole }) {
   const alDia = !!pagoMes?.pagado
   const pct = asis && asis.total ? Math.round((asis.asistidos / asis.total) * 100) : null
 
+  // Recordatorio: ¿el próximo evento es hoy o mañana?
+  const ymd = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d)
+  const hoy = ymd(new Date()); const manana = ymd(new Date(Date.now() + 86400000))
+  const proximo = eventos[0]
+  const cuando = proximo?.fecha === hoy ? 'Hoy' : proximo?.fecha === manana ? 'Mañana' : null
+
   return (
     <div>
       {/* Saludo */}
@@ -82,6 +88,17 @@ export default function MiResumen({ role }: { role: UserRole }) {
           <p className="text-gray-300 text-sm mt-1">Tu estado en la banda de un vistazo.</p>
         </div>
       </div>
+
+      {/* Recordatorio hoy/mañana */}
+      {proximo && cuando && (
+        <div className="mb-5 rounded-2xl border-2 border-gold/50 bg-gold/5 p-4 flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-gold flex items-center justify-center shrink-0"><BellRing size={20} className="text-navy" /></div>
+          <div className="min-w-0">
+            <p className="font-bold text-navy">{cuando} · {proximo.tipo === 'gira' ? 'Gira' : 'Ensayo'}: {proximo.titulo}</p>
+            {proximo.extra && <p className="text-sm text-gray-600 flex items-center gap-1"><MapPin size={12} /> {proximo.extra}</p>}
+          </div>
+        </div>
+      )}
 
       {/* Tarjetas */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

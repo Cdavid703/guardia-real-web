@@ -92,7 +92,8 @@
       "Bash(npx eslint *)",
       "Bash(echo \"exit: $?\")",
       "Bash(git commit --allow-empty -q -m 'chore: forzar redeploy \\(ruta de asistencia\\) *)",
-      "Bash(node -e \"const e=require\\('@vercel/analytics/package.json'\\).exports; console.log\\(Object.keys\\(e\\)\\)\")"
+      "Bash(node -e \"const e=require\\('@vercel/analytics/package.json'\\).exports; console.log\\(Object.keys\\(e\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); const d={...p.dependencies,...p.devDependencies}; console.log\\('admin/cron libs:', Object.keys\\(d\\).filter\\(k=>/firebase-admin|node-cron|cron/i.test\\(k\\)\\).join\\(', '\\)||'ninguna'\\)\")"
     ]
   }
 }
