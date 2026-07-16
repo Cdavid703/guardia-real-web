@@ -17,7 +17,8 @@ import {
 import type { UserRole } from '@/types'
 import { cn } from '@/lib/utils'
 
-const puedeGestionar = (r: UserRole) => r === 'admin' || r === 'director'
+// Ven la lista de confirmados: administración, director musical y junta directiva.
+const puedeGestionar = (r: UserRole) => r === 'admin' || r === 'director' || r === 'junta'
 
 function diaLegible(iso: string) {
   try {

@@ -137,10 +137,10 @@ service cloud.firestore {
       allow write: if isAuth() && myRole() in ['admin', 'director'];
     }
 
-    // Confirmación de asistencia a eventos del itinerario — admin/director ven todo;
+    // Confirmación de asistencia a eventos del itinerario — admin/director/junta ven todo;
     // cada integrante confirma/lee SOLO lo suyo (validado contra su ficha).
     match /confirmacionesItinerario/{id} {
-      allow read:  if (isAuth() && myRole() in ['admin', 'director'])
+      allow read:  if (isAuth() && myRole() in ['admin', 'director', 'junta'])
                    || (isAuth() && (
                        request.auth.uid in get(/databases/$(database)/documents/integrantes/$(resource.data.integranteId)).data.get('linkedUids', [])
                        || get(/databases/$(database)/documents/integrantes/$(resource.data.integranteId)).data.get('linkedUid', '') == request.auth.uid
