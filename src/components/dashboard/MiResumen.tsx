@@ -3,12 +3,13 @@
 import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 import {
-  Wallet, ClipboardCheck, CalendarDays, CheckCircle2, Clock, Plane, Music2, MapPin, BellRing,
+  Wallet, ClipboardCheck, CalendarDays, CheckCircle2, Clock, Plane, Music2, MapPin, BellRing, Flag,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getMiIntegrante, getMisPagos, getMiAsistenciaResumen, getEnsayosForRole, getGiras,
 } from '@/lib/firebase'
+import { proximosDelItinerario } from '@/lib/itinerarios'
 import { cn } from '@/lib/utils'
 import type { Integrante, Pago, UserRole } from '@/types'
 
@@ -21,7 +22,8 @@ function fechaCorta(s?: string) {
   try { return new Date(s + 'T00:00:00').toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short' }) } catch { return s }
 }
 
-interface Evento { tipo: 'ensayo' | 'gira'; titulo: string; fecha: string; extra?: string }
+interface Evento { tipo: 'ensayo' | 'gira' | 'presentacion'; titulo: string; fecha: string; extra?: string }
+const TIPO_LABEL: Record<Evento['tipo'], string> = { ensayo: 'Ensayo', gira: 'Gira', presentacion: 'Presentación' }
 
 export default function MiResumen({ role }: { role: UserRole }) {
   const { profile } = useAuth()
@@ -50,7 +52,9 @@ export default function MiResumen({ role }: { role: UserRole }) {
       const evGiras: Evento[] = giras
         .filter(g => (!f || g.inscritos.includes(f.id)) && g.fechaInicio >= hoy)
         .map(g => ({ tipo: 'gira', titulo: g.titulo, fecha: g.fechaInicio, extra: g.destino }))
-      setEventos([...evEnsayos, ...evGiras].sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, 6))
+      const evItin: Evento[] = proximosDelItinerario(hoy)
+        .map(e => ({ tipo: 'presentacion', titulo: e.titulo, fecha: e.fecha, extra: `${e.hora} · ${e.lugar}` }))
+      setEventos([...evEnsayos, ...evGiras, ...evItin].sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, 8))
 
       if (f) {
         const [ps, as] = await Promise.all([
@@ -94,7 +98,7 @@ export default function MiResumen({ role }: { role: UserRole }) {
         <div className="mb-5 rounded-2xl border-2 border-gold/50 bg-gold/5 p-4 flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-gold flex items-center justify-center shrink-0"><BellRing size={20} className="text-navy" /></div>
           <div className="min-w-0">
-            <p className="font-bold text-navy">{cuando} · {proximo.tipo === 'gira' ? 'Gira' : 'Ensayo'}: {proximo.titulo}</p>
+            <p className="font-bold text-navy">{cuando} · {TIPO_LABEL[proximo.tipo]}: {proximo.titulo}</p>
             {proximo.extra && <p className="text-sm text-gray-600 flex items-center gap-1"><MapPin size={12} /> {proximo.extra}</p>}
           </div>
         </div>
@@ -148,8 +152,8 @@ export default function MiResumen({ role }: { role: UserRole }) {
         <div className="space-y-2">
           {eventos.map((e, idx) => (
             <div key={idx} className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl p-3">
-              <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', e.tipo === 'gira' ? 'bg-gold/15 text-amber-600' : 'bg-royal/10 text-royal')}>
-                {e.tipo === 'gira' ? <Plane size={18} /> : <Music2 size={18} />}
+              <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', e.tipo === 'gira' ? 'bg-gold/15 text-amber-600' : e.tipo === 'presentacion' ? 'bg-royal/15 text-royal' : 'bg-royal/10 text-royal')}>
+                {e.tipo === 'gira' ? <Plane size={18} /> : e.tipo === 'presentacion' ? <Flag size={18} /> : <Music2 size={18} />}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-dark truncate">{e.titulo}</p>
@@ -158,7 +162,7 @@ export default function MiResumen({ role }: { role: UserRole }) {
                   {e.extra && <><span>·</span><span className="flex items-center gap-0.5"><MapPin size={10} /> {e.extra}</span></>}
                 </p>
               </div>
-              <span className={cn('text-[10px] font-medium rounded-full px-2 py-0.5 shrink-0', e.tipo === 'gira' ? 'bg-gold/20 text-amber-700' : 'bg-royal/10 text-royal')}>{e.tipo === 'gira' ? 'Gira' : 'Ensayo'}</span>
+              <span className={cn('text-[10px] font-medium rounded-full px-2 py-0.5 shrink-0', e.tipo === 'gira' ? 'bg-gold/20 text-amber-700' : 'bg-royal/10 text-royal')}>{TIPO_LABEL[e.tipo]}</span>
             </div>
           ))}
         </div>

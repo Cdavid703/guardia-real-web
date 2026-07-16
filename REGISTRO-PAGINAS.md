@@ -28,6 +28,8 @@ y **mascota (el gato)** (`/images/mascota.png`) — deben aparecer en cada pági
 | Noticias | `EquipoNoticiasPanel` | idem | ✅ |
 | Ensayos | `EquipoEnsayosPanel` | idem | ✅ |
 | Historia (archivo de viajes) | `HistoriaPanel` | idem | ✅ |
+| Inicio (pagos, asistencia, agenda del integrante) | `MiResumen` | Integrante | ✅ |
+| **Itinerario de presentaciones** | `ItinerarioPanel` (datos en `src/lib/itinerarios.ts`) | Todo el personal | ✅ |
 | **Partituras / Repertorio** | `RepertorioPanel` | Ven: todos los miembros · Suben: **admin + director musical** | ✅ |
 | Confirmación de chaqueta (dentro de Uniformes) | `ChaquetaConfirmacion` + `SignaturePad` | El integrante confirma y firma cuando el admin lo solicita | ✅ |
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { getAdminDb } from '@/lib/firebase-admin'
 import { emailWrapper, infoTable, alertBox } from '@/lib/email-helpers'
+import { itinerarioActivo } from '@/lib/itinerarios'
 
 const RESEND_KEY   = process.env.RESEND_API_KEY
 const FROM         = process.env.EMAIL_FROM ?? 'Guardia Real <onboarding@resend.dev>'
@@ -34,9 +35,15 @@ export async function GET(req: NextRequest) {
     ])
     const ensayos = ensSnap.docs.map(d => d.data() as { title?: string; startTime?: string; location?: string })
     const eventos = (evSnap.docs as { data(): unknown }[]).map(d => d.data() as { title?: string; startTime?: string; location?: string })
+    // Presentaciones del itinerario activo con fecha de mañana
+    const itin = (itinerarioActivo()?.cronograma ?? [])
+      .filter(e => e.fechaISO === manana)
+      .map(e => ({ tipo: 'Presentación', title: e.evento, startTime: e.hora, location: e.lugar }))
+
     const items = [
       ...ensayos.map(e => ({ tipo: 'Ensayo', ...e })),
       ...eventos.map(e => ({ tipo: 'Evento', ...e })),
+      ...itin,
     ]
 
     if (items.length === 0) {
