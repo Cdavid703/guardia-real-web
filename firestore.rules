@@ -131,6 +131,12 @@ service cloud.firestore {
       }
     }
 
+    // Itinerarios de presentaciones — miembros leen; admin/director editan
+    match /itinerarios/{id} {
+      allow read:  if isMiembro();
+      allow write: if isAuth() && myRole() in ['admin', 'director'];
+    }
+
     // Confirmación de asistencia a eventos del itinerario — admin/director ven todo;
     // cada integrante confirma/lee SOLO lo suyo (validado contra su ficha).
     match /confirmacionesItinerario/{id} {

@@ -34,6 +34,7 @@ import {
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import type { UserProfile, UserRole, Integrante, Tema, Partitura, ChaquetaInfo, PrendaKey, AutorizacionMenor, Gira, Pago } from '@/types'
+import { itinerarioActivo as itinerarioSeed, type Itinerario, type EventoItinerario } from '@/lib/itinerarios'
 import { camposFaltantes, diaMesCumple, esMenorDeEdad } from '@/lib/integrantes-utils'
 
 const firebaseConfig = {
@@ -667,6 +668,49 @@ export async function getMisConfirmaciones(itinerarioId: string, integranteId: s
 export async function getConfirmacionesEvento(itinerarioId: string, eventoId: string): Promise<{ integranteId: string; nombre: string; estado: EstadoConfirmacion }[]> {
   const snap = await getDocs(query(collection(db, 'confirmacionesItinerario'), where('eventoKey', '==', `${itinerarioId}_${eventoId}`)))
   return snap.docs.map(d => { const x = d.data(); return { integranteId: x.integranteId as string, nombre: x.nombre as string, estado: x.estado as EstadoConfirmacion } })
+}
+
+// ── Itinerarios (editables desde la web; semilla en código como respaldo) ──
+function mapItinerario(id: string, d: Record<string, unknown>): Itinerario {
+  return {
+    id,
+    titulo: (d.titulo as string) ?? '',
+    rango: (d.rango as string) ?? '',
+    descripcion: (d.descripcion as string) ?? '',
+    pdfUrl: (d.pdfUrl as string) ?? undefined,
+    activo: (d.activo as boolean) ?? false,
+    cronograma: ((d.cronograma as EventoItinerario[]) ?? []),
+  }
+}
+
+export async function getItinerariosDB(): Promise<Itinerario[]> {
+  const snap = await getDocs(collection(db, 'itinerarios'))
+  return snap.docs.map(d => mapItinerario(d.id, d.data()))
+}
+
+/** Itinerario activo: el de la base si existe, si no la semilla de código. */
+export async function getItinerarioActivoResuelto(): Promise<Itinerario | undefined> {
+  try {
+    const snap = await getDocs(query(collection(db, 'itinerarios'), where('activo', '==', true), limit(1)))
+    if (!snap.empty) return mapItinerario(snap.docs[0].id, snap.docs[0].data())
+  } catch { /* usa semilla */ }
+  return itinerarioSeed()
+}
+
+export async function upsertItinerario(id: string, data: Omit<Itinerario, 'id'>): Promise<void> {
+  await setDoc(doc(db, 'itinerarios', id), { ...data, updatedAt: serverTimestamp() }, { merge: true })
+}
+
+export async function deleteItinerario(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'itinerarios', id))
+}
+
+/** Marca uno como activo y desactiva los demás. */
+export async function setItinerarioActivo(id: string): Promise<void> {
+  const snap = await getDocs(collection(db, 'itinerarios'))
+  const batch = writeBatch(db)
+  snap.forEach(d => batch.update(d.ref, { activo: d.id === id }))
+  await batch.commit()
 }
 
 // ── Asistencia a ensayos ───────────────────────────────────────────

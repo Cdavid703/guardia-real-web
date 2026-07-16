@@ -8,8 +8,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getMiIntegrante, getMisPagos, getMiAsistenciaResumen, getEnsayosForRole, getGiras,
+  getItinerarioActivoResuelto,
 } from '@/lib/firebase'
-import { proximosDelItinerario } from '@/lib/itinerarios'
 import { cn } from '@/lib/utils'
 import type { Integrante, Pago, UserRole } from '@/types'
 
@@ -41,10 +41,11 @@ export default function MiResumen({ role }: { role: UserRole }) {
       const f = await getMiIntegrante(profile.uid)
       setMi(f)
 
-      // Próximos ensayos (por rol) + giras donde está inscrito
-      const [ensayos, giras] = await Promise.all([
+      // Próximos ensayos (por rol) + giras donde está inscrito + itinerario activo
+      const [ensayos, giras, itAct] = await Promise.all([
         getEnsayosForRole(role).catch(() => []),
         getGiras().catch(() => []),
+        getItinerarioActivoResuelto().catch(() => undefined),
       ])
       const evEnsayos: Evento[] = (ensayos as { id: string; title?: string; date?: string; startTime?: string; location?: string }[])
         .filter(e => String(e.date ?? '') >= hoy)
@@ -52,8 +53,9 @@ export default function MiResumen({ role }: { role: UserRole }) {
       const evGiras: Evento[] = giras
         .filter(g => (!f || g.inscritos.includes(f.id)) && g.fechaInicio >= hoy)
         .map(g => ({ tipo: 'gira', titulo: g.titulo, fecha: g.fechaInicio, extra: g.destino }))
-      const evItin: Evento[] = proximosDelItinerario(hoy)
-        .map(e => ({ tipo: 'presentacion', titulo: e.titulo, fecha: e.fecha, extra: `${e.hora} · ${e.lugar}` }))
+      const evItin: Evento[] = (itAct?.cronograma ?? [])
+        .filter(e => e.fechaISO >= hoy)
+        .map(e => ({ tipo: 'presentacion', titulo: e.evento, fecha: e.fechaISO, extra: `${e.hora} · ${e.lugar}` }))
       setEventos([...evEnsayos, ...evGiras, ...evItin].sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, 8))
 
       if (f) {

@@ -35,8 +35,13 @@ export async function GET(req: NextRequest) {
     ])
     const ensayos = ensSnap.docs.map(d => d.data() as { title?: string; startTime?: string; location?: string })
     const eventos = (evSnap.docs as { data(): unknown }[]).map(d => d.data() as { title?: string; startTime?: string; location?: string })
-    // Presentaciones del itinerario activo con fecha de mañana
-    const itin = (itinerarioActivo()?.cronograma ?? [])
+    // Presentaciones del itinerario activo (base o semilla) con fecha de mañana
+    let cronograma = itinerarioActivo()?.cronograma ?? []
+    try {
+      const itSnap = await db.collection('itinerarios').where('activo', '==', true).limit(1).get()
+      if (!itSnap.empty) cronograma = (itSnap.docs[0].data().cronograma as typeof cronograma) ?? []
+    } catch { /* usa semilla */ }
+    const itin = cronograma
       .filter(e => e.fechaISO === manana)
       .map(e => ({ tipo: 'Presentación', title: e.evento, startTime: e.hora, location: e.lugar }))
 

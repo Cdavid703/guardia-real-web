@@ -9,10 +9,10 @@ import {
 } from 'lucide-react'
 import Accordion from '@/components/ui/Accordion'
 import { useAuth } from '@/contexts/AuthContext'
-import { itinerarioActivo, type EventoItinerario } from '@/lib/itinerarios'
+import { type EventoItinerario, type Itinerario } from '@/lib/itinerarios'
 import {
   getMiIntegrante, confirmarEventoItinerario, getMisConfirmaciones, getConfirmacionesEvento,
-  type EstadoConfirmacion,
+  getItinerarioActivoResuelto, type EstadoConfirmacion,
 } from '@/lib/firebase'
 import type { UserRole } from '@/types'
 import { cn } from '@/lib/utils'
@@ -87,7 +87,8 @@ function ChecklistEvento({ eventoId }: { eventoId: string }) {
 
 export default function ItinerarioPanel({ role }: { role: UserRole }) {
   const { profile } = useAuth()
-  const it = itinerarioActivo()
+  const [it, setIt] = useState<Itinerario | undefined>(undefined)
+  const [cargando, setCargando] = useState(true)
   const [miId, setMiId] = useState<string>('')
   const [misConf, setMisConf] = useState<Record<string, EstadoConfirmacion>>({})
   const [guardando, setGuardando] = useState<string>('')
@@ -95,12 +96,17 @@ export default function ItinerarioPanel({ role }: { role: UserRole }) {
   const gestiona = puedeGestionar(role)
 
   const load = useCallback(async () => {
-    if (!profile || !it) return
+    setCargando(true)
     try {
-      const f = await getMiIntegrante(profile.uid)
-      if (f) { setMiId(f.id); setMisConf(await getMisConfirmaciones(it.id, f.id)) }
+      const activo = await getItinerarioActivoResuelto()
+      setIt(activo)
+      if (profile && activo) {
+        const f = await getMiIntegrante(profile.uid)
+        if (f) { setMiId(f.id); setMisConf(await getMisConfirmaciones(activo.id, f.id)) }
+      }
     } catch { /* silencioso */ }
-  }, [profile, it])
+    finally { setCargando(false) }
+  }, [profile])
   useEffect(() => { load() }, [load])
 
   const confirmar = async (e: EventoItinerario, estado: EstadoConfirmacion) => {
@@ -113,6 +119,8 @@ export default function ItinerarioPanel({ role }: { role: UserRole }) {
     } catch { toast.error('No se pudo guardar'); load() }
     finally { setGuardando('') }
   }
+
+  if (cargando) return <div className="flex justify-center py-16"><div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" /></div>
 
   if (!it) {
     return (
