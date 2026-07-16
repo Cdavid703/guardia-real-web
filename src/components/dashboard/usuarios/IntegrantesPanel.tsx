@@ -6,12 +6,12 @@ import { toast } from 'sonner'
 import {
   Upload, Search, Link2, Link2Off, UserCheck, UserX, ChevronDown,
   Pencil, Trash2, X, Save, AlertTriangle, Users2, FileSearch, Download,
-  Cake, Link as LinkIcon, FileDown, CheckCircle2, Phone, List, LayoutGrid,
+  Cake, Link as LinkIcon, FileDown, CheckCircle2, Phone, List, LayoutGrid, GitMerge,
 } from 'lucide-react'
 import {
   getAllIntegrantes, getAllUsers, getIntegrantePrivado, bulkImportIntegrantes,
   upsertIntegrante, linkIntegranteToUser, deleteIntegrante, autoLinkIntegrantes,
-  updateUserRole, type IntegranteBase,
+  updateUserRole, mergeIntegrantes, type IntegranteBase,
 } from '@/lib/firebase'
 import { FAMILIAS, SECCIONES_LIST, getSeccion, type FamiliaKey } from '@/lib/secciones'
 import {
@@ -82,6 +82,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
   const [creatingNew, setCreatingNew] = useState(false)
   const [preview,     setPreview]     = useState<PreviewResult | null>(null)
   const [reportOpen,  setReportOpen]  = useState(false)
+  const [dupOpen,     setDupOpen]     = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -373,6 +374,9 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
         <button onClick={() => setCreatingNew(true)} className="btn btn-ghost btn-sm">
           <Users2 size={14} /> Nuevo integrante
         </button>
+        <button onClick={() => setDupOpen(true)} className="btn btn-ghost btn-sm text-amber-600">
+          <GitMerge size={14} /> Duplicados
+        </button>
         <div className="relative ml-auto">
           <button onClick={() => setReportOpen(o => !o)} disabled={busy} className="btn btn-primary btn-sm disabled:opacity-60">
             <FileDown size={14} /> Informe ▾
@@ -619,6 +623,93 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
       {editing && <EditModal integrante={editing} uid={uid} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load() }} />}
       {creatingNew && <EditModal integrante={FICHA_VACIA} isNew uid={uid} onClose={() => setCreatingNew(false)} onSaved={() => { setCreatingNew(false); load() }} />}
       {preview && <PreviewModal result={preview} onClose={() => setPreview(null)} />}
+      {dupOpen && <DuplicadosModal integrantes={integrantes} uid={uid} onClose={() => setDupOpen(false)} onMerged={load} />}
+    </div>
+  )
+}
+
+// ── Detección y fusión de duplicados ────────────────────────────────
+function DuplicadosModal({ integrantes, uid, onClose, onMerged }: {
+  integrantes: IntegranteBase[]; uid: string; onClose: () => void; onMerged: () => Promise<void>
+}) {
+  const [busy, setBusy] = useState(false)
+  const [primarios, setPrimarios] = useState<Record<number, string>>({})
+
+  // Agrupa fichas que comparten nombre completo, correo o WhatsApp (union-find).
+  const grupos = useMemo(() => {
+    const padre: Record<string, string> = {}
+    const find = (x: string): string => { while (padre[x] && padre[x] !== x) { padre[x] = padre[padre[x]]; x = padre[x] } return x }
+    const union = (a: string, b: string) => { padre[a] = padre[a] ?? a; padre[b] = padre[b] ?? b; padre[find(a)] = find(b) }
+    const porClave = new Map<string, string>()
+    for (const i of integrantes) {
+      padre[i.id] = padre[i.id] ?? i.id
+      const claves = [
+        i.nombre && i.apellidos ? `n:${norm(`${i.nombre} ${i.apellidos}`)}` : '',
+        i.correo ? `c:${i.correo.toLowerCase().trim()}` : '',
+        i.whatsapp ? `w:${i.whatsapp.replace(/\D/g, '')}` : '',
+      ].filter(Boolean)
+      for (const k of claves) {
+        if (porClave.has(k)) union(i.id, porClave.get(k)!)
+        else porClave.set(k, i.id)
+      }
+    }
+    const byRoot: Record<string, IntegranteBase[]> = {}
+    for (const i of integrantes) { const r = find(i.id); (byRoot[r] ??= []).push(i) }
+    return Object.values(byRoot).filter(g => g.length > 1)
+      .sort((a, b) => `${a[0].nombre}`.localeCompare(b[0].nombre, 'es'))
+  }, [integrantes])
+
+  const fusionar = async (idx: number, grupo: IntegranteBase[]) => {
+    const primaryId = primarios[idx] ?? grupo[0].id
+    const secundarios = grupo.filter(g => g.id !== primaryId)
+    if (!secundarios.length) return
+    if (!confirm(`Fusionar ${secundarios.length + 1} fichas en una sola? Se conservará la marcada y se eliminarán las demás.`)) return
+    setBusy(true)
+    try {
+      for (const s of secundarios) await mergeIntegrantes(primaryId, s.id, uid)
+      toast.success('Fichas fusionadas')
+      await onMerged()
+    } catch { toast.error('No se pudo fusionar') }
+    finally { setBusy(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+          <div>
+            <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2"><GitMerge size={18} className="text-amber-600" /> Posibles duplicados</h3>
+            <p className="text-xs text-gray-400">Coinciden en nombre, correo o WhatsApp. Marca cuál conservar y fusiona.</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-navy"><X size={18} /></button>
+        </div>
+        <div className="p-6 space-y-4">
+          {grupos.length === 0 ? (
+            <div className="text-center py-10 text-gray-400"><CheckCircle2 size={32} className="mx-auto mb-2 text-green-500" /><p className="text-sm">No se encontraron duplicados. 🎉</p></div>
+          ) : grupos.map((g, idx) => {
+            const primaryId = primarios[idx] ?? g[0].id
+            return (
+              <div key={idx} className="border border-amber-200 rounded-xl overflow-hidden">
+                <div className="bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800">{g.length} fichas parecidas</div>
+                <div className="p-3 space-y-1.5">
+                  {g.map(i => (
+                    <label key={i.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <input type="radio" name={`dup-${idx}`} checked={primaryId === i.id} onChange={() => setPrimarios(p => ({ ...p, [idx]: i.id }))} className="accent-royal" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos} {i.linkedUids.length > 0 && <span className="text-[9px] bg-green-100 text-green-700 rounded-full px-1.5 py-0.5">con cuenta</span>}</p>
+                        <p className="text-xs text-gray-400 truncate">{getSeccion(i.seccion)?.label ?? i.seccion} · {i.correo || 'sin correo'} · {i.whatsapp || 'sin WhatsApp'}</p>
+                      </div>
+                    </label>
+                  ))}
+                  <div className="flex justify-end pt-1">
+                    <button onClick={() => fusionar(idx, g)} disabled={busy} className="btn btn-primary btn-sm disabled:opacity-60"><GitMerge size={13} /> Conservar la marcada y fusionar</button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }

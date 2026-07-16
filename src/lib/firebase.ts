@@ -427,6 +427,56 @@ export async function deleteIntegrante(id: string): Promise<void> {
   ])
 }
 
+/**
+ * Fusiona dos fichas de integrante: conserva `primaryId`, rellena sus campos
+ * vacíos con los del secundario, une cuentas/correos/secciones y luego elimina
+ * el secundario. Los datos sensibles se combinan igual.
+ */
+export async function mergeIntegrantes(primaryId: string, secondaryId: string, uid: string): Promise<void> {
+  if (primaryId === secondaryId) return
+  const [pSnap, sSnap, pPriv, sPriv] = await Promise.all([
+    getDoc(doc(db, 'integrantes', primaryId)),
+    getDoc(doc(db, 'integrantes', secondaryId)),
+    getIntegrantePrivado(primaryId),
+    getIntegrantePrivado(secondaryId),
+  ])
+  const pb = (pSnap.data() ?? {}) as Record<string, unknown>
+  const sb = (sSnap.data() ?? {}) as Record<string, unknown>
+  const priA = (pPriv ?? {}) as Record<string, unknown>
+  const priB = (sPriv ?? {}) as Record<string, unknown>
+
+  const pick = (a: unknown, b: unknown) => (a !== undefined && a !== null && String(a).trim() !== '') ? a : b
+  const uniq = (arr: unknown[]) => Array.from(new Set(arr.filter(v => v !== undefined && v !== null && v !== '')))
+  const arr = (v: unknown) => Array.isArray(v) ? v : []
+
+  const baseMerged: Record<string, unknown> = {
+    nombre: pick(pb.nombre, sb.nombre) ?? '', apellidos: pick(pb.apellidos, sb.apellidos) ?? '',
+    seccion: pick(pb.seccion, sb.seccion) ?? '', familia: pick(pb.familia, sb.familia) ?? '',
+    secciones: uniq([...arr(pb.secciones), ...arr(sb.secciones)]),
+    whatsapp: pick(pb.whatsapp, sb.whatsapp) ?? '', correo: pick(pb.correo, sb.correo) ?? '',
+    linkedUid: pick(pb.linkedUid, sb.linkedUid) ?? null,
+    linkedUids: uniq([...arr(pb.linkedUids), ...arr(sb.linkedUids), pb.linkedUid, sb.linkedUid]),
+    correosAutorizados: uniq([...arr(pb.correosAutorizados), ...arr(sb.correosAutorizados), pb.correo, sb.correo].map(c => typeof c === 'string' ? c.toLowerCase() : c)),
+    fotoURL: pick(pb.fotoURL, sb.fotoURL) ?? null,
+    consentimientoDatos: (pb.consentimientoDatos as boolean) || (sb.consentimientoDatos as boolean) || false,
+    consentimientoFecha: pick(pb.consentimientoFecha, sb.consentimientoFecha) ?? null,
+    chaqueta: pb.chaqueta ?? sb.chaqueta ?? null,
+    kepis: pb.kepis ?? sb.kepis ?? null,
+    autorizacionMenor: pb.autorizacionMenor ?? sb.autorizacionMenor ?? null,
+  }
+  const privMerged: Record<string, unknown> = {}
+  for (const k of CAMPOS_SENSIBLES) privMerged[k] = pick(priA[k], priB[k]) ?? (k === 'pasaporte' ? false : '')
+
+  const comp = completitud({ ...baseMerged, ...privMerged } as Partial<Integrante>)
+
+  await Promise.all([
+    updateDoc(doc(db, 'integrantes', primaryId), { ...baseMerged, ...comp, updatedAt: serverTimestamp(), updatedBy: uid }),
+    setDoc(doc(db, 'integrantesPrivado', primaryId), { ...privMerged, linkedUid: baseMerged.linkedUid ?? null, linkedUids: baseMerged.linkedUids, updatedAt: serverTimestamp() }, { merge: true }),
+    deleteDoc(doc(db, 'integrantes', secondaryId)),
+    deleteDoc(doc(db, 'integrantesPrivado', secondaryId)),
+  ])
+}
+
 // ── Control de prendas del uniforme (chaqueta, kepis) ──────────────
 // La firma (imagen PNG) vive en integrantesPrivado (solo admin/dueño).
 // El estado y las fechas viven en la base para el grid del admin.
