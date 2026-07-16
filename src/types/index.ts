@@ -2,7 +2,7 @@
 // GUARDIA REAL DE ANTIOQUIA — Tipos globales
 // ──────────────────────────────────────────────────────────────────
 
-export type UserRole = 'admin' | 'director' | 'integrante' | 'junta' | 'cm' | 'visitante' | 'pending'
+export type UserRole = 'admin' | 'director' | 'integrante' | 'junta' | 'cm' | 'collector' | 'visitante' | 'pending'
 
 export interface UserProfile {
   uid: string
@@ -289,6 +289,7 @@ export interface Pago {
   integranteId:     string
   integranteNombre?: string
   periodo:          string   // YYYY-MM
+  concepto:         string   // 'Mensualidad', 'Uniforme', 'Gira', etc.
   pagado:           boolean
   monto?:           number
   fecha?:           string   // ISO (cuándo pagó)

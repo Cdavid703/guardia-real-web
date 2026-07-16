@@ -73,7 +73,7 @@ export default function MiResumen({ role }: { role: UserRole }) {
 
   if (loading) return <div className="flex justify-center py-16"><div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" /></div>
 
-  const pagoMes = pagos.find(p => p.periodo === periodoActual())
+  const pagoMes = pagos.find(p => p.periodo === periodoActual() && (p.concepto ?? 'Mensualidad') === 'Mensualidad')
   const alDia = !!pagoMes?.pagado
   const pct = asis && asis.total ? Math.round((asis.asistidos / asis.total) * 100) : null
 
@@ -178,7 +178,7 @@ export default function MiResumen({ role }: { role: UserRole }) {
             {pagos.slice(0, 8).map(p => (
               <div key={p.id} className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl p-3">
                 <CheckCircle2 size={16} className="text-green-500 shrink-0" />
-                <p className="text-sm font-medium text-dark flex-1 capitalize">{periodoLabel(p.periodo)}</p>
+                <p className="text-sm font-medium text-dark flex-1 capitalize">{periodoLabel(p.periodo)} <span className="text-gray-400 font-normal">· {p.concepto ?? 'Mensualidad'}</span></p>
                 {p.monto != null && <span className="text-sm text-gray-500">{fmtCOP(p.monto)}</span>}
                 {p.fecha && <span className="text-xs text-gray-400">{p.fecha}</span>}
               </div>

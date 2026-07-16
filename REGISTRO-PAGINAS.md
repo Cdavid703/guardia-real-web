@@ -43,6 +43,7 @@ y **mascota (el gato)** (`/images/mascota.png`) — deben aparecer en cada pági
 | Autorización de menores (firma del acudiente) | Mi ficha → `AutorizacionMenor` | Integrante menor de edad | ✅ |
 | Secciones (roster + cumpleaños + mi ficha) | `/dashboard/secciones` | Miembros | ✅ |
 | Mi portal (integrante) | `/dashboard/integrante` | Integrante/admin | ✅ |
+| Panel del recaudador (pagos por mes/concepto) | `/dashboard/collector` | Collector/admin | ✅ |
 | Repertorio (director) | `/dashboard/director` | Admin/director | ✅ (base) |
 | Asistencia a ensayos (QR + manual + kiosco) | `/dashboard/director/asistencia` | Admin/director | ✅ |
 | Auto-registro de asistencia (QR del ensayo) | `/asistencia/[ensayoId]` | Integrante (su propia) | ✅ |

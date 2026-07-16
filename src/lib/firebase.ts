@@ -583,54 +583,49 @@ export async function deleteGira(id: string): Promise<void> {
   await deleteDoc(doc(db, 'giras', id))
 }
 
-// ── Pagos / mensualidades ──────────────────────────────────────────
-const pagoDocId = (integranteId: string, periodo: string) => `${integranteId}_${periodo}`
+// ── Pagos / mensualidades (por mes y concepto) ─────────────────────
+const slugPago = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+const pagoDocId = (integranteId: string, periodo: string, concepto: string) => `${integranteId}_${periodo}_${slugPago(concepto)}`
+const periodoConceptoKey = (periodo: string, concepto: string) => `${periodo}__${slugPago(concepto)}`
 
-/** Pagos de un periodo (YYYY-MM): mapa integranteId → Pago. */
-export async function getPagosPeriodo(periodo: string): Promise<Record<string, Pago>> {
-  const snap = await getDocs(query(collection(db, 'pagos'), where('periodo', '==', periodo)))
+function mapPago(id: string, data: Record<string, unknown>): Pago {
+  return {
+    id, integranteId: data.integranteId as string, integranteNombre: data.integranteNombre as string,
+    periodo: data.periodo as string, concepto: (data.concepto as string) ?? 'Mensualidad',
+    pagado: (data.pagado as boolean) ?? true, monto: data.monto as number, fecha: data.fecha as string,
+    metodo: data.metodo as string, registradoPor: data.registradoPor as string,
+    createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date(),
+  }
+}
+
+/** Pagos de un periodo (YYYY-MM) y concepto: mapa integranteId → Pago. */
+export async function getPagosPeriodoConcepto(periodo: string, concepto: string): Promise<Record<string, Pago>> {
+  const snap = await getDocs(query(collection(db, 'pagos'), where('periodoConcepto', '==', periodoConceptoKey(periodo, concepto))))
   const out: Record<string, Pago> = {}
-  snap.forEach(d => {
-    const data = d.data()
-    out[data.integranteId as string] = {
-      id: d.id, integranteId: data.integranteId as string, integranteNombre: data.integranteNombre as string,
-      periodo: data.periodo as string, pagado: (data.pagado as boolean) ?? true,
-      monto: data.monto as number, fecha: data.fecha as string, metodo: data.metodo as string,
-      registradoPor: data.registradoPor as string, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date(),
-    }
-  })
+  snap.forEach(d => { out[(d.data().integranteId as string)] = mapPago(d.id, d.data()) })
   return out
 }
 
 export async function setPago(
-  integranteId: string, periodo: string,
+  integranteId: string, periodo: string, concepto: string,
   data: { integranteNombre?: string; monto?: number; fecha?: string; metodo?: string }, uid: string,
 ): Promise<void> {
-  await setDoc(doc(db, 'pagos', pagoDocId(integranteId, periodo)), {
-    integranteId, periodo, pagado: true,
+  await setDoc(doc(db, 'pagos', pagoDocId(integranteId, periodo, concepto)), {
+    integranteId, periodo, concepto, periodoConcepto: periodoConceptoKey(periodo, concepto), pagado: true,
     integranteNombre: data.integranteNombre ?? '',
     monto: data.monto ?? null, fecha: data.fecha ?? new Date().toISOString().slice(0, 10),
     metodo: data.metodo ?? '', registradoPor: uid, createdAt: serverTimestamp(),
   }, { merge: true })
 }
 
-export async function deletePago(integranteId: string, periodo: string): Promise<void> {
-  await deleteDoc(doc(db, 'pagos', pagoDocId(integranteId, periodo)))
+export async function deletePago(integranteId: string, periodo: string, concepto: string): Promise<void> {
+  await deleteDoc(doc(db, 'pagos', pagoDocId(integranteId, periodo, concepto)))
 }
 
 /** Integrante: sus propios pagos (requiere regla de lectura por dueño). */
 export async function getMisPagos(integranteId: string): Promise<Pago[]> {
   const snap = await getDocs(query(collection(db, 'pagos'), where('integranteId', '==', integranteId)))
-  return snap.docs
-    .map(d => {
-      const data = d.data()
-      return {
-        id: d.id, integranteId: data.integranteId as string, integranteNombre: data.integranteNombre as string,
-        periodo: data.periodo as string, pagado: (data.pagado as boolean) ?? true,
-        monto: data.monto as number, fecha: data.fecha as string, metodo: data.metodo as string,
-        registradoPor: data.registradoPor as string, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date(),
-      } as Pago
-    })
+  return snap.docs.map(d => mapPago(d.id, d.data()))
     .sort((a, b) => (b.periodo ?? '').localeCompare(a.periodo ?? ''))
 }
 
