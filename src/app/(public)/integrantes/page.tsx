@@ -85,7 +85,7 @@ function IntegrantesContent() {
       <Tabs tabs={TABS} activeTab={activeTab} onChange={handleChange} className="mb-8 justify-start" />
 
       {activeTab === 'inicio'     && <MiResumen role={profile.role} />}
-      {activeTab === 'itinerario' && <ItinerarioPanel />}
+      {activeTab === 'itinerario' && <ItinerarioPanel role={profile.role} />}
       {activeTab === 'ficha'      && <MiFichaIntegrante />}
       {activeTab === 'partituras' && <RepertorioPanel role={profile.role} />}
       {activeTab === 'uniformes'  && <UniformesPanel />}

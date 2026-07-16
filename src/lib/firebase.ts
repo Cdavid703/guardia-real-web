@@ -642,6 +642,33 @@ export async function getMiAsistenciaResumen(integranteId: string, role: string)
   return { asistidos: checks.filter(s => s.exists()).length, total: pasados.length }
 }
 
+// ── Confirmación de asistencia a eventos del itinerario ────────────
+export type EstadoConfirmacion = 'asiste' | 'no'
+const confItinId = (itin: string, ev: string, int: string) => `${itin}_${ev}_${int}`
+
+export async function confirmarEventoItinerario(
+  itinerarioId: string, eventoId: string, integranteId: string, nombre: string, estado: EstadoConfirmacion,
+): Promise<void> {
+  await setDoc(doc(db, 'confirmacionesItinerario', confItinId(itinerarioId, eventoId, integranteId)), {
+    itinerarioId, eventoId, integranteId, nombre, estado, en: new Date().toISOString(),
+    eventoKey: `${itinerarioId}_${eventoId}`, miKey: `${itinerarioId}_${integranteId}`,
+  }, { merge: true })
+}
+
+/** Integrante: sus confirmaciones de un itinerario → { eventoId: estado }. */
+export async function getMisConfirmaciones(itinerarioId: string, integranteId: string): Promise<Record<string, EstadoConfirmacion>> {
+  const snap = await getDocs(query(collection(db, 'confirmacionesItinerario'), where('miKey', '==', `${itinerarioId}_${integranteId}`)))
+  const out: Record<string, EstadoConfirmacion> = {}
+  snap.forEach(d => { const x = d.data(); out[x.eventoId as string] = x.estado as EstadoConfirmacion })
+  return out
+}
+
+/** Admin: confirmaciones de un evento. */
+export async function getConfirmacionesEvento(itinerarioId: string, eventoId: string): Promise<{ integranteId: string; nombre: string; estado: EstadoConfirmacion }[]> {
+  const snap = await getDocs(query(collection(db, 'confirmacionesItinerario'), where('eventoKey', '==', `${itinerarioId}_${eventoId}`)))
+  return snap.docs.map(d => { const x = d.data(); return { integranteId: x.integranteId as string, nombre: x.nombre as string, estado: x.estado as EstadoConfirmacion } })
+}
+
 // ── Asistencia a ensayos ───────────────────────────────────────────
 // Se guarda en subcolección asistencias/{ensayoId}/presentes/{integranteId}
 // para que cada integrante pueda auto-registrar SOLO su propia asistencia

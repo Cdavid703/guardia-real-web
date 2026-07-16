@@ -131,6 +131,21 @@ service cloud.firestore {
       }
     }
 
+    // Confirmación de asistencia a eventos del itinerario — admin/director ven todo;
+    // cada integrante confirma/lee SOLO lo suyo (validado contra su ficha).
+    match /confirmacionesItinerario/{id} {
+      allow read:  if (isAuth() && myRole() in ['admin', 'director'])
+                   || (isAuth() && (
+                       request.auth.uid in get(/databases/$(database)/documents/integrantes/$(resource.data.integranteId)).data.get('linkedUids', [])
+                       || get(/databases/$(database)/documents/integrantes/$(resource.data.integranteId)).data.get('linkedUid', '') == request.auth.uid
+                     ));
+      allow write: if (isAuth() && myRole() in ['admin', 'director'])
+                   || (isAuth() && (
+                       request.auth.uid in get(/databases/$(database)/documents/integrantes/$(request.resource.data.integranteId)).data.get('linkedUids', [])
+                       || get(/databases/$(database)/documents/integrantes/$(request.resource.data.integranteId)).data.get('linkedUid', '') == request.auth.uid
+                     ));
+    }
+
     // Pagos / mensualidades — admin gestiona; el integrante ve solo los suyos
     match /pagos/{id} {
       allow read:  if isAdmin()

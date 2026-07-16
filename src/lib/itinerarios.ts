@@ -5,6 +5,7 @@
 // ──────────────────────────────────────────────────────────────────
 
 export interface EventoItinerario {
+  id:             string   // estable, para asistencia/confirmaciones
   fechaISO:       string   // 'YYYY-MM-DD'
   hora:           string   // '6:00 p.m.'
   evento:         string
@@ -45,28 +46,28 @@ export const ITINERARIOS: Itinerario[] = [
     activo: true,
     cronograma: [
       {
-        fechaISO: '2026-07-18', hora: '6:00 p.m.',
+        id: 'e-cootrasana', fechaISO: '2026-07-18', hora: '6:00 p.m.',
         evento: 'Desfile Artístico en honor a la Virgen del Carmen',
         lugar: 'Cootrasana — San Antonio de Prado',
         puntoEncuentro: 'Se informará por WhatsApp',
         uniforme: ['Pantalón overol BLANCO', 'Quepis con pluma AZUL', ...BASE_UNIFORME],
       },
       {
-        fechaISO: '2026-07-19', hora: '9:30 a.m.',
+        id: 'e-silleteritos', fechaISO: '2026-07-19', hora: '9:30 a.m.',
         evento: 'XVIII Desfile de Silleteritos',
         lugar: 'Santa Elena',
         puntoEncuentro: 'Se informará por WhatsApp',
         uniforme: ['Pantalón overol NEGRO', 'Quepis con pluma AZUL', ...BASE_UNIFORME],
       },
       {
-        fechaISO: '2026-07-20', hora: '9:30 a.m.',
+        id: 'e-laceja', fechaISO: '2026-07-20', hora: '9:30 a.m.',
         evento: 'Desfile conmemoración de la Independencia',
         lugar: 'Municipio de La Ceja',
         puntoEncuentro: 'Se informará por WhatsApp',
         uniforme: ['Pantalón overol NEGRO', 'Quepis con pluma BLANCA', ...BASE_UNIFORME],
       },
       {
-        fechaISO: '2026-07-20', hora: '1:20 p.m.',
+        id: 'e-bello', fechaISO: '2026-07-20', hora: '1:20 p.m.',
         evento: 'Concurso de Bandas',
         lugar: 'Bello, Antioquia',
         puntoEncuentro: 'Se informará por WhatsApp',
