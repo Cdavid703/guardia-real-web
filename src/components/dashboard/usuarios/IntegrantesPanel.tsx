@@ -667,11 +667,15 @@ function DuplicadosModal({ integrantes, uid, onClose, onMerged }: {
     setBusy(true)
     try {
       for (const s of secundarios) await mergeIntegrantes(primaryId, s.id, uid)
-      toast.success('Fichas fusionadas')
+      toast.success('Fichas fusionadas. Ambos correos quedaron autorizados; usa "Enlazar coincidentes" para relacionar las cuentas.', { duration: 7000 })
       await onMerged()
     } catch { toast.error('No se pudo fusionar') }
     finally { setBusy(false) }
   }
+
+  // Correos que quedarán autorizados en la ficha fusionada (de todo el grupo).
+  const correosDe = (g: IntegranteBase[]) =>
+    Array.from(new Set(g.flatMap(i => [i.correo, ...(i.correosAutorizados ?? [])]).map(c => (c ?? '').toLowerCase().trim()).filter(Boolean)))
 
   return (
     <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
@@ -701,6 +705,12 @@ function DuplicadosModal({ integrantes, uid, onClose, onMerged }: {
                       </div>
                     </label>
                   ))}
+                  {correosDe(g).length > 1 && (
+                    <div className="mx-2 mt-1 text-xs text-royal bg-royal/5 border border-royal/15 rounded-lg px-2.5 py-1.5 flex items-start gap-1.5">
+                      <LinkIcon size={12} className="shrink-0 mt-0.5" />
+                      <span>Quedarán autorizados ambos correos: <strong className="break-all">{correosDe(g).join(', ')}</strong> — luego usa &ldquo;Enlazar coincidentes&rdquo; para relacionar las cuentas.</span>
+                    </div>
+                  )}
                   <div className="flex justify-end pt-1">
                     <button onClick={() => fusionar(idx, g)} disabled={busy} className="btn btn-primary btn-sm disabled:opacity-60"><GitMerge size={13} /> Conservar la marcada y fusionar</button>
                   </div>
