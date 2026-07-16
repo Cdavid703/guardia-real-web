@@ -663,7 +663,12 @@ function DuplicadosModal({ integrantes, uid, onClose, onMerged }: {
     const primaryId = primarios[idx] ?? grupo[0].id
     const secundarios = grupo.filter(g => g.id !== primaryId)
     if (!secundarios.length) return
-    if (!confirm(`Fusionar ${secundarios.length + 1} fichas en una sola? Se conservará la marcada y se eliminarán las demás.`)) return
+    const correos = correosDe(grupo)
+    if (!confirm(
+      `Fusionar ${secundarios.length + 1} fichas en una sola.\n\n` +
+      `Se conserva la ficha marcada y ${correos.length > 1 ? `AMBOS correos quedan autorizados (${correos.join(', ')})` : 'el correo queda autorizado'}. ` +
+      `La otra tarjeta se elimina, pero su correo NO se pierde.\n\n¿Continuar?`,
+    )) return
     setBusy(true)
     try {
       for (const s of secundarios) await mergeIntegrantes(primaryId, s.id, uid)
