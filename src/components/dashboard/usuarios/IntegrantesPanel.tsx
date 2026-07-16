@@ -28,6 +28,17 @@ type SortBy = 'nombre' | 'apellido' | 'seccion' | 'incompletos'
 /** Normaliza texto para comparar/buscar sin importar mayúsculas ni acentos. */
 const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 
+/** Puntaje de completitud de una ficha (para sugerir cuál conservar al fusionar). */
+function scoreFicha(i: IntegranteBase): number {
+  let s = 0
+  if (i.datosCompletos === true) s += 1000
+  s -= (i.faltan?.length ?? 20) * 10           // menos faltantes → más completa
+  for (const v of [i.correo, i.whatsapp, i.fotoURL, i.seccion, i.consentimientoDatos]) if (v) s += 2
+  s += (i.correosAutorizados?.length ?? 0)
+  s += i.linkedUids.length * 3                  // conservar preferentemente la que ya tiene cuenta
+  return s
+}
+
 /** ¿La ficha fue creada en los últimos 7 días? */
 const esNuevo = (createdAt?: Date) => {
   if (!createdAt) return false
@@ -696,18 +707,28 @@ function DuplicadosModal({ integrantes, uid, onClose, onMerged }: {
           {grupos.length === 0 ? (
             <div className="text-center py-10 text-gray-400"><CheckCircle2 size={32} className="mx-auto mb-2 text-green-500" /><p className="text-sm">No se encontraron duplicados. 🎉</p></div>
           ) : grupos.map((g, idx) => {
-            const primaryId = primarios[idx] ?? g[0].id
+            const mejorId = [...g].sort((a, b) => scoreFicha(b) - scoreFicha(a))[0].id
+            const primaryId = primarios[idx] ?? mejorId
             return (
               <div key={idx} className="border border-amber-200 rounded-xl overflow-hidden">
-                <div className="bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800">{g.length} fichas parecidas</div>
+                <div className="bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800">{g.length} fichas parecidas · <span className="font-normal">se sugiere conservar la más completa (marcada)</span></div>
                 <div className="p-3 space-y-1.5">
                   {g.map(i => (
-                    <label key={i.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <label key={i.id} className={cn('flex items-center gap-3 p-2 rounded-lg cursor-pointer', primaryId === i.id ? 'bg-green-50 border border-green-200' : 'hover:bg-gray-50')}>
                       <input type="radio" name={`dup-${idx}`} checked={primaryId === i.id} onChange={() => setPrimarios(p => ({ ...p, [idx]: i.id }))} className="accent-royal" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos} {i.linkedUids.length > 0 && <span className="text-[9px] bg-green-100 text-green-700 rounded-full px-1.5 py-0.5">con cuenta</span>}</p>
-                        <p className="text-xs text-gray-400 truncate">{getSeccion(i.seccion)?.label ?? i.seccion} · {i.correo || 'sin correo'} · {i.whatsapp || 'sin WhatsApp'}</p>
+                        <p className="text-sm font-medium text-dark truncate flex items-center gap-1.5">
+                          {i.nombre} {i.apellidos}
+                          {i.id === mejorId && <span className="text-[9px] bg-green-100 text-green-700 rounded-full px-1.5 py-0.5 font-bold shrink-0">MÁS COMPLETA</span>}
+                          {i.linkedUids.length > 0 && <span className="text-[9px] bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5 shrink-0">con cuenta</span>}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {getSeccion(i.seccion)?.label ?? i.seccion} · {i.correo || 'sin correo'} · {i.whatsapp || 'sin WhatsApp'}
+                          {i.datosCompletos === false && <span className="text-red-500"> · faltan {i.faltan?.length ?? '?'} datos</span>}
+                          {i.datosCompletos === true && <span className="text-green-600"> · datos completos</span>}
+                        </p>
                       </div>
+                      {primaryId === i.id && <span className="text-[10px] text-green-700 font-semibold shrink-0">Se conserva</span>}
                     </label>
                   ))}
                   {correosDe(g).length > 1 && (
@@ -716,6 +737,7 @@ function DuplicadosModal({ integrantes, uid, onClose, onMerged }: {
                       <span>Quedarán autorizados ambos correos: <strong className="break-all">{correosDe(g).join(', ')}</strong> — luego usa &ldquo;Enlazar coincidentes&rdquo; para relacionar las cuentas.</span>
                     </div>
                   )}
+                  <p className="mx-2 text-[11px] text-gray-400">No se pierden datos: la ficha que se conserva se completa con los datos de la(s) otra(s) antes de eliminarla(s).</p>
                   <div className="flex justify-end pt-1">
                     <button onClick={() => fusionar(idx, g)} disabled={busy} className="btn btn-primary btn-sm disabled:opacity-60"><GitMerge size={13} /> Conservar la marcada y fusionar</button>
                   </div>
