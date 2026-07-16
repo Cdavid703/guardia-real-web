@@ -13,8 +13,8 @@ import type { UserProfile, UserRole, Integrante } from '@/types'
 const ROLES: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'Administrador' }, { value: 'director', label: 'Director Musical' },
   { value: 'integrante', label: 'Integrante' }, { value: 'junta', label: 'Junta Directiva' },
-  { value: 'cm', label: 'Community Manager' }, { value: 'visitante', label: 'Visitante' },
-  { value: 'pending', label: 'Pendiente' },
+  { value: 'cm', label: 'Community Manager' }, { value: 'collector', label: 'Recaudador' },
+  { value: 'visitante', label: 'Visitante' }, { value: 'pending', label: 'Pendiente' },
 ]
 
 // Roles que pertenecen a la banda y deberían tener ficha en el roster
@@ -116,7 +116,7 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
 
       {/* Filtros */}
       <div className="flex flex-wrap gap-2 mb-4">
-        {[['all','Todos'],['pending','Pendientes'],['admin','Administradores'],['director','Directores'],['integrante','Integrantes'],['junta','Junta'],['cm','Community Manager'],['visitante','Visitantes']].map(([v, l]) => (
+        {[['all','Todos'],['pending','Pendientes'],['admin','Administradores'],['director','Directores'],['integrante','Integrantes'],['junta','Junta'],['cm','Community Manager'],['collector','Recaudadores'],['visitante','Visitantes']].map(([v, l]) => (
           <button key={v} onClick={() => setFilter(v as UserRole | 'all')} className={cn('px-3 py-1.5 rounded-full text-xs font-semibold border transition-all', filter === v ? 'bg-navy text-white border-navy' : 'bg-white text-gray-600 border-gray-200 hover:border-navy hover:text-navy')}>
             {l}<span className="ml-1.5 opacity-60">{v === 'all' ? users.length : users.filter(u => u.role === v).length}</span>
           </button>
