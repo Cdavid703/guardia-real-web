@@ -107,13 +107,17 @@ function LoginContent() {
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email || !password) {
+    // Limpia espacios/saltos invisibles que agregan el autollenado o copiar-pegar
+    // desde WhatsApp (causan auth/invalid-argument o credenciales inválidas).
+    const mail = email.trim().toLowerCase()
+    const pass = password.trim()
+    if (!mail || !pass) {
       toast.error('Ingresa correo y contraseña')
       return
     }
     setLoadingEmail(true)
     try {
-      await loginWithEmail(email, password)
+      await loginWithEmail(mail, pass)
       toast.success('¡Bienvenido!')
       // El redirect según el rol lo hace el efecto de arriba (getRoleDashboard).
     } catch (err: unknown) {
@@ -123,6 +127,8 @@ function LoginContent() {
         msg = 'Correo o contraseña incorrectos'
       } else if (code === 'auth/too-many-requests') {
         msg = 'Demasiados intentos. Espera unos minutos.'
+      } else if (code === 'auth/invalid-argument' || code === 'auth/invalid-email') {
+        msg = 'Revisa el correo: bórralo y escríbelo a mano, sin espacios al inicio ni al final.'
       } else if (code) {
         msg = `Error: ${code}`
       }
