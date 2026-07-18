@@ -91,20 +91,19 @@ export async function ensureUserProfile(user: User): Promise<void> {
   const ref = doc(db, 'users', user.uid)
   const snap = await getDoc(ref)
   if (!snap.exists()) {
-    const profile: Omit<UserProfile, 'createdAt' | 'updatedAt'> & {
-      createdAt: ReturnType<typeof serverTimestamp>
-      updatedAt: ReturnType<typeof serverTimestamp>
-    } = {
+    // OJO: Firestore rechaza valores `undefined` (error invalid-argument).
+    // Los usuarios creados a mano con correo/contraseña no tienen foto ni nombre,
+    // así que photoURL solo se incluye cuando existe.
+    await setDoc(ref, {
       uid:         user.uid,
       email:       user.email ?? '',
       displayName: user.displayName ?? user.email?.split('@')[0] ?? 'Sin nombre',
-      photoURL:    user.photoURL ?? undefined,
+      ...(user.photoURL ? { photoURL: user.photoURL } : {}),
       role:        'pending',
       active:      true,
       createdAt:   serverTimestamp(),
       updatedAt:   serverTimestamp(),
-    }
-    await setDoc(ref, profile)
+    })
   }
 }
 
