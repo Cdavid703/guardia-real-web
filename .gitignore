@@ -39,3 +39,4 @@ next-env.d.ts
 
 # Datos sensibles de integrantes (no versionar)
 data/*.local.json
+/fotos/

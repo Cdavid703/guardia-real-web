@@ -15,6 +15,7 @@ y **mascota (el gato)** (`/images/mascota.png`) — deben aparecer en cada pági
 | Eventos | `/eventos` | Todos | ✅ |
 | Galería | `/galeria` | Todos | ✅ |
 | Galería — Calarcá 2026 | `/galeria/calarca-2026` | Todos | ✅ |
+| Galerías por evento (data-driven) | `/galeria/[evento]` (`src/lib/galerias.ts`) | Todos | ✅ |
 | Noticias | `/noticias` | Todos | ✅ |
 | Ingresos (formulario) | `/ingresos` | Todos | ✅ |
 | Donar | `/donar` | Todos | ✅ |

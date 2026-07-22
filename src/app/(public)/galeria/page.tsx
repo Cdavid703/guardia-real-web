@@ -7,6 +7,7 @@ import { Instagram, ExternalLink, Loader2, Play, Youtube, Link as LinkIcon, Trop
 import PageBanner from '@/components/layout/PageBanner'
 import { getPublicGalleryMedia } from '@/lib/firebase'
 import { getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/lib/utils'
+import { GALERIAS, fotoUrl } from '@/lib/galerias'
 
 interface InstaPost {
   id:            string
@@ -125,6 +126,32 @@ export default function GaleriaPage() {
             </div>
           </div>
         </Link>
+      </div>
+
+      {/* ── Eventos del fin de semana (18–20 jul 2026) ──────────────── */}
+      <div className="section-container pt-6 pb-2">
+        <div className="flex items-center gap-2 mb-4">
+          <Camera size={16} className="text-royal" />
+          <h2 className="font-display text-navy text-lg font-bold uppercase tracking-wider">Galerías por evento</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {GALERIAS.map(g => (
+            <Link key={g.slug} href={`/galeria/${g.slug}`} className="group rounded-2xl overflow-hidden border border-gray-200 hover:border-gold/60 shadow-sm hover:shadow-xl transition-all">
+              <div className="relative aspect-[16/10]">
+                <Image src={fotoUrl(g.slug, g.cover)} alt={g.tituloCorto} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-navy/85 via-navy/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h3 className="font-display text-white text-base font-bold uppercase tracking-wide leading-tight">{g.tituloCorto}</h3>
+                  <p className="text-gold text-[11px] mt-0.5">{g.fecha}</p>
+                  <div className="flex items-center gap-3 text-[11px] text-gray-300 mt-1.5">
+                    <span className="flex items-center gap-1"><Camera size={11} className="text-gold" /> {g.fotos} fotos</span>
+                    {g.videos > 0 && <span className="flex items-center gap-1"><Video size={11} className="text-gold" /> {g.videos} videos</span>}
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
       <div className="section-container py-16">
