@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 import {
-  Wallet, ClipboardCheck, CalendarDays, CheckCircle2, Clock, Plane, Music2, MapPin, BellRing, Flag,
+  Wallet, ClipboardCheck, CalendarDays, CheckCircle2, Clock, Plane, Music2, MapPin, BellRing, Flag, Receipt,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -180,7 +180,13 @@ export default function MiResumen({ role }: { role: UserRole }) {
                 <CheckCircle2 size={16} className="text-green-500 shrink-0" />
                 <p className="text-sm font-medium text-dark flex-1 capitalize">{periodoLabel(p.periodo)} <span className="text-gray-400 font-normal">· {p.concepto ?? 'Mensualidad'}</span></p>
                 {p.monto != null && <span className="text-sm text-gray-500">{fmtCOP(p.monto)}</span>}
-                {p.fecha && <span className="text-xs text-gray-400">{p.fecha}</span>}
+                {p.fecha && <span className="text-xs text-gray-400 hidden sm:inline">{p.fecha}</span>}
+                {p.token && (
+                  <a href={`/recibo/${p.id}?t=${p.token}`} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-royal hover:underline shrink-0">
+                    <Receipt size={13} /> Ver recibo
+                  </a>
+                )}
               </div>
             ))}
           </div>

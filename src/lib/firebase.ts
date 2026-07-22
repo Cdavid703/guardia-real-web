@@ -30,6 +30,7 @@ import {
   deleteField,
   writeBatch,
   arrayUnion,
+  runTransaction,
   Timestamp,
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
@@ -661,7 +662,15 @@ export async function setPago(
   data: { integranteNombre?: string; monto?: number; fecha?: string; metodo?: string }, uid: string,
 ): Promise<{ id: string; reciboNumero: string; token: string }> {
   const id = pagoDocId(integranteId, periodo, concepto)
-  const reciboNumero = `GRA-${Date.now().toString(36).toUpperCase()}`
+  // Consecutivo anual atómico: GRA-2026-0001, 0002... (contador en pagos/contador-<año>)
+  const year = new Date().getFullYear()
+  const reciboNumero = await runTransaction(db, async tx => {
+    const cRef = doc(db, 'pagos', `contador-${year}`)
+    const s = await tx.get(cRef)
+    const n = ((s.data()?.n as number) ?? 0) + 1
+    tx.set(cRef, { n, tipo: 'contador', year }, { merge: true })
+    return `GRA-${year}-${String(n).padStart(4, '0')}`
+  })
   const token = Math.random().toString(36).slice(2, 10)
   await setDoc(doc(db, 'pagos', id), {
     integranteId, periodo, concepto, periodoConcepto: periodoConceptoKey(periodo, concepto), pagado: true,
@@ -686,6 +695,13 @@ export async function setFirmaRecibo(uid: string, firmaDataUrl: string): Promise
 
 export async function deletePago(integranteId: string, periodo: string, concepto: string): Promise<void> {
   await deleteDoc(doc(db, 'pagos', pagoDocId(integranteId, periodo, concepto)))
+}
+
+/** Admin/recaudador: pagos registrados en una fecha (para el cierre de caja). */
+export async function getPagosPorFecha(fecha: string): Promise<Pago[]> {
+  const snap = await getDocs(query(collection(db, 'pagos'), where('fecha', '==', fecha)))
+  return snap.docs.map(d => mapPago(d.id, d.data()))
+    .sort((a, b) => (a.pagadoEn ?? '').localeCompare(b.pagadoEn ?? ''))
 }
 
 /** Integrante: sus propios pagos (requiere regla de lectura por dueño). */

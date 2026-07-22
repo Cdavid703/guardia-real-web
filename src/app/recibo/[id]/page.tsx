@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { getAdminDb } from '@/lib/firebase-admin'
 import { getSeccion, instrumentoImage } from '@/lib/secciones'
 import PrintButton from './PrintButton'
+import ReciboQR from './ReciboQR'
 
 export const dynamic = 'force-dynamic'
 
@@ -143,17 +144,23 @@ export default async function ReciboPage({ params, searchParams }: {
               <span className="font-display text-[#1B2E6E] text-2xl font-bold">{fmtCOP(data.monto as number | null)}</span>
             </div>
 
-            {/* Firma */}
-            <div className="mt-6 pt-4 border-t border-gray-100 text-center">
-              {firma ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={firma} alt="Firma" className="h-16 mx-auto object-contain" />
-              ) : (
-                <div className="h-10" />
-              )}
-              <div className="w-48 border-b border-gray-300 mx-auto" />
-              <p className="text-[#1B2E6E] text-sm font-bold mt-1.5">Recibido: {nombreRecaudador}</p>
-              <p className="text-[10px] text-gray-400 uppercase tracking-widest">Recaudador oficial</p>
+            {/* Firma + QR de verificación */}
+            <div className="mt-6 pt-4 border-t border-gray-100 flex items-end justify-between gap-4">
+              <div className="flex-1 text-center">
+                {firma ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={firma} alt="Firma" className="h-16 mx-auto object-contain" />
+                ) : (
+                  <div className="h-10" />
+                )}
+                <div className="w-48 border-b border-gray-300 mx-auto" />
+                <p className="text-[#1B2E6E] text-sm font-bold mt-1.5">Recibido: {nombreRecaudador}</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest">Recaudador oficial</p>
+              </div>
+              <div className="text-center shrink-0">
+                <ReciboQR url={`https://www.guardiarealdeantioquia.com/recibo/${id}?t=${t}`} />
+                <p className="text-[8px] text-gray-400 uppercase tracking-wide mt-1">Verificar recibo</p>
+              </div>
             </div>
           </div>
 

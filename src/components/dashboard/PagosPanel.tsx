@@ -9,7 +9,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getAllIntegrantes, getPagosPeriodoConcepto, setPago, deletePago,
-  getFirmaRecibo, setFirmaRecibo, type IntegranteBase,
+  getFirmaRecibo, setFirmaRecibo, getPagosPorFecha, type IntegranteBase,
 } from '@/lib/firebase'
 import SignaturePad from '@/components/dashboard/SignaturePad'
 import { FAMILIAS, getSeccion, type FamiliaKey } from '@/lib/secciones'
@@ -40,6 +40,7 @@ export default function PagosPanel() {
   const [firmaCargada, setFirmaCargada] = useState(false)
   const [firmaModal, setFirmaModal] = useState(false)
   const [pendienteFirma, setPendienteFirma] = useState<IntegranteBase | null>(null)
+  const [cierreOpen, setCierreOpen] = useState(false)
 
   useEffect(() => {
     if (!profile) return
@@ -178,6 +179,7 @@ export default function PagosPanel() {
         <button onClick={() => setSoloPendientes(s => !s)} className={cn('btn btn-sm', soloPendientes ? 'btn-primary' : 'btn-ghost')}>
           <Clock size={14} /> {soloPendientes ? 'Viendo pendientes' : 'Solo pendientes'}
         </button>
+        <button onClick={() => setCierreOpen(true)} className="btn btn-ghost btn-sm"><Receipt size={14} /> Cierre de caja</button>
         <button onClick={exportar} className="btn btn-ghost btn-sm"><FileDown size={14} /> Exportar</button>
       </div>
 
@@ -226,6 +228,8 @@ export default function PagosPanel() {
           })}
         </div>
       )}
+
+      {cierreOpen && <CierreCajaModal onClose={() => setCierreOpen(false)} />}
 
       {firmaModal && profile && (
         <FirmaReciboModal
@@ -314,6 +318,95 @@ function FirmaReciboModal({ nombre, onClose, onSaved }: {
           <button onClick={guardar} disabled={guardando || !firma} className="btn btn-primary btn-md flex-1 justify-center disabled:opacity-50">
             {guardando ? 'Guardando...' : 'Guardar firma y continuar'}
           </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Cierre de caja del día ──────────────────────────────────────────
+function CierreCajaModal({ onClose }: { onClose: () => void }) {
+  const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
+  const [pagos, setPagos] = useState<Pago[] | null>(null)
+
+  useEffect(() => {
+    setPagos(null)
+    getPagosPorFecha(fecha).then(setPagos).catch(() => setPagos([]))
+  }, [fecha])
+
+  const total = (pagos ?? []).reduce((s, p) => s + (p.monto ?? 0), 0)
+  const porConcepto = useMemo(() => {
+    const m: Record<string, { n: number; monto: number }> = {}
+    for (const p of pagos ?? []) {
+      const k = p.concepto || 'Mensualidad'
+      m[k] = { n: (m[k]?.n ?? 0) + 1, monto: (m[k]?.monto ?? 0) + (p.monto ?? 0) }
+    }
+    return Object.entries(m).sort((a, b) => b[1].monto - a[1].monto)
+  }, [pagos])
+
+  const exportar = () => {
+    if (!pagos?.length) return
+    descargarCSV(`cierre-caja-${fecha}`,
+      ['Recibo', 'Hora', 'Integrante', 'Concepto', 'Periodo', 'Monto'],
+      pagos.map(p => [
+        p.reciboNumero ?? '', p.pagadoEn ? new Date(p.pagadoEn).toLocaleTimeString('es-CO') : '',
+        p.integranteNombre ?? '', p.concepto, p.periodo, p.monto != null ? String(p.monto) : '',
+      ]))
+    toast.success('Cierre de caja descargado')
+  }
+
+  return (
+    <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-navy px-5 py-4 flex items-center justify-between">
+          <div className="text-white">
+            <p className="font-serif font-bold flex items-center gap-2"><Receipt size={17} className="text-gold" /> Cierre de caja</p>
+            <p className="text-gray-300 text-xs">Pagos registrados por fecha</p>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white"><X size={18} /></button>
+        </div>
+        <div className="p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <label className="text-xs font-semibold text-dark">Fecha</label>
+            <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className="input max-w-[180px]" />
+            <button onClick={exportar} className="btn btn-ghost btn-sm ml-auto"><FileDown size={13} /> CSV</button>
+          </div>
+
+          {pagos === null ? (
+            <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-royal/30 border-t-royal rounded-full animate-spin" /></div>
+          ) : pagos.length === 0 ? (
+            <p className="text-center text-gray-400 text-sm py-10">No hay pagos registrados en esta fecha.</p>
+          ) : (
+            <>
+              {/* Total */}
+              <div className="bg-[#F2C100]/10 border border-[#F2C100]/40 rounded-xl px-4 py-3 flex items-center justify-between mb-4">
+                <div><p className="text-[10px] font-bold text-[#8a6d00] uppercase tracking-widest">Total recaudado</p><p className="text-xs text-gray-500">{pagos.length} pago(s)</p></div>
+                <span className="font-display text-navy text-2xl font-bold">{fmtCOP(total) || '$0'}</span>
+              </div>
+
+              {/* Por concepto */}
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Por concepto</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {porConcepto.map(([c, v]) => (
+                  <span key={c} className="text-xs bg-navy/8 text-navy rounded-lg px-2.5 py-1">{c}: <strong>{fmtCOP(v.monto) || v.n}</strong> <span className="text-gray-400">({v.n})</span></span>
+                ))}
+              </div>
+
+              {/* Lista */}
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Recibos</p>
+              <div className="space-y-1">
+                {pagos.map(p => (
+                  <div key={p.id} className="flex items-center gap-2 text-sm py-1.5 border-b border-gray-50">
+                    <span className="text-[10px] text-gray-400 tabular-nums shrink-0">{p.pagadoEn ? new Date(p.pagadoEn).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                    <span className="text-dark truncate flex-1">{p.integranteNombre}</span>
+                    <span className="text-gray-400 text-xs shrink-0">{p.concepto}</span>
+                    <span className="font-semibold text-navy shrink-0">{fmtCOP(p.monto)}</span>
+                    {p.token && <a href={`/recibo/${p.id}?t=${p.token}`} target="_blank" rel="noopener noreferrer" className="text-royal shrink-0"><Receipt size={13} /></a>}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
