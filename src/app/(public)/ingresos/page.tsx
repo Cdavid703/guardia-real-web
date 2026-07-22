@@ -55,6 +55,7 @@ const schema = z.object({
   email:                   z.string().email('Email inválido'),
   telefono:                z.string().min(7, 'Número inválido'),
   instrumentoInteres:      z.string().min(1, 'Selecciona un instrumento'),
+  instrumentoPropio:       z.boolean(),
   experienciaPrevia:       z.boolean(),
   instrumentosExperiencia: z.string().optional(),
   nivelExperiencia:        z.enum(['ninguna', 'basica', 'intermedia', 'avanzada']),
@@ -82,10 +83,11 @@ export default function IngresosPage() {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { experienciaPrevia: false, nivelExperiencia: 'ninguna' },
+    defaultValues: { instrumentoPropio: false, experienciaPrevia: false, nivelExperiencia: 'ninguna' },
   })
 
   const experienciaPrevia = watch('experienciaPrevia')
+  const instrumentoPropio = watch('instrumentoPropio')
 
   useEffect(() => {
     if (profile) {
@@ -294,6 +296,30 @@ export default function IngresosPage() {
                   </div>
                   {errors.disponibilidad && <p className="text-red-500 text-xs mt-1">{errors.disponibilidad.message}</p>}
                 </div>
+              </div>
+
+              {/* Instrumento propio */}
+              <div>
+                <label className="block text-sm font-semibold text-dark mb-2">
+                  ¿Tienes instrumento propio? *
+                </label>
+                <div className="flex gap-4">
+                  {[{ value: true, label: 'Sí' }, { value: false, label: 'No' }].map(({ value, label }) => (
+                    <label
+                      key={String(value)}
+                      className="flex items-center gap-2 px-4 py-2.5 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-royal transition-colors has-[:checked]:border-royal has-[:checked]:bg-royal/5"
+                    >
+                      <input
+                        type="radio"
+                        className="sr-only"
+                        checked={instrumentoPropio === value}
+                        onChange={() => setValue('instrumentoPropio', value)}
+                      />
+                      <span className="text-sm font-medium">{label}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-400 mt-1.5">Si no tienes, la corporación puede facilitarte uno según disponibilidad.</p>
               </div>
 
               {/* Experiencia previa */}

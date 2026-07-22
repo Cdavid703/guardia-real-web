@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
                   ['Barrio',               d.barrio],
                   ['Ciudad',               d.ciudad],
                   ['Instrumento de interés', d.instrumentoInteres],
+                  ['Instrumento propio',        d.instrumentoPropio ? 'Sí' : 'No'],
                   ['Experiencia previa',        d.experienciaPrevia ? 'Sí' : 'No'],
                   ...(d.experienciaPrevia && d.instrumentosExperiencia
                     ? [['Instrumento(s) / Banda(s)', d.instrumentosExperiencia]] as [string, string][]

@@ -128,7 +128,7 @@ export default function SolicitudesPanel({ uid }: { uid: string }) {
                 {expanded === ing.id && (
                   <div className="mt-4 ml-12 space-y-4">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                      {[['Email', ing.email],['Teléfono', ing.telefono],['Identificación', ing.identificacion],['Fecha nacimiento', ing.fechaNacimiento],['Barrio / Ciudad', `${ing.barrio}, ${ing.ciudad}`],['Instrumento', ing.instrumentoInteres],['Experiencia', ing.experienciaPrevia ? `Sí — ${ing.nivelExperiencia}` : 'No'],['Disponibilidad', ing.disponibilidad],['Cómo se enteró', ing.comoSeEntero]].map(([l, v]) => (
+                      {[['Email', ing.email],['Teléfono', ing.telefono],['Identificación', ing.identificacion],['Fecha nacimiento', ing.fechaNacimiento],['Barrio / Ciudad', `${ing.barrio}, ${ing.ciudad}`],['Instrumento', ing.instrumentoInteres],['Instrumento propio', ing.instrumentoPropio ? 'Sí' : 'No'],['Experiencia', ing.experienciaPrevia ? `Sí — ${ing.nivelExperiencia}` : 'No'],['Disponibilidad', ing.disponibilidad],['Cómo se enteró', ing.comoSeEntero]].map(([l, v]) => (
                         <div key={l}><p className="font-bold text-gray-400 uppercase tracking-wider mb-0.5">{l}</p><p className="text-dark break-words">{v}</p></div>
                       ))}
                       {ing.mensaje && <div className="col-span-full"><p className="font-bold text-gray-400 uppercase tracking-wider mb-0.5">Mensaje</p><p className="text-dark italic">{ing.mensaje}</p></div>}

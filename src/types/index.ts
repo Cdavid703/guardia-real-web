@@ -244,6 +244,7 @@ export interface IngresoRequest {
   telefono: string
   // datos musicales
   instrumentoInteres:      string
+  instrumentoPropio:       boolean
   experienciaPrevia:       boolean
   instrumentosExperiencia?: string
   nivelExperiencia:        'ninguna' | 'basica' | 'intermedia' | 'avanzada'
