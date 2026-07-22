@@ -12,7 +12,7 @@ export const PANEL_ROLES: UserRole[] = ['admin', 'director', 'cm', 'collector']
 export function getRoleDashboard(role: UserRole): string {
   const map: Record<UserRole, string> = {
     admin:      '/dashboard/admin',
-    director:   '/dashboard/director',
+    director:   '/dashboard/director/events',
     cm:         '/dashboard/cm',
     collector:  '/dashboard/collector',
     // Sin panel propio: gestionan todo desde la pestaña "Integrantes" del sitio.

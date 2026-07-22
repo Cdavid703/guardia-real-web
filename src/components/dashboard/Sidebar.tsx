@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { getAllIntegrantes } from '@/lib/firebase'
 import {
   Users, Newspaper, Image as ImageIcon,
-  Music, Music2, Calendar, FileText, MessageSquare, IdCard,
+  Music2, Calendar, FileText, MessageSquare, IdCard,
   ChevronLeft, ChevronRight, LogOut, ClipboardList, Globe, X, Heart, Shirt, Plane, ClipboardCheck, Wallet, CalendarClock,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -28,7 +28,6 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/admin/gallery',     label: 'Galería (admin)',   icon: ImageIcon,       roles: ['admin'] },
   { href: '/dashboard/admin/quotes',      label: 'Cotizaciones',      icon: MessageSquare,   roles: ['admin'] },
   { href: '/dashboard/admin/donaciones',  label: 'Donaciones',        icon: Heart,           roles: ['admin'] },
-  { href: '/dashboard/director',          label: 'Repertorio',        icon: Music,           roles: ['admin','director'] },
   { href: '/dashboard/director/events',   label: 'Ensayos',           icon: ClipboardList,   roles: ['admin','director'] },
   { href: '/dashboard/director/asistencia', label: 'Asistencia',      icon: ClipboardCheck,  roles: ['admin','director'] },
   { href: '/dashboard/admin/itinerarios',  label: 'Itinerarios',       icon: CalendarClock,   roles: ['admin','director'] },

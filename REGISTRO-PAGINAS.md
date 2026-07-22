@@ -46,7 +46,7 @@ y **mascota (el gato)** (`/images/mascota.png`) — deben aparecer en cada pági
 | Mi portal (integrante) | `/dashboard/integrante` | Integrante/admin | ✅ |
 | Panel del recaudador (pagos por mes/concepto) | `/dashboard/collector` | Collector/admin | ✅ |
 | Recibo digital de pago (enlace con token) | `/recibo/[pagoId]?t=token` | Quien tenga el enlace | ✅ |
-| Repertorio (director) | `/dashboard/director` | Admin/director | ✅ (base) |
+| ~~Repertorio (director)~~ | `/dashboard/director` → redirige a Ensayos | — | 🗑️ Reemplazado por Integrantes → Partituras |
 | Asistencia a ensayos (QR + manual + kiosco) | `/dashboard/director/asistencia` | Admin/director | ✅ |
 | Auto-registro de asistencia (QR del ensayo) | `/asistencia/[ensayoId]` | Integrante (su propia) | ✅ |
 
