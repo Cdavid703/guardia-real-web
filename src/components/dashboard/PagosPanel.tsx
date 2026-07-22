@@ -1,14 +1,17 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 import {
   Wallet, Search, CheckCircle2, Clock, FileDown, MessageCircle, X, Coins, Tag,
+  Receipt, PenLine, ImageUp,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
-  getAllIntegrantes, getPagosPeriodoConcepto, setPago, deletePago, type IntegranteBase,
+  getAllIntegrantes, getPagosPeriodoConcepto, setPago, deletePago,
+  getFirmaRecibo, setFirmaRecibo, type IntegranteBase,
 } from '@/lib/firebase'
+import SignaturePad from '@/components/dashboard/SignaturePad'
 import { FAMILIAS, getSeccion, type FamiliaKey } from '@/lib/secciones'
 import { descargarCSV } from '@/lib/integrantes-utils'
 import type { Pago } from '@/types'
@@ -32,6 +35,16 @@ export default function PagosPanel() {
   const [search, setSearch] = useState('')
   const [fam, setFam] = useState<FamiliaKey | 'all'>('all')
   const [soloPendientes, setSoloPendientes] = useState(false)
+  // Firma del recaudador (para el recibo). Se pide la primera vez.
+  const [firma, setFirma] = useState<string | null>(null)
+  const [firmaCargada, setFirmaCargada] = useState(false)
+  const [firmaModal, setFirmaModal] = useState(false)
+  const [pendienteFirma, setPendienteFirma] = useState<IntegranteBase | null>(null)
+
+  useEffect(() => {
+    if (!profile) return
+    getFirmaRecibo(profile.uid).then(f => { setFirma(f); setFirmaCargada(true) }).catch(() => setFirmaCargada(true))
+  }, [profile])
 
   const loadRoster = useCallback(async () => {
     try { setRoster(await getAllIntegrantes()) } catch { toast.error('Error al cargar integrantes') }
@@ -62,13 +75,36 @@ export default function PagosPanel() {
       .sort((a, b) => `${a.apellidos}`.localeCompare(b.apellidos, 'es'))
   }, [roster, fam, soloPendientes, search, pagos])
 
+  const linkRecibo = (p?: Pago) => p?.token ? `${window.location.origin}/recibo/${p.id}?t=${p.token}` : null
+
+  const abrirWhatsAppRecibo = (i: IntegranteBase, p: Pago) => {
+    const tel = (i.whatsapp || '').replace(/\D/g, '')
+    const url = linkRecibo(p)
+    if (!tel || !url) return false
+    const monto = p.monto != null ? ` por ${fmtCOP(p.monto)}` : ''
+    const msg = encodeURIComponent(
+      `Hola ${i.nombre}, ✅ registramos tu pago de ${p.concepto} de ${periodoLabel(p.periodo)}${monto}.\n` +
+      `Este es tu recibo oficial de la Guardia Real de Antioquia:\n${url}\n¡Gracias por tu aporte! 🎺`)
+    window.open(`https://wa.me/57${tel}?text=${msg}`, '_blank', 'noopener')
+    return true
+  }
+
   const marcar = async (i: IntegranteBase) => {
     if (!profile) return
+    // La primera vez se anexa la firma del recaudador (va en cada recibo).
+    if (firmaCargada && !firma) { setPendienteFirma(i); setFirmaModal(true); return }
     const monto = cuota ? Number(cuota) : undefined
     const nombre = `${i.nombre} ${i.apellidos}`.trim()
-    setPagos(p => ({ ...p, [i.id]: { id: `${i.id}_${periodo}`, integranteId: i.id, integranteNombre: nombre, periodo, concepto, pagado: true, monto, fecha: new Date().toISOString().slice(0, 10), createdAt: new Date() } }))
-    try { await setPago(i.id, periodo, concepto.trim(), { integranteNombre: nombre, monto }, profile.uid) }
-    catch { toast.error('No se pudo guardar'); loadPagos() }
+    try {
+      const { id, reciboNumero, token } = await setPago(i.id, periodo, concepto.trim(), { integranteNombre: nombre, monto }, profile.uid)
+      const pago: Pago = { id, integranteId: i.id, integranteNombre: nombre, periodo, concepto, pagado: true, monto, fecha: new Date().toISOString().slice(0, 10), pagadoEn: new Date().toISOString(), reciboNumero, token, createdAt: new Date() }
+      setPagos(p => ({ ...p, [i.id]: pago }))
+      // Correo automático con el recibo (no bloquea la UI)
+      fetch('/api/recibos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pagoId: id }) }).catch(() => {})
+      // WhatsApp con el recibo listo para enviar (1 toque)
+      const abierto = abrirWhatsAppRecibo(i, pago)
+      toast.success(`Recibo ${reciboNumero} generado${abierto ? ' · WhatsApp abierto para enviarlo' : ''} · correo enviado`)
+    } catch { toast.error('No se pudo guardar'); loadPagos() }
   }
 
   const desmarcar = async (i: IntegranteBase) => {
@@ -164,7 +200,19 @@ export default function PagosPanel() {
                   </p>
                 </div>
                 {p?.pagado ? (
-                  <button onClick={() => desmarcar(i)} className="btn btn-ghost btn-sm text-red-500 shrink-0"><X size={13} /> Quitar</button>
+                  <>
+                    {p.token && (
+                      <>
+                        <a href={linkRecibo(p) ?? '#'} target="_blank" rel="noopener noreferrer" title="Ver recibo"
+                          className="btn btn-ghost btn-sm text-royal shrink-0"><Receipt size={13} /> Recibo</a>
+                        {i.whatsapp && (
+                          <button onClick={() => abrirWhatsAppRecibo(i, p)} title="Reenviar recibo por WhatsApp"
+                            className="w-8 h-8 rounded-lg bg-[#25D366]/10 text-[#1ebd5a] hover:bg-[#25D366] hover:text-white flex items-center justify-center shrink-0"><MessageCircle size={14} /></button>
+                        )}
+                      </>
+                    )}
+                    <button onClick={() => desmarcar(i)} className="btn btn-ghost btn-sm text-red-500 shrink-0"><X size={13} /> Quitar</button>
+                  </>
                 ) : (
                   <>
                     {i.whatsapp && (
@@ -178,6 +226,96 @@ export default function PagosPanel() {
           })}
         </div>
       )}
+
+      {firmaModal && profile && (
+        <FirmaReciboModal
+          nombre={profile.displayName || 'Recaudador'}
+          onClose={() => { setFirmaModal(false); setPendienteFirma(null) }}
+          onSaved={async (dataUrl) => {
+            try {
+              await setFirmaRecibo(profile.uid, dataUrl)
+              setFirma(dataUrl)
+              setFirmaModal(false)
+              toast.success('Firma guardada. Aparecerá en todos tus recibos.')
+              const pend = pendienteFirma
+              setPendienteFirma(null)
+              if (pend) setTimeout(() => marcar(pend), 100)
+            } catch { toast.error('No se pudo guardar la firma') }
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── Modal: firma del recaudador (primera vez) ───────────────────────
+function FirmaReciboModal({ nombre, onClose, onSaved }: {
+  nombre: string; onClose: () => void; onSaved: (dataUrl: string) => Promise<void>
+}) {
+  const [firma, setFirmaLocal] = useState('')
+  const [guardando, setGuardando] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  // Foto de la firma → se reduce y convierte a PNG
+  const subirFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return
+    if (!file.type.startsWith('image/')) { toast.error('Debe ser una imagen'); return }
+    const img = new window.Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const scale = Math.min(1, 600 / img.width)
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+      setFirmaLocal(canvas.toDataURL('image/png'))
+      toast.success('Foto de firma cargada')
+    }
+    img.src = URL.createObjectURL(file)
+    e.target.value = ''
+  }
+
+  const guardar = async () => {
+    if (!firma) { toast.error('Dibuja tu firma o sube una foto') ; return }
+    setGuardando(true)
+    await onSaved(firma)
+    setGuardando(false)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2"><PenLine size={17} className="text-royal" /> Tu firma para los recibos</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-navy"><X size={18} /></button>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          Solo se pide una vez. Aparecerá en cada recibo como <strong>&ldquo;Recibido: {nombre}&rdquo;</strong>.
+        </p>
+
+        {firma ? (
+          <div className="border-2 border-dashed border-green-300 bg-green-50/50 rounded-xl p-3 text-center mb-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={firma} alt="Firma" className="h-20 mx-auto object-contain" />
+            <button onClick={() => setFirmaLocal('')} className="text-xs text-red-500 hover:underline mt-1">Cambiar</button>
+          </div>
+        ) : (
+          <SignaturePad onChange={setFirmaLocal} />
+        )}
+
+        <div className="flex items-center gap-3 my-3">
+          <div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-400 uppercase">o</span><div className="flex-1 h-px bg-gray-200" />
+        </div>
+        <button onClick={() => fileRef.current?.click()} className="btn btn-ghost btn-md w-full justify-center">
+          <ImageUp size={16} /> Subir foto de mi firma
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={subirFoto} />
+
+        <div className="flex gap-3 mt-5">
+          <button onClick={guardar} disabled={guardando || !firma} className="btn btn-primary btn-md flex-1 justify-center disabled:opacity-50">
+            {guardando ? 'Guardando...' : 'Guardar firma y continuar'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

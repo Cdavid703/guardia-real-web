@@ -643,6 +643,7 @@ function mapPago(id: string, data: Record<string, unknown>): Pago {
     periodo: data.periodo as string, concepto: (data.concepto as string) ?? 'Mensualidad',
     pagado: (data.pagado as boolean) ?? true, monto: data.monto as number, fecha: data.fecha as string,
     metodo: data.metodo as string, registradoPor: data.registradoPor as string,
+    reciboNumero: data.reciboNumero as string, token: data.token as string, pagadoEn: data.pagadoEn as string,
     createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date(),
   }
 }
@@ -658,13 +659,29 @@ export async function getPagosPeriodoConcepto(periodo: string, concepto: string)
 export async function setPago(
   integranteId: string, periodo: string, concepto: string,
   data: { integranteNombre?: string; monto?: number; fecha?: string; metodo?: string }, uid: string,
-): Promise<void> {
-  await setDoc(doc(db, 'pagos', pagoDocId(integranteId, periodo, concepto)), {
+): Promise<{ id: string; reciboNumero: string; token: string }> {
+  const id = pagoDocId(integranteId, periodo, concepto)
+  const reciboNumero = `GRA-${Date.now().toString(36).toUpperCase()}`
+  const token = Math.random().toString(36).slice(2, 10)
+  await setDoc(doc(db, 'pagos', id), {
     integranteId, periodo, concepto, periodoConcepto: periodoConceptoKey(periodo, concepto), pagado: true,
     integranteNombre: data.integranteNombre ?? '',
     monto: data.monto ?? null, fecha: data.fecha ?? new Date().toISOString().slice(0, 10),
+    pagadoEn: new Date().toISOString(), reciboNumero, token,
     metodo: data.metodo ?? '', registradoPor: uid, createdAt: serverTimestamp(),
   }, { merge: true })
+  return { id, reciboNumero, token }
+}
+
+// ── Firma del recaudador para los recibos ──────────────────────────
+/** Firma (PNG base64) de quien registra pagos; se pide la primera vez. */
+export async function getFirmaRecibo(uid: string): Promise<string | null> {
+  const s = await getDoc(doc(db, 'users', uid))
+  return s.exists() ? ((s.data().firmaRecibo as string) ?? null) : null
+}
+
+export async function setFirmaRecibo(uid: string, firmaDataUrl: string): Promise<void> {
+  await updateDoc(doc(db, 'users', uid), { firmaRecibo: firmaDataUrl, updatedAt: serverTimestamp() })
 }
 
 export async function deletePago(integranteId: string, periodo: string, concepto: string): Promise<void> {

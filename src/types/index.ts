@@ -296,6 +296,10 @@ export interface Pago {
   fecha?:           string   // ISO (cuándo pagó)
   metodo?:          string
   registradoPor?:   string
+  // Recibo digital
+  reciboNumero?:    string
+  token?:           string   // acceso privado al recibo
+  pagadoEn?:        string   // ISO con fecha y hora exacta
   createdAt:        Date
 }
 

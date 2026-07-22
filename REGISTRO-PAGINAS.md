@@ -45,6 +45,7 @@ y **mascota (el gato)** (`/images/mascota.png`) — deben aparecer en cada pági
 | Secciones (roster + cumpleaños + mi ficha) | `/dashboard/secciones` | Miembros | ✅ |
 | Mi portal (integrante) | `/dashboard/integrante` | Integrante/admin | ✅ |
 | Panel del recaudador (pagos por mes/concepto) | `/dashboard/collector` | Collector/admin | ✅ |
+| Recibo digital de pago (enlace con token) | `/recibo/[pagoId]?t=token` | Quien tenga el enlace | ✅ |
 | Repertorio (director) | `/dashboard/director` | Admin/director | ✅ (base) |
 | Asistencia a ensayos (QR + manual + kiosco) | `/dashboard/director/asistencia` | Admin/director | ✅ |
 | Auto-registro de asistencia (QR del ensayo) | `/asistencia/[ensayoId]` | Integrante (su propia) | ✅ |
