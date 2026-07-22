@@ -129,29 +129,38 @@ export default function GaleriaPage() {
       </div>
 
       {/* ── Eventos del fin de semana (18–20 jul 2026) ──────────────── */}
-      <div className="section-container pt-6 pb-2">
-        <div className="flex items-center gap-2 mb-4">
-          <Camera size={16} className="text-royal" />
-          <h2 className="font-display text-navy text-lg font-bold uppercase tracking-wider">Galerías por evento</h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {GALERIAS.map(g => (
-            <Link key={g.slug} href={`/galeria/${g.slug}`} className="group rounded-2xl overflow-hidden border border-gray-200 hover:border-gold/60 shadow-sm hover:shadow-xl transition-all">
-              <div className="relative aspect-[16/10]">
-                <Image src={fotoUrl(g.slug, g.cover)} alt={g.tituloCorto} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-navy/85 via-navy/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="font-display text-white text-base font-bold uppercase tracking-wide leading-tight">{g.tituloCorto}</h3>
-                  <p className="text-gold text-[11px] mt-0.5">{g.fecha}</p>
-                  <div className="flex items-center gap-3 text-[11px] text-gray-300 mt-1.5">
-                    <span className="flex items-center gap-1"><Camera size={11} className="text-gold" /> {g.fotos} fotos</span>
-                    {g.videos > 0 && <span className="flex items-center gap-1"><Video size={11} className="text-gold" /> {g.videos} videos</span>}
-                  </div>
-                </div>
+      <div className="section-container pt-6 pb-2 space-y-4">
+        {GALERIAS.map(g => (
+          <Link
+            key={g.slug}
+            href={`/galeria/${g.slug}`}
+            className="group relative flex flex-col sm:flex-row items-center gap-0 rounded-2xl overflow-hidden border border-gold/30 hover:border-gold/60 shadow-md hover:shadow-xl transition-all duration-300"
+          >
+            {/* Foto de portada */}
+            <div className="relative w-full sm:w-64 shrink-0 aspect-[16/9] sm:aspect-[4/3]">
+              <Image src={fotoUrl(g.slug, g.cover)} alt={g.tituloCorto} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-navy/30 group-hover:bg-navy/10 transition-colors" />
+            </div>
+
+            {/* Texto */}
+            <div className="flex-1 bg-gradient-to-r from-navy to-navy/90 p-6 sm:p-7 w-full">
+              <div className="inline-flex items-center gap-1.5 bg-gold/20 text-gold text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3">
+                <Trophy size={10} /> {g.badge}
               </div>
-            </Link>
-          ))}
-        </div>
+              <h3 className="font-display text-white text-lg md:text-xl font-bold uppercase tracking-wider mb-1">
+                {g.titulo} <span className="text-gold">{g.tituloGold}</span>
+              </h3>
+              <p className="text-gray-300 text-sm mb-4">{g.fecha} · {g.lugar}</p>
+              <div className="flex items-center gap-4 text-xs text-gray-400">
+                <span className="flex items-center gap-1"><Camera size={12} className="text-gold" /> {g.fotos} fotos</span>
+                {g.videos > 0 && <span className="flex items-center gap-1"><Video size={12} className="text-gold" /> {g.videos} videos</span>}
+              </div>
+              <div className="mt-4 inline-flex items-center gap-2 bg-gold text-navy text-xs font-bold px-4 py-2 rounded-lg group-hover:bg-gold/90 transition-colors">
+                Ver galería completa →
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
 
       <div className="section-container py-16">
