@@ -77,6 +77,8 @@ service cloud.firestore {
     match /quotes/{id} {
       allow create: if true;
       allow read:   if isStaff();
+      allow update: if isStaff();
+      allow delete: if isAdmin();
     }
 
     // Galería — robusto ante documentos sin visibleTo

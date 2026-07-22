@@ -765,13 +765,22 @@ export async function getItinerariosDB(): Promise<Itinerario[]> {
   return snap.docs.map(d => mapItinerario(d.id, d.data()))
 }
 
-/** Itinerario activo: el de la base si existe, si no la semilla de código. */
+/** Un itinerario está vigente si le queda al menos un evento de hoy en adelante. */
+function itinerarioVigente(it: Itinerario | undefined): Itinerario | undefined {
+  if (!it) return undefined
+  const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+  return it.cronograma.some(e => e.fechaISO >= hoy) ? it : undefined
+}
+
+/** Itinerario activo Y vigente: el de la base si existe, si no la semilla.
+ *  Cuando todos los eventos ya pasaron, el itinerario "queda libre" (undefined)
+ *  y el fin de semana pasa al archivo de Historia. */
 export async function getItinerarioActivoResuelto(): Promise<Itinerario | undefined> {
   try {
     const snap = await getDocs(query(collection(db, 'itinerarios'), where('activo', '==', true), limit(1)))
-    if (!snap.empty) return mapItinerario(snap.docs[0].id, snap.docs[0].data())
+    if (!snap.empty) return itinerarioVigente(mapItinerario(snap.docs[0].id, snap.docs[0].data()))
   } catch { /* usa semilla */ }
-  return itinerarioSeed()
+  return itinerarioVigente(itinerarioSeed())
 }
 
 export async function upsertItinerario(id: string, data: Omit<Itinerario, 'id'>): Promise<void> {
@@ -1017,7 +1026,22 @@ export async function getQuoteRequests() {
   const snap = await getDocs(
     query(collection(db, 'quotes'), orderBy('createdAt', 'desc'))
   )
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  return snap.docs.map(d => {
+    const data = d.data()
+    return { id: d.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate() ?? new Date() }
+  })
+}
+
+export async function updateQuoteStatus(id: string, status: string, notes?: string): Promise<void> {
+  await updateDoc(doc(db, 'quotes', id), {
+    status,
+    ...(notes !== undefined ? { notes } : {}),
+    updatedAt: serverTimestamp(),
+  })
+}
+
+export async function deleteQuote(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'quotes', id))
 }
 
 // ── Firestore: Events ─────────────────────────────────────────────
