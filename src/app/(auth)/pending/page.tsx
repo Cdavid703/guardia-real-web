@@ -5,7 +5,7 @@ import { useRouter }  from 'next/navigation'
 import { useAuth }    from '@/contexts/AuthContext'
 import { getRoleDashboard, getRoleLabel, cn } from '@/lib/utils'
 import { updateUserRole, updateUserProfile } from '@/lib/firebase'
-import { Clock, LogOut, Mail, Phone, CheckCircle2 } from 'lucide-react'
+import { Clock, LogOut, Mail, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import Link  from 'next/link'
@@ -134,13 +134,12 @@ export default function PendingPage() {
             </div>
           )}
 
-          {/* Contacts */}
-          <div className="space-y-2 mb-6">
-            <a href="tel:+573197735052" className="flex items-center gap-2 justify-center text-sm text-gray-600 hover:text-navy transition-colors">
-              <Phone size={14} /> 319 773 5052 — Dairo Villada
-            </a>
-            <a href="mailto:bandashowguardiareal@outlook.com" className="flex items-center gap-2 justify-center text-xs text-gray-500 hover:text-navy transition-colors">
-              <Mail size={13} /> bandashowguardiareal@outlook.com
+          {/* Contacto para ingreso urgente */}
+          <div className="bg-gold/10 border border-gold/30 rounded-xl p-4 mb-6 text-center">
+            <p className="text-sm text-dark font-semibold mb-2">¿Necesitas tu ingreso con urgencia?</p>
+            <p className="text-xs text-gray-500 mb-3">Comunícate con <strong className="text-navy">Carlos David Jaramillo</strong> para facilitar y gestionar tu ingreso.</p>
+            <a href="mailto:cdavid.jaramillo@gmail.com" className="inline-flex items-center gap-2 justify-center text-sm text-royal hover:text-navy transition-colors">
+              <Mail size={14} /> cdavid.jaramillo@gmail.com
             </a>
           </div>
 
