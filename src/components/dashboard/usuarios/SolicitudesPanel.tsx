@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { ClipboardList, ChevronDown, ChevronUp, Trash2, Sparkles, History, Send, MessageSquare, ArrowRightLeft } from 'lucide-react'
+import { ClipboardList, ChevronDown, ChevronUp, Trash2, Sparkles, History, Send, MessageSquare, ArrowRightLeft, GitMerge, Copy } from 'lucide-react'
 import {
   getIngresoRequests, updateIngresoEstado, agregarComentarioIngreso, deleteIngresoRequest,
-  getIntegranteByCorreo, upsertIntegrante,
+  mergeIngresoRequests, getIntegranteByCorreo, upsertIntegrante,
 } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 import { getSeccion } from '@/lib/secciones'
@@ -26,18 +26,44 @@ function fechaCorta(iso: string) {
   try { return new Date(iso).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) } catch { return iso }
 }
 
+type Ingreso = IngresoRequest & { id: string }
+const normTxt = (s?: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
+const soloDigitos = (s?: string) => (s ?? '').replace(/\D/g, '')
+// Prioridad de estado al elegir cuál solicitud queda como principal
+const RANK: Record<string, number> = { aceptado: 4, contactado: 3, nuevo: 2, cancelado: 1, rechazado: 0 }
+
+/** Agrupa solicitudes que parecen la misma persona (mismo correo, teléfono o identificación). */
+function detectarDuplicados(reqs: Ingreso[]): Ingreso[][] {
+  const parent: Record<string, string> = {}
+  const find = (x: string): string => (parent[x] === x ? x : (parent[x] = find(parent[x])))
+  const union = (a: string, b: string) => { parent[find(a)] = find(b) }
+  reqs.forEach(r => { parent[r.id] = r.id })
+  const porCorreo: Record<string, string> = {}, porTel: Record<string, string> = {}, porId: Record<string, string> = {}
+  reqs.forEach(r => {
+    const e = normTxt(r.email), t = soloDigitos(r.telefono), d = normTxt(r.identificacion)
+    if (e) { if (porCorreo[e]) union(r.id, porCorreo[e]); else porCorreo[e] = r.id }
+    if (t && t.length >= 7) { if (porTel[t]) union(r.id, porTel[t]); else porTel[t] = r.id }
+    if (d) { if (porId[d]) union(r.id, porId[d]); else porId[d] = r.id }
+  })
+  const grupos: Record<string, Ingreso[]> = {}
+  reqs.forEach(r => { const root = find(r.id); (grupos[root] ??= []).push(r) })
+  return Object.values(grupos).filter(g => g.length > 1)
+}
+
 export default function SolicitudesPanel({ uid }: { uid: string }) {
   const { profile } = useAuth()
   const actor = profile?.displayName || 'Administración'
-  const [ingresos, setIngresos] = useState<(IngresoRequest & { id: string })[]>([])
+  const [ingresos, setIngresos] = useState<Ingreso[]>([])
   const [loading, setLoading]   = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [tab, setTab]           = useState<'recientes' | 'historial'>('recientes')
   const [comentario, setComentario] = useState<Record<string, string>>({})
+  const [merging, setMerging]   = useState<string | null>(null)
+  const [showDup, setShowDup]   = useState(true)
 
   const fetchIngresos = async () => {
     setLoading(true)
-    try { setIngresos(await getIngresoRequests() as (IngresoRequest & { id: string })[]) }
+    try { setIngresos(await getIngresoRequests() as Ingreso[]) }
     catch { toast.error('Error al cargar solicitudes de ingreso') }
     finally { setLoading(false) }
   }
@@ -94,12 +120,99 @@ export default function SolicitudesPanel({ uid }: { uid: string }) {
     catch { toast.error('Error al eliminar') }
   }
 
+  const handleMerge = async (grupo: Ingreso[]) => {
+    // Principal = estado más avanzado; a igualdad, la más reciente
+    const orden = [...grupo].sort((a, b) => (RANK[b.status] - RANK[a.status]) || (b.createdAt.getTime() - a.createdAt.getTime()))
+    const principal = orden[0]
+    const otras = orden.slice(1)
+    if (!confirm(`¿Fusionar ${grupo.length} solicitudes de "${principal.nombreCompleto}" en una sola? Se conserva toda la bitácora y se eliminan las duplicadas. No se puede deshacer.`)) return
+
+    setMerging(principal.id)
+    try {
+      // Completa campos vacíos de la principal con datos de las duplicadas
+      const pick = (f: keyof IngresoRequest): string => {
+        const propio = principal[f]
+        if (propio !== undefined && propio !== null && propio !== '') return String(propio)
+        const alt = grupo.map(g => g[f]).find(v => v !== undefined && v !== null && v !== '')
+        return alt !== undefined ? String(alt) : ''
+      }
+      const historialCombinado = [
+        ...grupo.flatMap(g => g.historial ?? []),
+        { tipo: 'comentario' as const, texto: `Se fusionaron ${grupo.length} solicitudes duplicadas en esta.`, por: actor, porUid: uid, en: new Date().toISOString() },
+      ].sort((a, b) => new Date(a.en).getTime() - new Date(b.en).getTime())
+
+      const merged: Record<string, unknown> = {
+        nombreCompleto: pick('nombreCompleto'), identificacion: pick('identificacion'),
+        email: pick('email'), telefono: pick('telefono'),
+        instrumentoInteres: pick('instrumentoInteres'), nivelExperiencia: pick('nivelExperiencia') || 'ninguna',
+        fechaNacimiento: pick('fechaNacimiento'), barrio: pick('barrio'), ciudad: pick('ciudad'),
+        disponibilidad: pick('disponibilidad'), comoSeEntero: pick('comoSeEntero'),
+        instrumentosExperiencia: pick('instrumentosExperiencia'), mensaje: pick('mensaje'),
+        instrumentoPropio: grupo.some(g => g.instrumentoPropio),
+        experienciaPrevia: grupo.some(g => g.experienciaPrevia),
+        status: principal.status,
+        historial: historialCombinado,
+        createdAt: new Date(Math.min(...grupo.map(g => g.createdAt.getTime()))),
+        lastUpdatedBy: uid,
+      }
+
+      await mergeIngresoRequests(principal.id, merged, otras.map(o => o.id))
+      const otrasIds = new Set(otras.map(o => o.id))
+      setIngresos(prev => prev
+        .filter(i => !otrasIds.has(i.id))
+        .map(i => i.id === principal.id ? { ...i, ...merged, createdAt: merged.createdAt as Date, historial: historialCombinado } as Ingreso : i))
+      if (otrasIds.has(expanded ?? '')) setExpanded(null)
+      toast.success('Solicitudes fusionadas en una sola')
+    } catch { toast.error('Error al fusionar las solicitudes') }
+    finally { setMerging(null) }
+  }
+
+  const duplicados = useMemo(() => detectarDuplicados(ingresos), [ingresos])
   const recientes = useMemo(() => ingresos.filter(i => EN_GESTION.includes(i.status as Estado)), [ingresos])
   const historial = useMemo(() => ingresos.filter(i => EN_HISTORIAL.includes(i.status as Estado)), [ingresos])
   const lista = tab === 'recientes' ? recientes : historial
 
   return (
     <div>
+      {/* Duplicados detectados */}
+      {duplicados.length > 0 && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 overflow-hidden">
+          <button onClick={() => setShowDup(s => !s)} className="w-full flex items-center gap-2 px-4 py-3 text-left">
+            <Copy size={16} className="text-amber-600 shrink-0" />
+            <span className="text-sm font-semibold text-amber-800">
+              {duplicados.length} posible{duplicados.length !== 1 ? 's' : ''} duplicad{duplicados.length !== 1 ? 'os' : 'o'} detectado{duplicados.length !== 1 ? 's' : ''}
+            </span>
+            <span className="text-xs text-amber-600 ml-auto">{showDup ? 'Ocultar' : 'Ver'}</span>
+            {showDup ? <ChevronUp size={15} className="text-amber-600" /> : <ChevronDown size={15} className="text-amber-600" />}
+          </button>
+          {showDup && (
+            <div className="px-4 pb-4 space-y-3">
+              {duplicados.map((grupo, gi) => (
+                <div key={gi} className="bg-white rounded-lg border border-amber-100 p-3">
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <p className="text-sm font-semibold text-dark">{grupo[0].nombreCompleto} <span className="font-normal text-gray-400">· {grupo.length} solicitudes</span></p>
+                    <button onClick={() => handleMerge(grupo)} disabled={merging === grupo[0].id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-navy hover:bg-navy/90 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-60 shrink-0">
+                      <GitMerge size={13} /> {merging ? 'Fusionando...' : 'Fusionar en una'}
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    {grupo.map(g => (
+                      <div key={g.id} className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className={cn('badge text-[10px]', STATUS_COLORS[g.status])}>{STATUS_LABELS[g.status]}</span>
+                        <span className="truncate">{g.email} · {g.telefono}</span>
+                        <span className="text-gray-300 ml-auto shrink-0">{formatDate(g.createdAt as Date, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <p className="text-[11px] text-amber-700/80">Se conserva la solicitud con el estado más avanzado, se rellenan los datos faltantes con los de las otras y se unifica la bitácora.</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-2 mb-4">
         <button onClick={() => setTab('recientes')} className={cn('px-4 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-1.5', tab === 'recientes' ? 'bg-navy text-white shadow' : 'bg-white text-gray-600 border border-gray-200 hover:border-navy')}>

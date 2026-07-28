@@ -1149,6 +1149,12 @@ export async function agregarComentarioIngreso(id: string, texto: string, actorN
   })
 }
 
+/** Fusiona solicitudes duplicadas: guarda los datos combinados en la principal y elimina las demás. */
+export async function mergeIngresoRequests(primaryId: string, primaryData: Record<string, unknown>, duplicateIds: string[]) {
+  await updateDoc(doc(db, 'ingresos', primaryId), { ...primaryData, updatedAt: serverTimestamp() })
+  await Promise.all(duplicateIds.map(id => deleteDoc(doc(db, 'ingresos', id))))
+}
+
 /** Elimina una solicitud de ingreso (solo admin por reglas). */
 export async function deleteIngresoRequest(id: string) {
   return deleteDoc(doc(db, 'ingresos', id))
