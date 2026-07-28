@@ -121,8 +121,17 @@ export default function PagosPanel() {
     return true
   }
 
+  // Blindaje: nunca registrar un pago/abono sin un integrante claramente identificado.
+  const integranteValido = (i?: IntegranteBase | null): i is IntegranteBase => {
+    if (!i || !i.id || !`${i.nombre ?? ''} ${i.apellidos ?? ''}`.trim()) {
+      toast.error('Debes seleccionar un integrante válido. La ficha no tiene nombre o no está seleccionada.')
+      return false
+    }
+    return true
+  }
+
   const marcar = async (i: IntegranteBase) => {
-    if (!profile) return
+    if (!profile || !integranteValido(i)) return
     // La primera vez se anexa la firma del recaudador (va en cada recibo).
     if (firmaCargada && !firma) { setPendienteFirma(i); setFirmaModal(true); return }
     const monto = cuota ? Number(cuota) : undefined
@@ -146,13 +155,14 @@ export default function PagosPanel() {
 
   // ── Abonos acumulables ──
   const abrirAbono = (i: IntegranteBase) => {
+    if (!integranteValido(i)) return
     // La firma del recaudador se pide una sola vez (va en cada recibo)
     if (firmaCargada && !firma) { setPendienteAbono(i); setFirmaModal(true); return }
     setAbonoModal(i)
   }
 
   const registrarAbono = async (i: IntegranteBase, vals: { monto: number; metodo?: string; fecha: string }) => {
-    if (!profile) return
+    if (!profile || !integranteValido(i)) return
     const nombre = `${i.nombre} ${i.apellidos}`.trim()
     try {
       const { id, reciboNumero, token } = await addAbono(i.id, periodo, concepto.trim(), { integranteNombre: nombre, monto: vals.monto, metodo: vals.metodo, fecha: vals.fecha }, profile.uid)
@@ -408,8 +418,11 @@ function AbonoModal({ integrante, concepto, periodoTxt, montoSugerido, onClose, 
   const [metodo, setMetodo] = useState('')
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
   const [guardando, setGuardando] = useState(false)
+  const nombre = `${integrante.nombre ?? ''} ${integrante.apellidos ?? ''}`.trim()
+  const sinIntegrante = !integrante.id || !nombre
 
   const guardar = async () => {
+    if (sinIntegrante) { toast.error('Este abono no tiene un integrante identificado'); return }
     const n = Number(monto)
     if (!n || n <= 0) { toast.error('Ingresa el monto del abono'); return }
     setGuardando(true)
@@ -424,7 +437,13 @@ function AbonoModal({ integrante, concepto, periodoTxt, montoSugerido, onClose, 
           <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2"><PiggyBank size={18} className="text-royal" /> Registrar abono</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-navy"><X size={18} /></button>
         </div>
-        <p className="text-sm text-gray-500 mb-4"><strong className="text-dark">{integrante.nombre} {integrante.apellidos}</strong> · {concepto} · {periodoTxt}</p>
+        <p className="text-sm text-gray-500 mb-4"><strong className="text-dark">{nombre || '⚠ Sin nombre'}</strong> · {concepto} · {periodoTxt}</p>
+
+        {sinIntegrante && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 mb-4">
+            Esta ficha no tiene nombre o no está seleccionada. No se puede registrar el abono hasta completar la ficha del integrante.
+          </div>
+        )}
 
         <label className="block text-xs font-semibold text-dark mb-1">Monto del abono</label>
         <div className="relative mb-3">
@@ -443,7 +462,7 @@ function AbonoModal({ integrante, concepto, periodoTxt, montoSugerido, onClose, 
           </div>
         </div>
 
-        <button onClick={guardar} disabled={guardando} className="btn btn-primary btn-md w-full justify-center disabled:opacity-50">
+        <button onClick={guardar} disabled={guardando || sinIntegrante} className="btn btn-primary btn-md w-full justify-center disabled:opacity-50">
           {guardando ? 'Registrando...' : 'Registrar abono y generar recibo'}
         </button>
       </div>

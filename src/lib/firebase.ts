@@ -661,6 +661,7 @@ export async function setPago(
   integranteId: string, periodo: string, concepto: string,
   data: { integranteNombre?: string; monto?: number; fecha?: string; metodo?: string }, uid: string,
 ): Promise<{ id: string; reciboNumero: string; token: string }> {
+  if (!integranteId?.trim() || !data.integranteNombre?.trim()) throw new Error('El pago requiere un integrante identificado')
   const id = pagoDocId(integranteId, periodo, concepto)
   // Consecutivo anual atómico: GRA-2026-0001, 0002... (contador en pagos/contador-<año>)
   const year = new Date().getFullYear()
@@ -706,6 +707,7 @@ export async function addAbono(
   integranteId: string, periodo: string, concepto: string,
   data: { integranteNombre?: string; monto?: number; fecha?: string; metodo?: string }, uid: string,
 ): Promise<{ id: string; reciboNumero: string; token: string }> {
+  if (!integranteId?.trim() || !data.integranteNombre?.trim()) throw new Error('El abono requiere un integrante identificado')
   const id = abonoDocId(integranteId, periodo, concepto)
   const year = new Date().getFullYear()
   const reciboNumero = await runTransaction(db, async tx => {
