@@ -98,7 +98,13 @@
       "Bash(cd \"D:/Guardia-real-web\" && mkdir -p public/docs && cp \"C:/Users/USER/Downloads/INSTRUCTIVO 18-20 JULIO.pdf\" \"public/docs/instructivo-18-20-julio-2026.pdf\" && ls -la public/docs/ | grep -i julio)",
       "Bash(awk '{print $5, $9}')",
       "Bash(echo \"/fotos/\")",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(cd \"D:/Guardia-real-web\" && mkdir -p public/partituras/el-ausente && cp \"C:/Users/USER/.claude/uploads/9d24fa66-144e-4711-ba4a-910673bb42f4/b808193a-Bombo.pdf\" \"public/partituras/el-ausente/bombos.pdf\" && ls -la public/partituras/el-ausente/)",
+      "Bash(cp __TRACKED_VAR__/31302b82-conga.pdf conga.pdf)",
+      "Bash(cp __TRACKED_VAR__/f0853ba7-EL_AUSENTE__Alto_Sax.pdf sax-alto.pdf)",
+      "Bash(cp __TRACKED_VAR__/dcdf7527-EL_AUSENTE__Clarinet_in_Bb_1.pdf clarinete-1.pdf)",
+      "Bash(cp __TRACKED_VAR__/8746890d-EL_AUSENTE__Baritone_Sax.pdf sax-baritono.pdf)",
+      "Bash(cp __TRACKED_VAR__/549f3086-EL_AUSENTE__Baritone_Sax_2.pdf sax-baritono-2.pdf)"
     ]
   }
 }
