@@ -133,10 +133,23 @@ const MAMBO: Tema = {
   createdAt: new Date('2026-07-02'), updatedAt: new Date('2026-07-02'),
 }
 
+const EL_AUSENTE: Tema = {
+  id: 'seed-el-ausente', numeroMarcacion: undefined, titulo: 'El Ausente',
+  compositor: 'Fruko y sus Tesos & Joe Arroyo', arreglista: 'José Gómez', genero: 'Salsa',
+  tonalidad: '', compas: '2/2', tempo: '', duracion: '', ano: '', dificultad: '',
+  notas: 'Clásico de la salsa colombiana. Arreglo para banda show.',
+  partituras: [
+    { instrumento: 'bombos', label: 'Bombos', url: '/partituras/el-ausente/bombos.pdf' },
+  ],
+  categoria: 'temporada', activo: true, visibleTo: ['public'], esSeed: true,
+  createdAt: new Date('2026-07-27'), updatedAt: new Date('2026-07-27'),
+}
+
 /** Repertorio oficial temporada 2026 (orden de marcación). */
 export const REPERTORIO_SEED: Tema[] = [
   ...(manifest.temporada as TemaManifest[]).map(fromManifest),
   MAMBO,
+  EL_AUSENTE,
 ].sort((a, b) => (a.numeroMarcacion ?? 999) - (b.numeroMarcacion ?? 999))
 
 /** Repertorio de Semana Santa (sección aparte). */
