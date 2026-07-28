@@ -280,7 +280,14 @@ function TemaDetalle({ tema, role, miSeccion, uid, onClose, onChanged }: {
           </div>
           {tema.notas && <p className="text-sm text-gray-600 bg-gray-50 rounded-xl p-3 mb-5 italic">{tema.notas}</p>}
           {tema.audioUrl && (
-            <a href={tema.audioUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm mb-5"><Play size={14} /> Escuchar referencia</a>
+            /\.(mp3|wav|ogg|m4a)$/i.test(tema.audioUrl) ? (
+              <div className="mb-5 bg-navy/5 border border-navy/10 rounded-xl p-3">
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1"><Play size={12} className="text-royal" /> Audio de referencia</p>
+                <audio src={tema.audioUrl} controls preload="none" className="w-full h-10" />
+              </div>
+            ) : (
+              <a href={tema.audioUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm mb-5"><Play size={14} /> Escuchar referencia</a>
+            )
           )}
 
           {/* Partituras */}

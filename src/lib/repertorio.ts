@@ -136,7 +136,8 @@ const MAMBO: Tema = {
 const EL_AUSENTE: Tema = {
   id: 'seed-el-ausente', numeroMarcacion: 9, titulo: 'El Ausente',
   compositor: 'Fruko y sus Tesos & Joe Arroyo', arreglista: 'José Gómez', genero: 'Salsa',
-  tonalidad: 'La menor', compas: '2/2', tempo: '', duracion: '', ano: '', dificultad: 'Intermedio',
+  tonalidad: 'La menor', compas: '2/2', tempo: '', duracion: '≈ 2:35 min', ano: '', dificultad: 'Intermedio',
+  audioUrl: '/audio/el-ausente.mp3',
   notas: 'Clásico de la salsa colombiana. Arreglo para banda show.',
   partituras: [
     { instrumento: 'flauta', label: 'Flauta', url: '/partituras/el-ausente/flauta.pdf' },
