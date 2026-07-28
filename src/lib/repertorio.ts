@@ -134,12 +134,17 @@ const MAMBO: Tema = {
 }
 
 const EL_AUSENTE: Tema = {
-  id: 'seed-el-ausente', numeroMarcacion: undefined, titulo: 'El Ausente',
+  id: 'seed-el-ausente', numeroMarcacion: 9, titulo: 'El Ausente',
   compositor: 'Fruko y sus Tesos & Joe Arroyo', arreglista: 'José Gómez', genero: 'Salsa',
-  tonalidad: '', compas: '2/2', tempo: '', duracion: '', ano: '', dificultad: '',
+  tonalidad: 'La menor', compas: '2/2', tempo: '', duracion: '', ano: '', dificultad: 'Intermedio',
   notas: 'Clásico de la salsa colombiana. Arreglo para banda show.',
   partituras: [
+    { instrumento: 'clarinete-1', label: 'Clarinete 1', url: '/partituras/el-ausente/clarinete-1.pdf' },
+    { instrumento: 'sax-alto', label: 'Sax Alto', url: '/partituras/el-ausente/sax-alto.pdf' },
+    { instrumento: 'sax-baritono', label: 'Sax Barítono', url: '/partituras/el-ausente/sax-baritono.pdf' },
+    { instrumento: 'sax-baritono', label: 'Sax Barítono 2', url: '/partituras/el-ausente/sax-baritono-2.pdf' },
     { instrumento: 'bombos', label: 'Bombos', url: '/partituras/el-ausente/bombos.pdf' },
+    { instrumento: 'percusion-lat', label: 'Conga', url: '/partituras/el-ausente/conga.pdf' },
   ],
   categoria: 'temporada', activo: true, visibleTo: ['public'], esSeed: true,
   createdAt: new Date('2026-07-27'), updatedAt: new Date('2026-07-27'),
