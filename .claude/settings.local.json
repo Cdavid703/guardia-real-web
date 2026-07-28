@@ -104,7 +104,12 @@
       "Bash(cp __TRACKED_VAR__/f0853ba7-EL_AUSENTE__Alto_Sax.pdf sax-alto.pdf)",
       "Bash(cp __TRACKED_VAR__/dcdf7527-EL_AUSENTE__Clarinet_in_Bb_1.pdf clarinete-1.pdf)",
       "Bash(cp __TRACKED_VAR__/8746890d-EL_AUSENTE__Baritone_Sax.pdf sax-baritono.pdf)",
-      "Bash(cp __TRACKED_VAR__/549f3086-EL_AUSENTE__Baritone_Sax_2.pdf sax-baritono-2.pdf)"
+      "Bash(cp __TRACKED_VAR__/549f3086-EL_AUSENTE__Baritone_Sax_2.pdf sax-baritono-2.pdf)",
+      "Bash(cp __TRACKED_VAR__/7268d67b-EL_AUSENTE__Trumpet_in_Bb_1.pdf trompeta-1.pdf)",
+      "Bash(cp __TRACKED_VAR__/eb71a8ee-EL_AUSENTE__Trumpet_in_Bb_2.pdf trompeta-2.pdf)",
+      "Bash(cp __TRACKED_VAR__/4547f624-EL_AUSENTE__Trombone_1.pdf trombon-1.pdf)",
+      "Bash(cp __TRACKED_VAR__/a1b0cf7f-EL_AUSENTE__Trombone_2.pdf trombon-2.pdf)",
+      "Bash(cp __TRACKED_VAR__/728a61a9-EL_AUSENTE__Tenor_Sax.pdf sax-tenor.pdf)"
     ]
   }
 }
