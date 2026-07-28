@@ -256,11 +256,22 @@ export interface IngresoRequest {
   comoSeEntero: string
   mensaje?: string
   // estado
-  status: 'nuevo' | 'contactado' | 'aceptado' | 'rechazado'
+  status: 'nuevo' | 'contactado' | 'aceptado' | 'rechazado' | 'cancelado'
   notes?: string
+  historial?: IngresoHistorial[]
   lastUpdatedBy?: string
   updatedAt?: Date
   createdAt: Date
+}
+
+/** Bitácora de gestión de una solicitud de ingreso (quién hizo qué y cuándo). */
+export interface IngresoHistorial {
+  tipo:    'estado' | 'comentario'
+  estado?: string   // cuando tipo = 'estado'
+  texto?:  string   // cuando tipo = 'comentario'
+  por:     string   // nombre de quien gestionó
+  porUid:  string
+  en:      string   // ISO
 }
 
 // ── Band Events (calendar) ─────────────────────────────────────────

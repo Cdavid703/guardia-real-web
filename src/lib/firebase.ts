@@ -1129,17 +1129,23 @@ export async function getIngresoRequests() {
  * Actualiza el estado y notas de una solicitud de ingreso.
  * Solo staff (admin/director/junta) puede hacerlo según las reglas de Firestore.
  */
-export async function updateIngresoStatus(
+export async function updateIngresoEstado(
   id: string,
-  status: 'nuevo' | 'contactado' | 'aceptado' | 'rechazado',
-  notes?: string,
-  updatedBy?: string,
+  status: 'nuevo' | 'contactado' | 'aceptado' | 'rechazado' | 'cancelado',
+  actorNombre: string,
+  actorUid: string,
 ) {
   return updateDoc(doc(db, 'ingresos', id), {
-    status,
-    ...(notes !== undefined && { notes }),
-    ...(updatedBy && { lastUpdatedBy: updatedBy }),
-    updatedAt: serverTimestamp(),
+    status, lastUpdatedBy: actorUid, updatedAt: serverTimestamp(),
+    historial: arrayUnion({ tipo: 'estado', estado: status, por: actorNombre, porUid: actorUid, en: new Date().toISOString() }),
+  })
+}
+
+/** Agrega un comentario de gestión a la bitácora de la solicitud. */
+export async function agregarComentarioIngreso(id: string, texto: string, actorNombre: string, actorUid: string) {
+  return updateDoc(doc(db, 'ingresos', id), {
+    lastUpdatedBy: actorUid, updatedAt: serverTimestamp(),
+    historial: arrayUnion({ tipo: 'comentario', texto, por: actorNombre, porUid: actorUid, en: new Date().toISOString() }),
   })
 }
 

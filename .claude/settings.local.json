@@ -113,7 +113,10 @@
       "Bash(cp __TRACKED_VAR__/0e859774-EL_AUSENTE__Tuba.pdf tuba.pdf)",
       "Bash(cp __TRACKED_VAR__/e952eff1-Redoblante.pdf redoblante.pdf)",
       "Bash(cp __TRACKED_VAR__/cd32e8b9-platillos.pdf platillos.pdf)",
-      "Bash(cp __TRACKED_VAR__/be69fd13-Multitenor.pdf multitenor.pdf)"
+      "Bash(cp __TRACKED_VAR__/be69fd13-Multitenor.pdf multitenor.pdf)",
+      "Bash(ffmpeg -version)",
+      "Bash(node -e \"console.log\\(require\\('ffmpeg-static'\\)\\)\")",
+      "Bash(npx next *)"
     ]
   }
 }
