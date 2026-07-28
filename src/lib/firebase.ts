@@ -697,6 +697,54 @@ export async function deletePago(integranteId: string, periodo: string, concepto
   await deleteDoc(doc(db, 'pagos', pagoDocId(integranteId, periodo, concepto)))
 }
 
+// ── Abonos acumulables (varios pagos independientes por integrante/mes/concepto) ──
+const abonoDocId = (integranteId: string, periodo: string, concepto: string) =>
+  `${integranteId}_${periodo}_${slugPago(concepto)}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+
+/** Registra un abono independiente (no sobrescribe los anteriores del mismo mes/concepto). */
+export async function addAbono(
+  integranteId: string, periodo: string, concepto: string,
+  data: { integranteNombre?: string; monto?: number; fecha?: string; metodo?: string }, uid: string,
+): Promise<{ id: string; reciboNumero: string; token: string }> {
+  const id = abonoDocId(integranteId, periodo, concepto)
+  const year = new Date().getFullYear()
+  const reciboNumero = await runTransaction(db, async tx => {
+    const cRef = doc(db, 'pagos', `contador-${year}`)
+    const s = await tx.get(cRef)
+    const n = ((s.data()?.n as number) ?? 0) + 1
+    tx.set(cRef, { n, tipo: 'contador', year }, { merge: true })
+    return `GRA-${year}-${String(n).padStart(4, '0')}`
+  })
+  const token = Math.random().toString(36).slice(2, 10)
+  await setDoc(doc(db, 'pagos', id), {
+    integranteId, periodo, concepto, periodoConcepto: periodoConceptoKey(periodo, concepto), pagado: true, acumulable: true,
+    integranteNombre: data.integranteNombre ?? '',
+    monto: data.monto ?? null, fecha: data.fecha ?? new Date().toISOString().slice(0, 10),
+    pagadoEn: new Date().toISOString(), reciboNumero, token,
+    metodo: data.metodo ?? '', registradoPor: uid, createdAt: serverTimestamp(),
+  })
+  return { id, reciboNumero, token }
+}
+
+/** Todos los abonos de un periodo (YYYY-MM) y concepto, como lista (varios por integrante). */
+export async function getAbonosPeriodoConcepto(periodo: string, concepto: string): Promise<Pago[]> {
+  const snap = await getDocs(query(collection(db, 'pagos'), where('periodoConcepto', '==', periodoConceptoKey(periodo, concepto))))
+  return snap.docs.map(d => mapPago(d.id, d.data())).sort((a, b) => (a.pagadoEn ?? '').localeCompare(b.pagadoEn ?? ''))
+}
+
+/** Borra un abono puntual por su id de documento. */
+export async function deleteAbono(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'pagos', id))
+}
+
+/** Total histórico acumulado de un concepto (todos los meses). */
+export async function getTotalConcepto(concepto: string): Promise<{ total: number; count: number }> {
+  const snap = await getDocs(query(collection(db, 'pagos'), where('concepto', '==', concepto)))
+  let total = 0, count = 0
+  snap.forEach(d => { total += (d.data().monto as number) ?? 0; count += 1 })
+  return { total, count }
+}
+
 /** Admin/recaudador: pagos registrados en una fecha (para el cierre de caja). */
 export async function getPagosPorFecha(fecha: string): Promise<Pago[]> {
   const snap = await getDocs(query(collection(db, 'pagos'), where('fecha', '==', fecha)))

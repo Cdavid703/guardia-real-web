@@ -4,11 +4,12 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 import {
   Wallet, Search, CheckCircle2, Clock, FileDown, MessageCircle, X, Coins, Tag,
-  Receipt, PenLine, ImageUp,
+  Receipt, PenLine, ImageUp, Plus, ChevronDown, ChevronUp, Trash2, PiggyBank,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getAllIntegrantes, getPagosPeriodoConcepto, setPago, deletePago,
+  addAbono, getAbonosPeriodoConcepto, deleteAbono, getTotalConcepto,
   getFirmaRecibo, setFirmaRecibo, getPagosPorFecha, type IntegranteBase,
 } from '@/lib/firebase'
 import SignaturePad from '@/components/dashboard/SignaturePad'
@@ -23,14 +24,22 @@ const CONCEPTOS = ['Mensualidad', 'Abono viaje de México', 'Uniforme', 'Gira', 
 
 function periodoLabel(p: string) { const [y, m] = p.split('-'); return `${MESES[Number(m) - 1] ?? ''} ${y}` }
 const fmtCOP = (n?: number) => n != null ? `$${n.toLocaleString('es-CO')}` : ''
+// Conceptos "Abono …" admiten varios pagos independientes en el mismo mes (se suman)
+const esAcumulable = (c: string) => /^abono/i.test((c ?? '').trim())
 
 export default function PagosPanel() {
   const { profile } = useAuth()
   const [periodo, setPeriodo] = useState(new Date().toISOString().slice(0, 7))
-  const [concepto, setConcepto] = useState('Mensualidad')
+  const [conceptoSel, setConceptoSel] = useState('Mensualidad')
+  const [conceptoOtro, setConceptoOtro] = useState('')
+  const concepto = conceptoSel === 'Otro' ? conceptoOtro.trim() : conceptoSel
   const [cuota, setCuota] = useState<string>('')
   const [roster, setRoster] = useState<IntegranteBase[]>([])
   const [pagos, setPagos] = useState<Record<string, Pago>>({})
+  const [abonos, setAbonos] = useState<Record<string, Pago[]>>({})
+  const [totalConcepto, setTotalConcepto] = useState<{ total: number; count: number } | null>(null)
+  const [expandAbono, setExpandAbono] = useState<string | null>(null)
+  const [abonoModal, setAbonoModal] = useState<IntegranteBase | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [fam, setFam] = useState<FamiliaKey | 'all'>('all')
@@ -40,7 +49,10 @@ export default function PagosPanel() {
   const [firmaCargada, setFirmaCargada] = useState(false)
   const [firmaModal, setFirmaModal] = useState(false)
   const [pendienteFirma, setPendienteFirma] = useState<IntegranteBase | null>(null)
+  const [pendienteAbono, setPendienteAbono] = useState<IntegranteBase | null>(null)
   const [cierreOpen, setCierreOpen] = useState(false)
+
+  const acumulable = esAcumulable(concepto)
 
   useEffect(() => {
     if (!profile) return
@@ -53,28 +65,47 @@ export default function PagosPanel() {
   useEffect(() => { loadRoster() }, [loadRoster])
 
   const loadPagos = useCallback(async () => {
-    if (!concepto.trim()) return
+    const c = concepto.trim()
+    if (!c) return
     setLoading(true)
-    try { setPagos(await getPagosPeriodoConcepto(periodo, concepto.trim())) }
+    try {
+      if (esAcumulable(c)) {
+        const [lista, total] = await Promise.all([getAbonosPeriodoConcepto(periodo, c), getTotalConcepto(c)])
+        const grouped: Record<string, Pago[]> = {}
+        for (const p of lista) (grouped[p.integranteId] ??= []).push(p)
+        setAbonos(grouped); setTotalConcepto(total); setPagos({})
+      } else {
+        setPagos(await getPagosPeriodoConcepto(periodo, c)); setAbonos({}); setTotalConcepto(null)
+      }
+    }
     catch { toast.error('Error al cargar los pagos') }
     finally { setLoading(false) }
   }, [periodo, concepto])
   useEffect(() => { loadPagos() }, [loadPagos])
 
+  const sumaAbonos = useCallback((id: string) => (abonos[id] ?? []).reduce((s, p) => s + (p.monto ?? 0), 0), [abonos])
+  const tieneAbono = useCallback((id: string) => (abonos[id]?.length ?? 0) > 0, [abonos])
+
   const stats = useMemo(() => {
+    if (acumulable) {
+      const conAbono = roster.filter(i => tieneAbono(i.id)).length
+      const recaudado = Object.values(abonos).flat().reduce((s, p) => s + (p.monto ?? 0), 0)
+      return { total: roster.length, pagaron: conAbono, pendientes: roster.length - conAbono, recaudado }
+    }
     const pagaron = roster.filter(i => pagos[i.id]?.pagado).length
     const recaudado = roster.reduce((s, i) => s + (pagos[i.id]?.monto ?? 0), 0)
     return { total: roster.length, pagaron, pendientes: roster.length - pagaron, recaudado }
-  }, [roster, pagos])
+  }, [roster, pagos, abonos, acumulable, tieneAbono])
 
   const lista = useMemo(() => {
     const q = norm(search.trim())
+    const pendiente = (i: IntegranteBase) => acumulable ? !tieneAbono(i.id) : !pagos[i.id]?.pagado
     return roster
       .filter(i => fam === 'all' || i.familia === fam)
-      .filter(i => !soloPendientes || !pagos[i.id]?.pagado)
+      .filter(i => !soloPendientes || pendiente(i))
       .filter(i => !q || norm(`${i.nombre} ${i.apellidos} ${getSeccion(i.seccion)?.label ?? ''}`).includes(q))
       .sort((a, b) => `${a.apellidos}`.localeCompare(b.apellidos, 'es'))
-  }, [roster, fam, soloPendientes, search, pagos])
+  }, [roster, fam, soloPendientes, search, pagos, abonos, acumulable, tieneAbono])
 
   const linkRecibo = (p?: Pago) => p?.token ? `${window.location.origin}/recibo/${p.id}?t=${p.token}` : null
 
@@ -113,6 +144,35 @@ export default function PagosPanel() {
     try { await deletePago(i.id, periodo, concepto.trim()) } catch { toast.error('No se pudo quitar'); loadPagos() }
   }
 
+  // ── Abonos acumulables ──
+  const abrirAbono = (i: IntegranteBase) => {
+    // La firma del recaudador se pide una sola vez (va en cada recibo)
+    if (firmaCargada && !firma) { setPendienteAbono(i); setFirmaModal(true); return }
+    setAbonoModal(i)
+  }
+
+  const registrarAbono = async (i: IntegranteBase, vals: { monto: number; metodo?: string; fecha: string }) => {
+    if (!profile) return
+    const nombre = `${i.nombre} ${i.apellidos}`.trim()
+    try {
+      const { id, reciboNumero, token } = await addAbono(i.id, periodo, concepto.trim(), { integranteNombre: nombre, monto: vals.monto, metodo: vals.metodo, fecha: vals.fecha }, profile.uid)
+      const pago: Pago = { id, integranteId: i.id, integranteNombre: nombre, periodo, concepto, pagado: true, monto: vals.monto, fecha: vals.fecha, pagadoEn: new Date().toISOString(), reciboNumero, token, metodo: vals.metodo, createdAt: new Date() }
+      setAbonos(prev => ({ ...prev, [i.id]: [...(prev[i.id] ?? []), pago] }))
+      setTotalConcepto(t => t ? { total: t.total + vals.monto, count: t.count + 1 } : t)
+      setAbonoModal(null)
+      fetch('/api/recibos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pagoId: id }) }).catch(() => {})
+      const abierto = abrirWhatsAppRecibo(i, pago)
+      toast.success(`Abono de ${fmtCOP(vals.monto)} registrado · Recibo ${reciboNumero}${abierto ? ' · WhatsApp abierto' : ''}`)
+    } catch { toast.error('No se pudo registrar el abono') }
+  }
+
+  const quitarAbono = async (i: IntegranteBase, pago: Pago) => {
+    if (!confirm(`¿Eliminar este abono${pago.monto != null ? ` de ${fmtCOP(pago.monto)}` : ''}? No se puede deshacer.`)) return
+    setAbonos(prev => ({ ...prev, [i.id]: (prev[i.id] ?? []).filter(p => p.id !== pago.id) }))
+    setTotalConcepto(t => t ? { total: t.total - (pago.monto ?? 0), count: Math.max(0, t.count - 1) } : t)
+    try { await deleteAbono(pago.id) } catch { toast.error('No se pudo eliminar'); loadPagos() }
+  }
+
   const recordar = (i: IntegranteBase) => {
     const tel = (i.whatsapp || '').replace(/\D/g, '')
     if (!tel) { toast.info('Sin WhatsApp registrado'); return }
@@ -123,6 +183,14 @@ export default function PagosPanel() {
   }
 
   const exportar = () => {
+    if (acumulable) {
+      descargarCSV(`abonos-${slugCsv(concepto)}-${periodo}`,
+        ['Apellidos', 'Nombre', 'Sección', 'Concepto', 'Recibo', 'Monto', 'Fecha', 'Método'],
+        lista.flatMap(i => (abonos[i.id] ?? []).map(p =>
+          [i.apellidos, i.nombre, getSeccion(i.seccion)?.label ?? i.seccion, concepto, p.reciboNumero ?? '', p.monto != null ? String(p.monto) : '', p.fecha ?? '', p.metodo ?? ''])))
+      toast.success('Reporte de abonos descargado')
+      return
+    }
     descargarCSV(`pagos-${slugCsv(concepto)}-${periodo}`,
       ['Apellidos', 'Nombre', 'Sección', 'Concepto', 'Estado', 'Monto', 'Fecha de pago'],
       lista.map(i => {
@@ -143,13 +211,20 @@ export default function PagosPanel() {
         <div>
           <label className="block text-xs font-semibold text-dark mb-1">Concepto</label>
           <div className="relative">
-            <Tag size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input list="conceptos-pago" value={concepto} onChange={e => setConcepto(e.target.value)} className="input pl-9 max-w-[200px]" placeholder="Mensualidad" />
-            <datalist id="conceptos-pago">{CONCEPTOS.map(c => <option key={c} value={c} />)}</datalist>
+            <Tag size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
+            <select value={conceptoSel} onChange={e => setConceptoSel(e.target.value)} className="input pl-9 pr-8 max-w-[220px] cursor-pointer">
+              {CONCEPTOS.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
         </div>
+        {conceptoSel === 'Otro' && (
+          <div>
+            <label className="block text-xs font-semibold text-dark mb-1">¿Cuál concepto?</label>
+            <input autoFocus value={conceptoOtro} onChange={e => setConceptoOtro(e.target.value)} className="input max-w-[200px]" placeholder="Escribe el concepto" />
+          </div>
+        )}
         <div>
-          <label className="block text-xs font-semibold text-dark mb-1">Cuota <span className="font-normal text-gray-400">(opcional)</span></label>
+          <label className="block text-xs font-semibold text-dark mb-1">{acumulable ? 'Monto sugerido' : 'Cuota'} <span className="font-normal text-gray-400">(opcional)</span></label>
           <div className="relative">
             <Coins size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input type="number" value={cuota} onChange={e => setCuota(e.target.value)} className="input pl-9 max-w-[150px]" placeholder="30000" />
@@ -160,11 +235,25 @@ export default function PagosPanel() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-        <Stat icon={CheckCircle2} label="Pagaron" value={String(stats.pagaron)} color="text-green-600" />
-        <Stat icon={Clock} label="Pendientes" value={String(stats.pendientes)} color="text-amber-600" />
-        <Stat icon={Coins} label="Recaudado" value={fmtCOP(stats.recaudado) || '$0'} color="text-royal" />
+        <Stat icon={CheckCircle2} label={acumulable ? 'Con abono' : 'Pagaron'} value={String(stats.pagaron)} color="text-green-600" />
+        <Stat icon={Clock} label={acumulable ? 'Sin abono' : 'Pendientes'} value={String(stats.pendientes)} color="text-amber-600" />
+        <Stat icon={Coins} label={acumulable ? 'Recaudado del mes' : 'Recaudado'} value={fmtCOP(stats.recaudado) || '$0'} color="text-royal" />
         <Stat icon={Wallet} label="Integrantes" value={String(stats.total)} color="text-navy" />
       </div>
+
+      {/* Total histórico del concepto acumulable */}
+      {acumulable && totalConcepto && (
+        <div className="bg-gradient-to-br from-navy to-[#0a2350] rounded-xl px-4 py-3 mb-5 flex items-center justify-between text-white">
+          <div className="flex items-center gap-2.5">
+            <PiggyBank size={20} className="text-gold" />
+            <div>
+              <p className="text-[10px] font-bold text-gold uppercase tracking-widest">Total acumulado · {concepto}</p>
+              <p className="text-xs text-gray-300">{totalConcepto.count} abono(s) en total (todos los meses)</p>
+            </div>
+          </div>
+          <span className="font-display text-2xl font-bold">{fmtCOP(totalConcepto.total) || '$0'}</span>
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="flex flex-wrap gap-2 mb-4">
@@ -190,6 +279,51 @@ export default function PagosPanel() {
       ) : (
         <div className="space-y-1.5">
           {lista.map(i => {
+            // Concepto acumulable: varios abonos independientes por integrante
+            if (acumulable) {
+              const mis = abonos[i.id] ?? []
+              const suma = sumaAbonos(i.id)
+              const abierto = expandAbono === i.id
+              return (
+                <div key={i.id} className={cn('border rounded-xl', mis.length ? 'border-green-200 bg-green-50/40' : 'border-gray-100 bg-white')}>
+                  <div className="flex items-center gap-3 p-3">
+                    <div className="w-9 h-9 rounded-full bg-royal/10 flex items-center justify-center text-royal text-sm font-bold shrink-0">{(i.nombre[0] ?? '?').toUpperCase()}</div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
+                      <p className="text-xs text-gray-400 truncate">
+                        {getSeccion(i.seccion)?.label ?? i.seccion}
+                        {mis.length > 0 && <span className="text-green-600 font-semibold"> · {fmtCOP(suma)} en {mis.length} abono{mis.length !== 1 ? 's' : ''}</span>}
+                      </p>
+                    </div>
+                    {mis.length > 0 && (
+                      <button onClick={() => setExpandAbono(abierto ? null : i.id)} className="btn btn-ghost btn-sm shrink-0">
+                        {abierto ? <ChevronUp size={14} /> : <ChevronDown size={14} />} {mis.length}
+                      </button>
+                    )}
+                    {mis.length === 0 && i.whatsapp && (
+                      <button onClick={() => recordar(i)} title="Recordar por WhatsApp" className="w-8 h-8 rounded-lg bg-[#25D366]/10 text-[#1ebd5a] hover:bg-[#25D366] hover:text-white flex items-center justify-center shrink-0"><MessageCircle size={14} /></button>
+                    )}
+                    <button onClick={() => abrirAbono(i)} className="btn btn-primary btn-sm shrink-0"><Plus size={13} /> Abonar</button>
+                  </div>
+                  {abierto && mis.length > 0 && (
+                    <div className="px-3 pb-3 sm:pl-14 space-y-1">
+                      {mis.map(p => (
+                        <div key={p.id} className="flex items-center gap-2 text-xs border-t border-green-100 pt-1.5">
+                          <span className="text-gray-400 tabular-nums shrink-0">{p.pagadoEn ? new Date(p.pagadoEn).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : p.fecha}</span>
+                          <span className="font-semibold text-navy">{fmtCOP(p.monto)}</span>
+                          {p.metodo && <span className="text-gray-400">· {p.metodo}</span>}
+                          <div className="ml-auto flex items-center gap-2 shrink-0">
+                            {p.token && <a href={linkRecibo(p) ?? '#'} target="_blank" rel="noopener noreferrer" className="text-royal" title="Ver recibo"><Receipt size={14} /></a>}
+                            {p.token && i.whatsapp && <button onClick={() => abrirWhatsAppRecibo(i, p)} title="Enviar recibo por WhatsApp" className="text-[#1ebd5a]"><MessageCircle size={14} /></button>}
+                            <button onClick={() => quitarAbono(i, p)} title="Eliminar abono" className="text-red-500 hover:text-red-600"><Trash2 size={14} /></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            }
             const p = pagos[i.id]
             return (
               <div key={i.id} className={cn('flex items-center gap-3 border rounded-xl p-3', p?.pagado ? 'border-green-200 bg-green-50/60' : 'border-gray-100 bg-white')}>
@@ -234,7 +368,7 @@ export default function PagosPanel() {
       {firmaModal && profile && (
         <FirmaReciboModal
           nombre={profile.displayName || 'Recaudador'}
-          onClose={() => { setFirmaModal(false); setPendienteFirma(null) }}
+          onClose={() => { setFirmaModal(false); setPendienteFirma(null); setPendienteAbono(null) }}
           onSaved={async (dataUrl) => {
             try {
               await setFirmaRecibo(profile.uid, dataUrl)
@@ -242,12 +376,77 @@ export default function PagosPanel() {
               setFirmaModal(false)
               toast.success('Firma guardada. Aparecerá en todos tus recibos.')
               const pend = pendienteFirma
-              setPendienteFirma(null)
+              const pendA = pendienteAbono
+              setPendienteFirma(null); setPendienteAbono(null)
               if (pend) setTimeout(() => marcar(pend), 100)
+              if (pendA) setTimeout(() => setAbonoModal(pendA), 100)
             } catch { toast.error('No se pudo guardar la firma') }
           }}
         />
       )}
+
+      {abonoModal && (
+        <AbonoModal
+          integrante={abonoModal}
+          concepto={concepto}
+          periodoTxt={periodoLabel(periodo)}
+          montoSugerido={cuota}
+          onClose={() => setAbonoModal(null)}
+          onSave={(vals) => registrarAbono(abonoModal, vals)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── Modal: registrar un abono ───────────────────────────────────────
+function AbonoModal({ integrante, concepto, periodoTxt, montoSugerido, onClose, onSave }: {
+  integrante: IntegranteBase; concepto: string; periodoTxt: string; montoSugerido: string
+  onClose: () => void; onSave: (vals: { monto: number; metodo?: string; fecha: string }) => Promise<void>
+}) {
+  const [monto, setMonto] = useState(montoSugerido)
+  const [metodo, setMetodo] = useState('')
+  const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
+  const [guardando, setGuardando] = useState(false)
+
+  const guardar = async () => {
+    const n = Number(monto)
+    if (!n || n <= 0) { toast.error('Ingresa el monto del abono'); return }
+    setGuardando(true)
+    await onSave({ monto: n, metodo: metodo.trim() || undefined, fecha })
+    setGuardando(false)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2"><PiggyBank size={18} className="text-royal" /> Registrar abono</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-navy"><X size={18} /></button>
+        </div>
+        <p className="text-sm text-gray-500 mb-4"><strong className="text-dark">{integrante.nombre} {integrante.apellidos}</strong> · {concepto} · {periodoTxt}</p>
+
+        <label className="block text-xs font-semibold text-dark mb-1">Monto del abono</label>
+        <div className="relative mb-3">
+          <Coins size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input autoFocus type="number" value={monto} onChange={e => setMonto(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') guardar() }} className="input pl-9" placeholder="50000" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <div>
+            <label className="block text-xs font-semibold text-dark mb-1">Fecha</label>
+            <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className="input" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-dark mb-1">Método <span className="font-normal text-gray-400">(opc.)</span></label>
+            <input value={metodo} onChange={e => setMetodo(e.target.value)} className="input" placeholder="Efectivo" />
+          </div>
+        </div>
+
+        <button onClick={guardar} disabled={guardando} className="btn btn-primary btn-md w-full justify-center disabled:opacity-50">
+          {guardando ? 'Registrando...' : 'Registrar abono y generar recibo'}
+        </button>
+      </div>
     </div>
   )
 }
