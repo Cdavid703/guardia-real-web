@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils'
 
 const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-const CONCEPTOS = ['Mensualidad', 'Uniforme', 'Gira', 'Inscripción', 'Camiseta', 'Instrumento', 'Otro']
+const CONCEPTOS = ['Mensualidad', 'Abono viaje de México', 'Uniforme', 'Gira', 'Inscripción', 'Camiseta', 'Instrumento', 'Otro']
 
 function periodoLabel(p: string) { const [y, m] = p.split('-'); return `${MESES[Number(m) - 1] ?? ''} ${y}` }
 const fmtCOP = (n?: number) => n != null ? `$${n.toLocaleString('es-CO')}` : ''
