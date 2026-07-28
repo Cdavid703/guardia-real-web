@@ -5,7 +5,7 @@ import { useRouter }  from 'next/navigation'
 import { useAuth }    from '@/contexts/AuthContext'
 import { getRoleDashboard, getRoleLabel, cn } from '@/lib/utils'
 import { updateUserRole, updateUserProfile } from '@/lib/firebase'
-import { Clock, LogOut, Mail, CheckCircle2 } from 'lucide-react'
+import { Clock, LogOut, MessageCircle, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import Link  from 'next/link'
@@ -138,8 +138,14 @@ export default function PendingPage() {
           <div className="bg-gold/10 border border-gold/30 rounded-xl p-4 mb-6 text-center">
             <p className="text-sm text-dark font-semibold mb-2">¿Necesitas tu ingreso con urgencia?</p>
             <p className="text-xs text-gray-500 mb-3">Comunícate con <strong className="text-navy">Carlos David Jaramillo</strong> para facilitar y gestionar tu ingreso.</p>
-            <a href="mailto:cdavid.jaramillo@gmail.com" className="inline-flex items-center gap-2 justify-center text-sm text-royal hover:text-navy transition-colors">
-              <Mail size={14} /> cdavid.jaramillo@gmail.com
+            <a
+              href={`https://wa.me/573508341643?text=${encodeURIComponent('Hola Carlos David. Necesito gestionar mi ingreso a la Guardia Real de Antioquia como integrante.')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 justify-center px-4 py-2.5 rounded-lg text-white text-sm font-semibold transition-colors"
+              style={{ backgroundColor: '#25D366' }}
+            >
+              <MessageCircle size={16} /> Hablar por WhatsApp
             </a>
           </div>
 
