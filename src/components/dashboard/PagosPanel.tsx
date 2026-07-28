@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import {
   getAllIntegrantes, getPagosPeriodoConcepto, setPago, deletePago,
   addAbono, getAbonosPeriodoConcepto, deleteAbono, getTotalConcepto,
-  getFirmaRecibo, setFirmaRecibo, getPagosPorFecha, type IntegranteBase,
+  getReciboPerfil, setFirmaRecibo, setReciboNombre, getPagosPorFecha, type IntegranteBase,
 } from '@/lib/firebase'
 import SignaturePad from '@/components/dashboard/SignaturePad'
 import { FAMILIAS, getSeccion, type FamiliaKey } from '@/lib/secciones'
@@ -26,6 +26,8 @@ function periodoLabel(p: string) { const [y, m] = p.split('-'); return `${MESES[
 const fmtCOP = (n?: number) => n != null ? `$${n.toLocaleString('es-CO')}` : ''
 // Conceptos "Abono …" admiten varios pagos independientes en el mismo mes (se suman)
 const esAcumulable = (c: string) => /^abono/i.test((c ?? '').trim())
+// Capitaliza cada palabra: "carlos cano valencia" → "Carlos Cano Valencia"
+const titleCase = (s: string) => (s ?? '').trim().toLowerCase().replace(/\b([a-záéíóúñ])/g, m => m.toUpperCase())
 
 export default function PagosPanel() {
   const { profile } = useAuth()
@@ -44,8 +46,9 @@ export default function PagosPanel() {
   const [search, setSearch] = useState('')
   const [fam, setFam] = useState<FamiliaKey | 'all'>('all')
   const [soloPendientes, setSoloPendientes] = useState(false)
-  // Firma del recaudador (para el recibo). Se pide la primera vez.
+  // Firma y nombre del recaudador (para el recibo). Se piden la primera vez.
   const [firma, setFirma] = useState<string | null>(null)
+  const [miNombreRecibo, setMiNombreRecibo] = useState('')
   const [firmaCargada, setFirmaCargada] = useState(false)
   const [firmaModal, setFirmaModal] = useState(false)
   const [pendienteFirma, setPendienteFirma] = useState<IntegranteBase | null>(null)
@@ -56,7 +59,11 @@ export default function PagosPanel() {
 
   useEffect(() => {
     if (!profile) return
-    getFirmaRecibo(profile.uid).then(f => { setFirma(f); setFirmaCargada(true) }).catch(() => setFirmaCargada(true))
+    getReciboPerfil(profile.uid).then(p => {
+      setFirma(p.firma)
+      setMiNombreRecibo(p.nombreRecibo || titleCase(p.displayName || profile.displayName || ''))
+      setFirmaCargada(true)
+    }).catch(() => setFirmaCargada(true))
   }, [profile])
 
   const loadRoster = useCallback(async () => {
@@ -279,6 +286,7 @@ export default function PagosPanel() {
           <Clock size={14} /> {soloPendientes ? 'Viendo pendientes' : 'Solo pendientes'}
         </button>
         <button onClick={() => setCierreOpen(true)} className="btn btn-ghost btn-sm"><Receipt size={14} /> Cierre de caja</button>
+        <button onClick={() => setFirmaModal(true)} className="btn btn-ghost btn-sm"><PenLine size={14} /> Firma y nombre</button>
         <button onClick={exportar} className="btn btn-ghost btn-sm"><FileDown size={14} /> Exportar</button>
       </div>
 
@@ -377,20 +385,22 @@ export default function PagosPanel() {
 
       {firmaModal && profile && (
         <FirmaReciboModal
-          nombre={profile.displayName || 'Recaudador'}
+          nombreInicial={miNombreRecibo}
+          firmaInicial={firma}
           onClose={() => { setFirmaModal(false); setPendienteFirma(null); setPendienteAbono(null) }}
-          onSaved={async (dataUrl) => {
+          onSaved={async ({ firma: nuevaFirma, nombre }) => {
             try {
-              await setFirmaRecibo(profile.uid, dataUrl)
-              setFirma(dataUrl)
+              if (nuevaFirma) { await setFirmaRecibo(profile.uid, nuevaFirma); setFirma(nuevaFirma) }
+              await setReciboNombre(profile.uid, nombre)
+              setMiNombreRecibo(nombre)
               setFirmaModal(false)
-              toast.success('Firma guardada. Aparecerá en todos tus recibos.')
+              toast.success('Firma y nombre guardados. Aparecerán en todos tus recibos.')
               const pend = pendienteFirma
               const pendA = pendienteAbono
               setPendienteFirma(null); setPendienteAbono(null)
               if (pend) setTimeout(() => marcar(pend), 100)
               if (pendA) setTimeout(() => setAbonoModal(pendA), 100)
-            } catch { toast.error('No se pudo guardar la firma') }
+            } catch { toast.error('No se pudo guardar') }
           }}
         />
       )}
@@ -470,11 +480,14 @@ function AbonoModal({ integrante, concepto, periodoTxt, montoSugerido, onClose, 
   )
 }
 
-// ── Modal: firma del recaudador (primera vez) ───────────────────────
-function FirmaReciboModal({ nombre, onClose, onSaved }: {
-  nombre: string; onClose: () => void; onSaved: (dataUrl: string) => Promise<void>
+// ── Modal: firma y nombre del recaudador para los recibos ───────────
+function FirmaReciboModal({ nombreInicial, firmaInicial, onClose, onSaved }: {
+  nombreInicial: string; firmaInicial: string | null
+  onClose: () => void; onSaved: (v: { firma?: string; nombre: string }) => Promise<void>
 }) {
-  const [firma, setFirmaLocal] = useState('')
+  const [nombre, setNombre] = useState(nombreInicial)
+  const [firma, setFirmaLocal] = useState('')          // firma nueva dibujada/subida
+  const [redibujar, setRedibujar] = useState(!firmaInicial)
   const [guardando, setGuardando] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -496,45 +509,59 @@ function FirmaReciboModal({ nombre, onClose, onSaved }: {
     e.target.value = ''
   }
 
+  const hayFirma = !!firma || (!!firmaInicial && !redibujar)
   const guardar = async () => {
-    if (!firma) { toast.error('Dibuja tu firma o sube una foto') ; return }
+    if (!nombre.trim()) { toast.error('Escribe tu nombre como debe aparecer en el recibo'); return }
+    if (!hayFirma) { toast.error('Dibuja tu firma o sube una foto'); return }
     setGuardando(true)
-    await onSaved(firma)
+    await onSaved({ firma: firma || undefined, nombre: nombre.trim() })
     setGuardando(false)
   }
 
   return (
-    <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-md w-full p-6 my-8" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-1">
-          <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2"><PenLine size={17} className="text-royal" /> Tu firma para los recibos</h3>
+          <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2"><PenLine size={17} className="text-royal" /> Firma y nombre en tus recibos</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-navy"><X size={18} /></button>
         </div>
-        <p className="text-sm text-gray-500 mb-4">
-          Solo se pide una vez. Aparecerá en cada recibo como <strong>&ldquo;Recibido: {nombre}&rdquo;</strong>.
-        </p>
+        <p className="text-sm text-gray-500 mb-4">Aparecerán en cada recibo como <strong>&ldquo;Recibido: {nombre.trim() || '…'}&rdquo;</strong> junto a tu firma.</p>
 
-        {firma ? (
+        {/* Nombre */}
+        <label className="block text-xs font-semibold text-dark mb-1">Nombre completo (como debe salir)</label>
+        <input value={nombre} onChange={e => setNombre(e.target.value)} className="input mb-1" placeholder="Carlos Cano Valencia" />
+        <p className="text-[11px] text-gray-400 mb-4">Escríbelo con mayúsculas iniciales y los espacios correctos entre nombres y apellidos.</p>
+
+        {/* Firma */}
+        <label className="block text-xs font-semibold text-dark mb-1">Firma</label>
+        {firmaInicial && !redibujar && !firma ? (
+          <div className="border-2 border-dashed border-green-300 bg-green-50/50 rounded-xl p-3 text-center mb-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={firmaInicial} alt="Firma actual" className="h-20 mx-auto object-contain" />
+            <button onClick={() => setRedibujar(true)} className="text-xs text-royal hover:underline mt-1">Cambiar firma</button>
+          </div>
+        ) : firma ? (
           <div className="border-2 border-dashed border-green-300 bg-green-50/50 rounded-xl p-3 text-center mb-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={firma} alt="Firma" className="h-20 mx-auto object-contain" />
-            <button onClick={() => setFirmaLocal('')} className="text-xs text-red-500 hover:underline mt-1">Cambiar</button>
+            <button onClick={() => setFirmaLocal('')} className="text-xs text-red-500 hover:underline mt-1">Borrar</button>
           </div>
         ) : (
-          <SignaturePad onChange={setFirmaLocal} />
+          <>
+            <SignaturePad onChange={setFirmaLocal} />
+            <div className="flex items-center gap-3 my-3">
+              <div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-400 uppercase">o</span><div className="flex-1 h-px bg-gray-200" />
+            </div>
+            <button onClick={() => fileRef.current?.click()} className="btn btn-ghost btn-md w-full justify-center">
+              <ImageUp size={16} /> Subir foto de mi firma
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={subirFoto} />
+          </>
         )}
 
-        <div className="flex items-center gap-3 my-3">
-          <div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-400 uppercase">o</span><div className="flex-1 h-px bg-gray-200" />
-        </div>
-        <button onClick={() => fileRef.current?.click()} className="btn btn-ghost btn-md w-full justify-center">
-          <ImageUp size={16} /> Subir foto de mi firma
-        </button>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={subirFoto} />
-
         <div className="flex gap-3 mt-5">
-          <button onClick={guardar} disabled={guardando || !firma} className="btn btn-primary btn-md flex-1 justify-center disabled:opacity-50">
-            {guardando ? 'Guardando...' : 'Guardar firma y continuar'}
+          <button onClick={guardar} disabled={guardando} className="btn btn-primary btn-md flex-1 justify-center disabled:opacity-50">
+            {guardando ? 'Guardando...' : 'Guardar'}
           </button>
         </div>
       </div>

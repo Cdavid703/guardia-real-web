@@ -14,6 +14,9 @@ function periodoLabel(p?: string) {
   return `${mes.charAt(0).toUpperCase()}${mes.slice(1)} ${y}`
 }
 const fmtCOP = (n?: number | null) => n != null ? `$${Number(n).toLocaleString('es-CO')} COP` : '—'
+// Capitaliza cada palabra (nombres): "carlos cano valencia" → "Carlos Cano Valencia"
+const titleCase = (s?: string) => (s ?? '').trim().toLowerCase()
+  .replace(/\b([a-záéíóúñ])/g, m => m.toUpperCase())
 
 export default async function ReciboPage({ params, searchParams }: {
   params: Promise<{ id: string }>
@@ -63,10 +66,12 @@ export default async function ReciboPage({ params, searchParams }: {
   const horaTxt = pagadoEn
     ? pagadoEn.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' })
     : ''
-  const nombreIntegrante = (data.integranteNombre as string)
-    || `${(integrante?.nombre as string) ?? ''} ${(integrante?.apellidos as string) ?? ''}`.trim() || '—'
+  const nombreIntegrante = titleCase((data.integranteNombre as string)
+    || `${(integrante?.nombre as string) ?? ''} ${(integrante?.apellidos as string) ?? ''}`.trim()) || '—'
   const firma = (recaudador?.firmaRecibo as string) ?? null
-  const nombreRecaudador = (recaudador?.displayName as string) ?? 'Recaudador'
+  // Prioriza el nombre que el recaudador fijó para sus recibos; si no, capitaliza el displayName
+  const nombreRecaudador = ((recaudador?.nombreRecibo as string) ?? '').trim()
+    || titleCase(recaudador?.displayName as string) || 'Recaudador'
 
   return (
     <div className="min-h-screen bg-[#F5F7FA] py-8 px-4 print:bg-white print:py-0">

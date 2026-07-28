@@ -694,6 +694,18 @@ export async function setFirmaRecibo(uid: string, firmaDataUrl: string): Promise
   await updateDoc(doc(db, 'users', uid), { firmaRecibo: firmaDataUrl, updatedAt: serverTimestamp() })
 }
 
+/** Perfil del recaudador para los recibos: firma + nombre tal como debe aparecer. */
+export async function getReciboPerfil(uid: string): Promise<{ firma: string | null; nombreRecibo: string; displayName: string }> {
+  const s = await getDoc(doc(db, 'users', uid))
+  const d = s.exists() ? s.data() : {}
+  return { firma: (d.firmaRecibo as string) ?? null, nombreRecibo: (d.nombreRecibo as string) ?? '', displayName: (d.displayName as string) ?? '' }
+}
+
+/** Fija el nombre con que el recaudador aparece en sus recibos ("Recibido: ..."). */
+export async function setReciboNombre(uid: string, nombre: string): Promise<void> {
+  await updateDoc(doc(db, 'users', uid), { nombreRecibo: nombre.trim(), updatedAt: serverTimestamp() })
+}
+
 export async function deletePago(integranteId: string, periodo: string, concepto: string): Promise<void> {
   await deleteDoc(doc(db, 'pagos', pagoDocId(integranteId, periodo, concepto)))
 }
