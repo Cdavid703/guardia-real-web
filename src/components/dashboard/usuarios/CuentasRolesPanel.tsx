@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
-import { Users, ShieldCheck, UserPlus, Search } from 'lucide-react'
+import { Users, ShieldCheck, UserPlus, Search, ChevronLeft, ChevronRight, EyeOff } from 'lucide-react'
 
 const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante } from '@/lib/firebase'
@@ -20,6 +20,8 @@ const ROLES: { value: UserRole; label: string }[] = [
 // Roles que pertenecen a la banda y deberían tener ficha en el roster
 const ROLES_BANDA: UserRole[] = ['integrante', 'director', 'junta', 'cm']
 
+const PAGE_SIZE = 25
+
 export default function CuentasRolesPanel({ uid }: { uid: string }) {
   const [users, setUsers]         = useState<UserProfile[]>([])
   const [linkedUids, setLinkedUids] = useState<Set<string>>(new Set())
@@ -27,6 +29,7 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
   const [creating, setCreating]   = useState<string | null>(null)
   const [filter, setFilter]       = useState<UserRole | 'all'>('all')
   const [search, setSearch]       = useState('')
+  const [page, setPage]           = useState(1)
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -77,11 +80,20 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
 
   const q = norm(search.trim())
   const filtered = users.filter(u => {
-    if (filter !== 'all' && u.role !== filter) return false
-    if (!q) return true
-    return norm(`${u.displayName} ${u.email}`).includes(q)
+    const matchesSearch = !q || norm(`${u.displayName} ${u.email}`).includes(q)
+    if (!matchesSearch) return false
+    // La vista "Todos" oculta a los visitantes (salvo que estés buscando).
+    if (filter === 'all') return q ? true : u.role !== 'visitante'
+    return u.role === filter
   })
   const pendingApprovals = users.filter(u => u.role === 'pending' && u.requestedRole)
+  const visitantesOcultos = filter === 'all' && !q ? users.filter(u => u.role === 'visitante').length : 0
+
+  // Paginación — se reinicia al cambiar filtro o búsqueda
+  useEffect(() => { setPage(1) }, [filter, search])
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const pageSafe = Math.min(page, totalPages)
+  const paged = filtered.slice((pageSafe - 1) * PAGE_SIZE, pageSafe * PAGE_SIZE)
 
   return (
     <div>
@@ -115,13 +127,20 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
       </div>
 
       {/* Filtros */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-2">
         {[['all','Todos'],['pending','Pendientes'],['admin','Administradores'],['director','Directores'],['integrante','Integrantes'],['junta','Junta'],['cm','Community Manager'],['collector','Recaudadores'],['visitante','Visitantes']].map(([v, l]) => (
           <button key={v} onClick={() => setFilter(v as UserRole | 'all')} className={cn('px-3 py-1.5 rounded-full text-xs font-semibold border transition-all', filter === v ? 'bg-navy text-white border-navy' : 'bg-white text-gray-600 border-gray-200 hover:border-navy hover:text-navy')}>
-            {l}<span className="ml-1.5 opacity-60">{v === 'all' ? users.length : users.filter(u => u.role === v).length}</span>
+            {l}<span className="ml-1.5 opacity-60">{v === 'all' ? users.filter(u => u.role !== 'visitante').length : users.filter(u => u.role === v).length}</span>
           </button>
         ))}
       </div>
+      {visitantesOcultos > 0 && (
+        <p className="text-xs text-gray-400 mb-4 flex items-center gap-1.5">
+          <EyeOff size={12} />
+          {visitantesOcultos} visitante{visitantesOcultos !== 1 ? 's' : ''} oculto{visitantesOcultos !== 1 ? 's' : ''} de esta vista.
+          <button onClick={() => setFilter('visitante')} className="text-royal font-semibold hover:underline">Ver visitantes</button>
+        </p>
+      )}
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {loading ? (
@@ -140,7 +159,7 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((u, i) => {
+                {paged.map((u, i) => {
                   const necesitaFicha = ROLES_BANDA.includes(u.role) && !linkedUids.has(u.uid)
                   return (
                   <tr key={u.uid} className={cn('border-t border-gray-100', i % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
@@ -184,6 +203,24 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
           </div>
         )}
       </div>
+
+      {/* Paginación */}
+      {!loading && filtered.length > 0 && (
+        <div className="flex items-center justify-between gap-3 mt-3 text-xs text-gray-500">
+          <span>
+            Mostrando <strong className="text-dark">{(pageSafe - 1) * PAGE_SIZE + 1}–{Math.min(pageSafe * PAGE_SIZE, filtered.length)}</strong> de <strong className="text-dark">{filtered.length}</strong>
+          </span>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={pageSafe <= 1}
+                className="p-1.5 rounded-lg border border-gray-200 hover:border-navy disabled:opacity-40 disabled:hover:border-gray-200 transition-colors"><ChevronLeft size={15} /></button>
+              <span className="px-2 font-semibold text-dark">{pageSafe} / {totalPages}</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={pageSafe >= totalPages}
+                className="p-1.5 rounded-lg border border-gray-200 hover:border-navy disabled:opacity-40 disabled:hover:border-gray-200 transition-colors"><ChevronRight size={15} /></button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
