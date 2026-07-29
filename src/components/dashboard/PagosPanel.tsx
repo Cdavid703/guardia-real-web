@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 import {
   Wallet, Search, CheckCircle2, Clock, FileDown, MessageCircle, X, Coins, Tag,
-  Receipt, PenLine, ImageUp, Plus, ChevronDown, ChevronUp, Trash2, PiggyBank,
+  Receipt, PenLine, ImageUp, Plus, ChevronDown, ChevronUp, Trash2, PiggyBank, ListChecks,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -42,6 +42,8 @@ export default function PagosPanel() {
   const [totalConcepto, setTotalConcepto] = useState<{ total: number; count: number } | null>(null)
   const [expandAbono, setExpandAbono] = useState<string | null>(null)
   const [abonoModal, setAbonoModal] = useState<IntegranteBase | null>(null)
+  const [seleccion, setSeleccion] = useState<Set<string>>(new Set())
+  const [procesando, setProcesando] = useState(false)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [fam, setFam] = useState<FamiliaKey | 'all'>('all')
@@ -92,6 +94,7 @@ export default function PagosPanel() {
 
   const sumaAbonos = useCallback((id: string) => (abonos[id] ?? []).reduce((s, p) => s + (p.monto ?? 0), 0), [abonos])
   const tieneAbono = useCallback((id: string) => (abonos[id]?.length ?? 0) > 0, [abonos])
+  const esPendiente = useCallback((i: IntegranteBase) => acumulable ? !tieneAbono(i.id) : !pagos[i.id]?.pagado, [acumulable, tieneAbono, pagos])
 
   const stats = useMemo(() => {
     if (acumulable) {
@@ -106,13 +109,12 @@ export default function PagosPanel() {
 
   const lista = useMemo(() => {
     const q = norm(search.trim())
-    const pendiente = (i: IntegranteBase) => acumulable ? !tieneAbono(i.id) : !pagos[i.id]?.pagado
     return roster
       .filter(i => fam === 'all' || i.familia === fam)
-      .filter(i => !soloPendientes || pendiente(i))
+      .filter(i => !soloPendientes || esPendiente(i))
       .filter(i => !q || norm(`${i.nombre} ${i.apellidos} ${getSeccion(i.seccion)?.label ?? ''}`).includes(q))
       .sort((a, b) => `${a.apellidos}`.localeCompare(b.apellidos, 'es'))
-  }, [roster, fam, soloPendientes, search, pagos, abonos, acumulable, tieneAbono])
+  }, [roster, fam, soloPendientes, search, esPendiente])
 
   const linkRecibo = (p?: Pago) => p?.token ? `${window.location.origin}/recibo/${p.id}?t=${p.token}` : null
 
@@ -188,6 +190,47 @@ export default function PagosPanel() {
     setAbonos(prev => ({ ...prev, [i.id]: (prev[i.id] ?? []).filter(p => p.id !== pago.id) }))
     setTotalConcepto(t => t ? { total: t.total - (pago.monto ?? 0), count: Math.max(0, t.count - 1) } : t)
     try { await deleteAbono(pago.id) } catch { toast.error('No se pudo eliminar'); loadPagos() }
+  }
+
+  // ── Selección y marcado masivo ──
+  const toggleSel = (id: string) => setSeleccion(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const seleccionarPendientes = () => setSeleccion(new Set(lista.filter(esPendiente).map(i => i.id)))
+
+  const marcarSeleccionados = async () => {
+    if (!profile) return
+    const ids = [...seleccion]
+    if (ids.length === 0) return
+    if (firmaCargada && !firma) { toast.error('Primero configura tu firma en "Firma y nombre"'); setFirmaModal(true); return }
+    const monto = cuota ? Number(cuota) : undefined
+    if (acumulable && (!monto || monto <= 0)) { toast.error('Escribe el "Monto sugerido" para el abono masivo'); return }
+    const hoy = new Date().toISOString().slice(0, 10)
+    if (!confirm(`¿Marcar ${ids.length} integrante(s) como pagados de "${concepto}" (${periodoLabel(periodo)})${monto ? ` por ${fmtCOP(monto)} c/u` : ''}?\nSe generará el recibo y se enviará el correo a cada uno.`)) return
+
+    setProcesando(true)
+    let ok = 0, fail = 0
+    for (const id of ids) {
+      const i = roster.find(r => r.id === id)
+      const nombre = i ? `${i.nombre} ${i.apellidos}`.trim() : ''
+      if (!i || !nombre) { fail++; continue }
+      try {
+        if (acumulable) {
+          const { id: pid, reciboNumero, token } = await addAbono(i.id, periodo, concepto.trim(), { integranteNombre: nombre, monto, fecha: hoy }, profile.uid)
+          const pago: Pago = { id: pid, integranteId: i.id, integranteNombre: nombre, periodo, concepto, pagado: true, monto, fecha: hoy, pagadoEn: new Date().toISOString(), reciboNumero, token, createdAt: new Date() }
+          setAbonos(prev => ({ ...prev, [i.id]: [...(prev[i.id] ?? []), pago] }))
+          setTotalConcepto(t => t ? { total: t.total + (monto ?? 0), count: t.count + 1 } : t)
+          fetch('/api/recibos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pagoId: pid }) }).catch(() => {})
+        } else {
+          const { id: pid, reciboNumero, token } = await setPago(i.id, periodo, concepto.trim(), { integranteNombre: nombre, monto }, profile.uid)
+          const pago: Pago = { id: pid, integranteId: i.id, integranteNombre: nombre, periodo, concepto, pagado: true, monto, fecha: hoy, pagadoEn: new Date().toISOString(), reciboNumero, token, createdAt: new Date() }
+          setPagos(p => ({ ...p, [i.id]: pago }))
+          fetch('/api/recibos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pagoId: pid }) }).catch(() => {})
+        }
+        ok++
+      } catch { fail++ }
+    }
+    setProcesando(false)
+    setSeleccion(new Set())
+    toast.success(`${ok} pago(s) registrados${fail ? `, ${fail} con error` : ''}. Correos enviados.`)
   }
 
   const recordar = (i: IntegranteBase) => {
@@ -285,10 +328,22 @@ export default function PagosPanel() {
         <button onClick={() => setSoloPendientes(s => !s)} className={cn('btn btn-sm', soloPendientes ? 'btn-primary' : 'btn-ghost')}>
           <Clock size={14} /> {soloPendientes ? 'Viendo pendientes' : 'Solo pendientes'}
         </button>
+        <button onClick={seleccionarPendientes} className="btn btn-ghost btn-sm"><ListChecks size={14} /> Sel. pendientes</button>
         <button onClick={() => setCierreOpen(true)} className="btn btn-ghost btn-sm"><Receipt size={14} /> Cierre de caja</button>
         <button onClick={() => setFirmaModal(true)} className="btn btn-ghost btn-sm"><PenLine size={14} /> Firma y nombre</button>
         <button onClick={exportar} className="btn btn-ghost btn-sm"><FileDown size={14} /> Exportar</button>
       </div>
+
+      {/* Barra de marcado masivo */}
+      {seleccion.size > 0 && (
+        <div className="sticky top-2 z-20 bg-navy text-white rounded-xl px-4 py-2.5 mb-3 flex items-center gap-3 shadow-lg">
+          <span className="text-sm font-semibold shrink-0">{seleccion.size} seleccionado(s)</span>
+          <button onClick={() => setSeleccion(new Set())} className="text-xs text-gray-300 hover:text-white shrink-0">Limpiar</button>
+          <button onClick={marcarSeleccionados} disabled={procesando} className="ml-auto inline-flex items-center gap-1.5 bg-gold text-navy font-bold text-sm px-3 py-1.5 rounded-lg hover:bg-gold/90 transition-colors disabled:opacity-60 shrink-0">
+            {procesando ? 'Procesando...' : <><CheckCircle2 size={15} /> Marcar {seleccion.size} como {acumulable ? 'abonados' : 'pagados'}</>}
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-16"><div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" /></div>
@@ -303,8 +358,9 @@ export default function PagosPanel() {
               const suma = sumaAbonos(i.id)
               const abierto = expandAbono === i.id
               return (
-                <div key={i.id} className={cn('border rounded-xl', mis.length ? 'border-green-200 bg-green-50/40' : 'border-gray-100 bg-white')}>
+                <div key={i.id} className={cn('border rounded-xl', seleccion.has(i.id) ? 'border-royal ring-1 ring-royal/30 bg-royal/5' : mis.length ? 'border-green-200 bg-green-50/40' : 'border-gray-100 bg-white')}>
                   <div className="flex items-center gap-3 p-3">
+                    <input type="checkbox" checked={seleccion.has(i.id)} onChange={() => toggleSel(i.id)} className="w-4 h-4 accent-royal shrink-0 cursor-pointer" title="Seleccionar para marcado masivo" />
                     <div className="w-9 h-9 rounded-full bg-royal/10 flex items-center justify-center text-royal text-sm font-bold shrink-0">{(i.nombre[0] ?? '?').toUpperCase()}</div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
@@ -344,7 +400,10 @@ export default function PagosPanel() {
             }
             const p = pagos[i.id]
             return (
-              <div key={i.id} className={cn('flex items-center gap-3 border rounded-xl p-3', p?.pagado ? 'border-green-200 bg-green-50/60' : 'border-gray-100 bg-white')}>
+              <div key={i.id} className={cn('flex items-center gap-3 border rounded-xl p-3', seleccion.has(i.id) ? 'border-royal ring-1 ring-royal/30 bg-royal/5' : p?.pagado ? 'border-green-200 bg-green-50/60' : 'border-gray-100 bg-white')}>
+                {!p?.pagado && (
+                  <input type="checkbox" checked={seleccion.has(i.id)} onChange={() => toggleSel(i.id)} className="w-4 h-4 accent-royal shrink-0 cursor-pointer" title="Seleccionar para marcado masivo" />
+                )}
                 <div className="w-9 h-9 rounded-full bg-royal/10 flex items-center justify-center text-royal text-sm font-bold shrink-0">{(i.nombre[0] ?? '?').toUpperCase()}</div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
