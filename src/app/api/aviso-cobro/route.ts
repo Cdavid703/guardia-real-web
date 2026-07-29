@@ -18,9 +18,10 @@ const titleCase = (s: string) => (s ?? '').trim().toLowerCase().replace(/\b([a-z
 /** Envía por correo el aviso de cobro (recordatorio de pago) a varios integrantes. */
 export async function POST(req: NextRequest) {
   try {
-    const { integranteIds, periodo, concepto, monto } = await req.json()
+    const { integranteIds, periodo, concepto, monto, cc } = await req.json()
     if (!Array.isArray(integranteIds) || integranteIds.length === 0)
       return NextResponse.json({ ok: false, error: 'integranteIds requerido' }, { status: 400 })
+    const ccMail = typeof cc === 'string' && cc.includes('@') ? cc.trim() : null
 
     if (!RESEND_KEY) return NextResponse.json({ ok: false, error: 'no email key' }, { status: 500 })
 
@@ -67,6 +68,7 @@ export async function POST(req: NextRequest) {
         await resend.emails.send({
           from: FROM,
           to: correo,
+          ...(ccMail && ccMail.toLowerCase() !== correo.toLowerCase() ? { cc: ccMail } : {}),
           subject: `Recordatorio: ${conceptoTxt} de ${periodoTxt} — Guardia Real`,
           html: emailWrapper('Recordatorio de pago', content),
         })

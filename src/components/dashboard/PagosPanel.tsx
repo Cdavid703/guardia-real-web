@@ -242,12 +242,12 @@ export default function PagosPanel() {
     try {
       const res = await fetch('/api/aviso-cobro', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ integranteIds: ids, periodo, concepto: concepto.trim(), monto }),
+        body: JSON.stringify({ integranteIds: ids, periodo, concepto: concepto.trim(), monto, cc: profile?.email ?? undefined }),
       })
       const data = await res.json()
       if (!data.ok) { toast.error('No se pudo enviar el aviso'); return }
       setSeleccion(new Set())
-      toast.success(`Aviso enviado a ${data.enviados} integrante(s)${data.sinCorreo ? ` · ${data.sinCorreo} sin correo` : ''}${data.fallidos ? ` · ${data.fallidos} con error` : ''}`)
+      toast.success(`Aviso enviado a ${data.enviados} integrante(s)${data.sinCorreo ? ` · ${data.sinCorreo} sin correo` : ''}${data.fallidos ? ` · ${data.fallidos} con error` : ''}${profile?.email ? ` · con copia a ${profile.email}` : ''}`)
     } catch { toast.error('No se pudo enviar el aviso') }
     finally { setProcesando(false) }
   }
