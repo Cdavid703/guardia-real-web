@@ -233,6 +233,25 @@ export default function PagosPanel() {
     toast.success(`${ok} pago(s) registrados${fail ? `, ${fail} con error` : ''}. Correos enviados.`)
   }
 
+  const enviarAvisoCobro = async () => {
+    const ids = [...seleccion]
+    if (ids.length === 0) return
+    const monto = cuota ? Number(cuota) : undefined
+    if (!confirm(`¿Enviar por correo el aviso de cobro de "${concepto}" (${periodoLabel(periodo)})${monto ? ` por ${fmtCOP(monto)}` : ''} a ${ids.length} integrante(s)?`)) return
+    setProcesando(true)
+    try {
+      const res = await fetch('/api/aviso-cobro', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ integranteIds: ids, periodo, concepto: concepto.trim(), monto }),
+      })
+      const data = await res.json()
+      if (!data.ok) { toast.error('No se pudo enviar el aviso'); return }
+      setSeleccion(new Set())
+      toast.success(`Aviso enviado a ${data.enviados} integrante(s)${data.sinCorreo ? ` · ${data.sinCorreo} sin correo` : ''}${data.fallidos ? ` · ${data.fallidos} con error` : ''}`)
+    } catch { toast.error('No se pudo enviar el aviso') }
+    finally { setProcesando(false) }
+  }
+
   const recordar = (i: IntegranteBase) => {
     const tel = (i.whatsapp || '').replace(/\D/g, '')
     if (!tel) { toast.info('Sin WhatsApp registrado'); return }
@@ -339,9 +358,14 @@ export default function PagosPanel() {
         <div className="sticky top-2 z-20 bg-navy text-white rounded-xl px-4 py-2.5 mb-3 flex items-center gap-3 shadow-lg">
           <span className="text-sm font-semibold shrink-0">{seleccion.size} seleccionado(s)</span>
           <button onClick={() => setSeleccion(new Set())} className="text-xs text-gray-300 hover:text-white shrink-0">Limpiar</button>
-          <button onClick={marcarSeleccionados} disabled={procesando} className="ml-auto inline-flex items-center gap-1.5 bg-gold text-navy font-bold text-sm px-3 py-1.5 rounded-lg hover:bg-gold/90 transition-colors disabled:opacity-60 shrink-0">
-            {procesando ? 'Procesando...' : <><CheckCircle2 size={15} /> Marcar {seleccion.size} como {acumulable ? 'abonados' : 'pagados'}</>}
-          </button>
+          <div className="ml-auto flex items-center gap-2 shrink-0">
+            <button onClick={enviarAvisoCobro} disabled={procesando} className="inline-flex items-center gap-1.5 bg-white/10 border border-white/25 text-white font-semibold text-sm px-3 py-1.5 rounded-lg hover:bg-white/20 transition-colors disabled:opacity-60">
+              <MessageCircle size={15} /> Enviar aviso de cobro
+            </button>
+            <button onClick={marcarSeleccionados} disabled={procesando} className="inline-flex items-center gap-1.5 bg-gold text-navy font-bold text-sm px-3 py-1.5 rounded-lg hover:bg-gold/90 transition-colors disabled:opacity-60">
+              {procesando ? 'Procesando...' : <><CheckCircle2 size={15} /> Marcar {acumulable ? 'abonados' : 'pagados'}</>}
+            </button>
+          </div>
         </div>
       )}
 
