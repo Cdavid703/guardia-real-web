@@ -188,8 +188,8 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
         </p>
       )}
 
-      {/* Columnas visibles (colapsables para móvil) */}
-      <div className="flex flex-wrap items-center gap-1.5 mb-2">
+      {/* Columnas visibles (colapsables) — solo tabla de escritorio */}
+      <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-2">
         <span className="text-[11px] text-gray-400 mr-0.5">Columnas:</span>
         {[['rolActual','Rol actual'],['rolSolicitado','Rol solicitado'],['ficha','Ficha'],['registro','Registro']].map(([k, l]) => (
           <button key={k} onClick={() => toggleCol(k)} className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all', cols.has(k) ? 'bg-navy text-white border-navy' : 'bg-white text-gray-400 border-gray-200 hover:border-navy')}>
@@ -204,7 +204,35 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-400"><Users size={36} className="mx-auto mb-3 opacity-30" /><p className="text-sm">No hay usuarios en esta categoría</p></div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Móvil: tarjetas apiladas con nombre y correo completos */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {paged.map(u => {
+              const necesitaFicha = ROLES_BANDA.includes(u.role) && !linkedUids.has(u.uid)
+              return (
+                <div key={u.uid} className="p-3.5">
+                  <div className="flex items-start gap-2.5">
+                    {u.photoURL ? <Image src={u.photoURL} alt={u.displayName} width={38} height={38} className="rounded-full shrink-0" /> : <div className="w-9 h-9 rounded-full bg-navy text-white text-sm font-bold flex items-center justify-center shrink-0">{u.displayName[0]?.toUpperCase()}</div>}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-dark break-words">{u.displayName}</p>
+                      <p className="text-xs text-gray-500 break-all">{u.email}</p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                        <span className={cn('badge text-xs', getRoleBadgeColor(u.role))}>{getRoleLabel(u.role)}</span>
+                        {u.requestedRole && <button onClick={() => handleApprove(u)} className="badge bg-amber-100 text-amber-700 text-xs">Solicita {getRoleLabel(u.requestedRole)} · Aprobar</button>}
+                        {necesitaFicha && <button onClick={() => handleCrearFicha(u)} disabled={creating === u.uid} className="text-[11px] bg-gold/15 text-amber-700 rounded-full px-2 py-0.5 font-semibold inline-flex items-center gap-1"><UserPlus size={10} /> {creating === u.uid ? 'Creando...' : 'Crear ficha'}</button>}
+                        {!necesitaFicha && ROLES_BANDA.includes(u.role) && <span className="text-[11px] bg-green-100 text-green-700 rounded-full px-2 py-0.5 font-medium">Con ficha</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <select value={u.role} onChange={e => handleRole(u.uid, e.target.value as UserRole)} className="mt-2.5 w-full text-sm border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-dark focus:outline-none focus:border-royal">
+                    {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  </select>
+                </div>
+              )
+            })}
+          </div>
+          {/* Desktop: tabla */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-navy text-white text-xs font-bold uppercase tracking-wider">
@@ -263,6 +291,7 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 
