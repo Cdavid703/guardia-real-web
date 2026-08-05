@@ -34,6 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/integrante',        label: 'Mi portal',          icon: IdCard,          roles: ['admin','integrante'] },
   { href: '/dashboard/junta',             label: 'Documentos',        icon: FileText,        roles: ['admin','junta'] },
   { href: '/dashboard/collector',         label: 'Pagos (recaudo)',   icon: Wallet,          roles: ['collector'] },
+  { href: '/dashboard/staff',             label: 'Mis pagos',         icon: Wallet,          roles: ['staff'] },
   { href: '/dashboard/cm',               label: 'Panel CM',          icon: Globe,           roles: ['cm'] },
   { href: '/dashboard/cm/noticias',       label: 'Publicar noticias', icon: Newspaper,       roles: ['cm'] },
   { href: '/dashboard/cm/galeria',        label: 'Galería / Media',   icon: ImageIcon,       roles: ['cm'] },

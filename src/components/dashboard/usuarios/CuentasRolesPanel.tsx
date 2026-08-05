@@ -15,6 +15,7 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'Administrador' }, { value: 'director', label: 'Director Musical' },
   { value: 'integrante', label: 'Integrante' }, { value: 'junta', label: 'Junta Directiva' },
   { value: 'cm', label: 'Community Manager' }, { value: 'collector', label: 'Recaudador' },
+  { value: 'staff', label: 'Staff' },
   { value: 'visitante', label: 'Visitante' }, { value: 'pending', label: 'Pendiente' },
 ]
 

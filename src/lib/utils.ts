@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /** Roles con panel (dashboard) propio. El resto gestiona todo desde /integrantes. */
-export const PANEL_ROLES: UserRole[] = ['admin', 'director', 'cm', 'collector']
+export const PANEL_ROLES: UserRole[] = ['admin', 'director', 'cm', 'collector', 'staff']
 
 export function getRoleDashboard(role: UserRole): string {
   const map: Record<UserRole, string> = {
@@ -18,6 +18,8 @@ export function getRoleDashboard(role: UserRole): string {
     // Sin panel propio: gestionan todo desde la pestaña "Integrantes" del sitio.
     integrante: '/integrantes',
     junta:      '/integrantes',
+    // Staff (familiares/logística): portal propio con sus pagos; sin acceso a integrantes.
+    staff:      '/dashboard/staff',
     visitante:  '/',
     pending:    '/pending',
   }
@@ -32,6 +34,7 @@ export function getRoleLabel(role: UserRole): string {
     junta:      'Junta Directiva',
     cm:         'Community Manager',
     collector:  'Recaudador',
+    staff:      'Staff',
     visitante:  'Visitante',
     pending:    'Pendiente de aprobación',
   }
@@ -46,6 +49,7 @@ export function getRoleBadgeColor(role: UserRole): string {
     junta:      'bg-amber-100 text-amber-700',
     cm:         'bg-pink-100 text-pink-700',
     collector:  'bg-teal-100 text-teal-700',
+    staff:      'bg-slate-200 text-slate-700',
     visitante:  'bg-green-100 text-green-700',
     pending:    'bg-gray-100 text-gray-600',
   }
