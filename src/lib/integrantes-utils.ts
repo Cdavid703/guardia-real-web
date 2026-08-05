@@ -4,7 +4,31 @@
 import type { Integrante } from '@/types'
 
 /** Tipos de documento de identidad (para los selectores de ficha). */
-export const TIPOS_DOCUMENTO = ['Cédula', 'Tarjeta de identidad', 'Pasaporte', 'NUIP', 'Documento Venezuela'] as const
+export const TIPOS_DOCUMENTO = ['Cédula', 'Tarjeta de identidad', 'Pasaporte', 'NUIP', 'Documento Venezuela', 'Permiso de permanencia'] as const
+
+/**
+ * Sugiere a cuál tipo estándar corresponde un valor de documento existente
+ * (formato viejo o texto libre). Devuelve '' si no hay una correspondencia clara
+ * (p. ej. "Cédula de extranjería"), para que el admin decida manualmente.
+ */
+export function sugerirTipoDoc(raw: string): string {
+  const s = (raw ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[.\-_]/g, ' ').replace(/\s+/g, ' ').trim()
+  if (!s) return ''
+  // ya es uno de los estándar
+  for (const t of TIPOS_DOCUMENTO) {
+    if (s === t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')) return t
+  }
+  // extranjería no tiene equivalente en el estándar → sin sugerencia
+  if (s.includes('extranjeria')) return ''
+  if (/permiso.*(permanencia|proteccion)|(^| )ppt( |$)|(^| )pep( |$)/.test(s)) return 'Permiso de permanencia'
+  if (/venez|(^| )v ?\d/.test(s)) return 'Documento Venezuela'
+  if (/nuip/.test(s)) return 'NUIP'
+  if (/pasaporte|passport/.test(s)) return 'Pasaporte'
+  if (/tarjeta.*identidad|(^| )ti( |$)/.test(s)) return 'Tarjeta de identidad'
+  if (/cedula|(^| )cc( |$)|ciudadania/.test(s)) return 'Cédula'
+  return ''
+}
 
 /** Campos obligatorios para considerar una ficha "completa". */
 export const REQUERIDOS_INTEGRANTE: [keyof Integrante, string][] = [

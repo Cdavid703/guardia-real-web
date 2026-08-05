@@ -286,6 +286,25 @@ export async function getIntegrantePrivado(id: string): Promise<Partial<Integran
   return s.exists() ? (s.data() as Partial<Integrante>) : null
 }
 
+/** Escanea el tipo de documento de todas las fichas (para normalizar). Solo admin. */
+export async function getTiposDocFichas(): Promise<{ id: string; nombre: string; tipoDoc: string }[]> {
+  const [privSnap, base] = await Promise.all([
+    getDocs(collection(db, 'integrantesPrivado')),
+    getAllIntegrantes(),
+  ])
+  const nombrePorId = new Map(base.map(b => [b.id, `${b.nombre} ${b.apellidos}`.trim()]))
+  return privSnap.docs.map(d => ({
+    id: d.id,
+    nombre: nombrePorId.get(d.id) ?? d.id,
+    tipoDoc: (d.data().tipoDoc as string) ?? '',
+  }))
+}
+
+/** Actualiza solo el tipo de documento de una ficha (normalización). Solo admin. */
+export async function actualizarTipoDoc(id: string, tipoDoc: string): Promise<void> {
+  await setDoc(doc(db, 'integrantesPrivado', id), { tipoDoc }, { merge: true })
+}
+
 /** Ficha COMPLETA (base + sensible) enlazada a un uid de cuenta. */
 export async function getMiIntegrante(uid: string): Promise<Integrante | null> {
   // Cuentas con acceso (puede haber varias por ficha)

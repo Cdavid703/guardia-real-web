@@ -6,16 +6,16 @@ import { toast } from 'sonner'
 import {
   Upload, Search, Link2, Link2Off, UserCheck, UserX, ChevronDown,
   Pencil, Trash2, X, Save, AlertTriangle, Users2, FileSearch, Download,
-  Cake, Link as LinkIcon, FileDown, CheckCircle2, Phone, List, LayoutGrid, GitMerge,
+  Cake, Link as LinkIcon, FileDown, CheckCircle2, Phone, List, LayoutGrid, GitMerge, IdCard,
 } from 'lucide-react'
 import {
   getAllIntegrantes, getAllUsers, getIntegrantePrivado, bulkImportIntegrantes,
   upsertIntegrante, linkIntegranteToUser, deleteIntegrante, autoLinkIntegrantes,
-  updateUserRole, mergeIntegrantes, type IntegranteBase,
+  updateUserRole, mergeIntegrantes, getTiposDocFichas, actualizarTipoDoc, type IntegranteBase,
 } from '@/lib/firebase'
 import { FAMILIAS, SECCIONES_LIST, getSeccion, type FamiliaKey } from '@/lib/secciones'
 import {
-  REQUERIDOS_INTEGRANTE, edadDesde, esMenorDeEdad, descargarCSV, TIPOS_DOCUMENTO,
+  REQUERIDOS_INTEGRANTE, edadDesde, esMenorDeEdad, descargarCSV, TIPOS_DOCUMENTO, sugerirTipoDoc,
 } from '@/lib/integrantes-utils'
 import type { Integrante, UserProfile } from '@/types'
 import { cn } from '@/lib/utils'
@@ -94,6 +94,7 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
   const [preview,     setPreview]     = useState<PreviewResult | null>(null)
   const [reportOpen,  setReportOpen]  = useState(false)
   const [dupOpen,     setDupOpen]     = useState(false)
+  const [normDocsOpen, setNormDocsOpen] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -388,6 +389,9 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
         <button onClick={() => setDupOpen(true)} className="btn btn-ghost btn-sm text-amber-600">
           <GitMerge size={14} /> Duplicados
         </button>
+        <button onClick={() => setNormDocsOpen(true)} className="btn btn-ghost btn-sm text-royal">
+          <IdCard size={14} /> Normalizar documentos
+        </button>
         <div className="relative ml-auto">
           <button onClick={() => setReportOpen(o => !o)} disabled={busy} className="btn btn-primary btn-sm disabled:opacity-60">
             <FileDown size={14} /> Informe ▾
@@ -635,6 +639,114 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
       {creatingNew && <EditModal integrante={FICHA_VACIA} isNew uid={uid} onClose={() => setCreatingNew(false)} onSaved={() => { setCreatingNew(false); load() }} />}
       {preview && <PreviewModal result={preview} onClose={() => setPreview(null)} />}
       {dupOpen && <DuplicadosModal integrantes={integrantes} uid={uid} onClose={() => setDupOpen(false)} onMerged={load} />}
+      {normDocsOpen && <NormalizarDocsModal onClose={() => setNormDocsOpen(false)} />}
+    </div>
+  )
+}
+
+// ── Normalizar tipos de documento al estándar ───────────────────────
+interface GrupoDoc { raw: string; count: number; ids: string[]; destino: string }
+
+function NormalizarDocsModal({ onClose }: { onClose: () => void }) {
+  const [loading, setLoading] = useState(true)
+  const [grupos, setGrupos] = useState<GrupoDoc[]>([])
+  const [aplicando, setAplicando] = useState(false)
+  const [conDato, setConDato] = useState(0)
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const fichas = await getTiposDocFichas()
+        const map = new Map<string, GrupoDoc>()
+        let n = 0
+        for (const f of fichas) {
+          const raw = (f.tipoDoc ?? '').trim()
+          if (!raw) continue
+          n++
+          const g = map.get(raw) ?? { raw, count: 0, ids: [], destino: '' }
+          g.count++; g.ids.push(f.id)
+          map.set(raw, g)
+        }
+        // sugerencia por grupo; ya-estándar quedan sin cambio
+        const arr = [...map.values()].map(g => ({ ...g, destino: sugerirTipoDoc(g.raw) }))
+          .sort((a, b) => b.count - a.count)
+        setConDato(n)
+        setGrupos(arr)
+      } catch { toast.error('No se pudieron leer los documentos') }
+      finally { setLoading(false) }
+    })()
+  }, [])
+
+  const setDestino = (raw: string, destino: string) =>
+    setGrupos(gs => gs.map(g => g.raw === raw ? { ...g, destino } : g))
+
+  const pendientes = grupos.filter(g => g.destino && g.destino !== g.raw)
+  const totalCambios = pendientes.reduce((s, g) => s + g.count, 0)
+
+  const aplicar = async () => {
+    if (pendientes.length === 0) { toast.info('No hay cambios por aplicar'); return }
+    if (!confirm(`¿Aplicar la normalización a ${totalCambios} ficha(s)? Esta acción reescribe el tipo de documento.`)) return
+    setAplicando(true)
+    let ok = 0, fail = 0
+    for (const g of pendientes) {
+      for (const id of g.ids) {
+        try { await actualizarTipoDoc(id, g.destino); ok++ } catch { fail++ }
+      }
+    }
+    setAplicando(false)
+    toast.success(`${ok} ficha(s) normalizadas${fail ? `, ${fail} con error` : ''}`)
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-serif font-bold text-navy text-lg flex items-center gap-2"><IdCard size={18} className="text-royal" /> Normalizar tipos de documento</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-navy"><X size={18} /></button>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">Revisa a qué tipo estándar se convertirá cada valor existente. Los que ya están bien no cambian. Los que no tienen sugerencia (ej. <em>Cédula de extranjería</em>) quedan sin tocar salvo que les elijas destino.</p>
+
+        {loading ? (
+          <div className="flex justify-center py-12"><div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" /></div>
+        ) : grupos.length === 0 ? (
+          <p className="text-center text-gray-400 text-sm py-10">No hay fichas con tipo de documento registrado.</p>
+        ) : (
+          <>
+            <div className="border border-gray-200 rounded-xl overflow-hidden mb-4">
+              <table className="w-full text-sm">
+                <thead><tr className="bg-navy text-white text-xs uppercase tracking-wide">
+                  <th className="px-3 py-2 text-left">Valor actual</th><th className="px-3 py-2 text-center">Fichas</th><th className="px-3 py-2 text-left">Convertir a</th>
+                </tr></thead>
+                <tbody>
+                  {grupos.map((g, i) => {
+                    const yaEstandar = (TIPOS_DOCUMENTO as readonly string[]).includes(g.raw)
+                    const cambia = g.destino && g.destino !== g.raw
+                    return (
+                      <tr key={g.raw} className={cn('border-t border-gray-100', i % 2 ? 'bg-gray-50' : 'bg-white')}>
+                        <td className="px-3 py-2"><span className={cn('font-medium', yaEstandar ? 'text-green-700' : 'text-dark')}>{g.raw}</span>{yaEstandar && <span className="ml-1.5 text-[10px] text-green-600">(ya estándar)</span>}</td>
+                        <td className="px-3 py-2 text-center text-gray-500">{g.count}</td>
+                        <td className="px-3 py-2">
+                          <select value={g.destino} onChange={e => setDestino(g.raw, e.target.value)} className={cn('text-xs border rounded-lg px-2 py-1.5 bg-white cursor-pointer', cambia ? 'border-royal text-royal font-semibold' : 'border-gray-200 text-gray-500')}>
+                            <option value="">— Dejar igual —</option>
+                            {TIPOS_DOCUMENTO.map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex items-center gap-3">
+              <p className="text-xs text-gray-500">{conDato} fichas con dato · <strong className="text-navy">{totalCambios}</strong> se cambiarán</p>
+              <button onClick={aplicar} disabled={aplicando || totalCambios === 0} className="btn btn-primary btn-md ml-auto disabled:opacity-50">
+                {aplicando ? 'Aplicando...' : `Aplicar (${totalCambios})`}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }
