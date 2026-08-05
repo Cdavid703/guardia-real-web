@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getMiIntegrante, updateMiIntegrante, createMiFicha, getIntegranteByCorreoAutorizado, storage } from '@/lib/firebase'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { SECCIONES_LIST, getSeccion, instrumentoImage } from '@/lib/secciones'
-import { camposFaltantes } from '@/lib/integrantes-utils'
+import { camposFaltantes, TIPOS_DOCUMENTO } from '@/lib/integrantes-utils'
 import type { Integrante } from '@/types'
 import { cn } from '@/lib/utils'
 import CarneIntegrante from '@/components/dashboard/CarneIntegrante'
@@ -19,7 +19,7 @@ import AutorizacionMenor from '@/components/dashboard/AutorizacionMenor'
 import FotoCropper from '@/components/dashboard/FotoCropper'
 import QrIntegrante from '@/components/dashboard/QrIntegrante'
 
-const TIPOS_DOC = ['CEDULA CIUDADANIA', 'TARJETA IDENTIDAD', 'PERMISO PERMANENCIA', 'CEDULA EXTRANJERIA', 'PASAPORTE']
+const TIPOS_DOC = TIPOS_DOCUMENTO
 const TIPOS_SANGRE = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']
 
 /** Ficha del integrante: ver y actualizar sus propios datos. Autónomo. */

@@ -15,7 +15,7 @@ import {
 } from '@/lib/firebase'
 import { FAMILIAS, SECCIONES_LIST, getSeccion, type FamiliaKey } from '@/lib/secciones'
 import {
-  REQUERIDOS_INTEGRANTE, edadDesde, esMenorDeEdad, descargarCSV,
+  REQUERIDOS_INTEGRANTE, edadDesde, esMenorDeEdad, descargarCSV, TIPOS_DOCUMENTO,
 } from '@/lib/integrantes-utils'
 import type { Integrante, UserProfile } from '@/types'
 import { cn } from '@/lib/utils'
@@ -824,7 +824,7 @@ function EditModal({ integrante, onClose, onSaved, uid, isNew }: { integrante: I
           <Fld label="Sección"><select className="input" value={getSeccion(form.seccion)?.key ?? ''} onChange={e => set('seccion', e.target.value)}>{SECCIONES_LIST.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}</select></Fld>
           <Fld label="WhatsApp"><input className="input" value={form.whatsapp} onChange={e => set('whatsapp', e.target.value)} /></Fld>
           <Fld label="Correo"><input className="input" value={form.correo} onChange={e => set('correo', e.target.value.toLowerCase())} /></Fld>
-          <Fld label="Tipo documento"><input className="input" value={form.tipoDoc} onChange={e => set('tipoDoc', e.target.value)} /></Fld>
+          <Fld label="Tipo documento"><select className="input" value={form.tipoDoc} onChange={e => set('tipoDoc', e.target.value)}><option value="">—</option>{TIPOS_DOCUMENTO.map(t => <option key={t} value={t}>{t}</option>)}</select></Fld>
           <Fld label="Número documento"><input className="input" value={form.numDoc} onChange={e => set('numDoc', e.target.value)} /></Fld>
           <Fld label="Nacimiento"><input className="input" value={form.fechaNacimiento} onChange={e => set('fechaNacimiento', e.target.value)} placeholder="YYYY-MM-DD" /></Fld>
           <Fld label="Tipo sangre"><input className="input" value={form.tipoSangre} onChange={e => set('tipoSangre', e.target.value)} /></Fld>

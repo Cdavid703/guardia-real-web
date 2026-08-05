@@ -3,6 +3,9 @@
 // ──────────────────────────────────────────────────────────────────
 import type { Integrante } from '@/types'
 
+/** Tipos de documento de identidad (para los selectores de ficha). */
+export const TIPOS_DOCUMENTO = ['Cédula', 'Tarjeta de identidad', 'Pasaporte', 'NUIP', 'Documento Venezuela'] as const
+
 /** Campos obligatorios para considerar una ficha "completa". */
 export const REQUERIDOS_INTEGRANTE: [keyof Integrante, string][] = [
   ['apellidos', 'Apellidos'], ['tipoDoc', 'Tipo de documento'], ['numDoc', 'Número de documento'],
