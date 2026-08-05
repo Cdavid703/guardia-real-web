@@ -282,7 +282,10 @@ function TemaDetalle({ tema, role, miSeccion, uid, onClose, onChanged }: {
           {tema.audioUrl && (
             /\.(mp3|wav|ogg|m4a)$/i.test(tema.audioUrl) ? (
               <div className="mb-5 bg-navy/5 border border-navy/10 rounded-xl p-3">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1"><Play size={12} className="text-royal" /> Audio de referencia</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1"><Play size={12} className="text-royal" /> Audio de referencia</p>
+                  <a href={tema.audioUrl} download className="text-[11px] font-semibold text-royal hover:text-navy inline-flex items-center gap-1 transition-colors"><Download size={12} /> Descargar</a>
+                </div>
                 <audio src={tema.audioUrl} controls preload="none" className="w-full h-10" />
               </div>
             ) : (
