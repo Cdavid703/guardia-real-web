@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
-import { Users, ShieldCheck, UserPlus, Search, ChevronLeft, ChevronRight, EyeOff, IdCard } from 'lucide-react'
+import { Users, ShieldCheck, UserPlus, Search, ChevronLeft, ChevronRight, Eye, EyeOff, IdCard } from 'lucide-react'
 
 const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante, setRolFicha, type IntegranteBase } from '@/lib/firebase'
@@ -33,6 +33,10 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
   const [filter, setFilter]       = useState<UserRole | 'all'>('all')
   const [search, setSearch]       = useState('')
   const [page, setPage]           = useState(1)
+  // Columnas opcionales de la grilla (colapsables; ocultas por defecto en móvil)
+  const [cols, setCols] = useState<Set<string>>(new Set(['rolActual', 'rolSolicitado', 'ficha', 'registro']))
+  useEffect(() => { if (typeof window !== 'undefined' && window.innerWidth < 768) setCols(new Set()) }, [])
+  const toggleCol = (k: string) => setCols(s => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -184,6 +188,16 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
         </p>
       )}
 
+      {/* Columnas visibles (colapsables para móvil) */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-2">
+        <span className="text-[11px] text-gray-400 mr-0.5">Columnas:</span>
+        {[['rolActual','Rol actual'],['rolSolicitado','Rol solicitado'],['ficha','Ficha'],['registro','Registro']].map(([k, l]) => (
+          <button key={k} onClick={() => toggleCol(k)} className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all', cols.has(k) ? 'bg-navy text-white border-navy' : 'bg-white text-gray-400 border-gray-200 hover:border-navy')}>
+            {cols.has(k) ? <Eye size={11} /> : <EyeOff size={11} />} {l}
+          </button>
+        ))}
+      </div>
+
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16"><div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" /></div>
@@ -195,9 +209,11 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
               <thead>
                 <tr className="bg-navy text-white text-xs font-bold uppercase tracking-wider">
                   <th className="px-4 py-3 text-left">Usuario</th><th className="px-4 py-3 text-left">Email</th>
-                  <th className="px-4 py-3 text-left">Rol actual</th><th className="px-4 py-3 text-left">Rol solicitado</th>
-                  <th className="px-4 py-3 text-left">Ficha</th>
-                  <th className="px-4 py-3 text-left">Registro</th><th className="px-4 py-3 text-left">Cambiar rol</th>
+                  {cols.has('rolActual') && <th className="px-4 py-3 text-left">Rol actual</th>}
+                  {cols.has('rolSolicitado') && <th className="px-4 py-3 text-left">Rol solicitado</th>}
+                  {cols.has('ficha') && <th className="px-4 py-3 text-left">Ficha</th>}
+                  {cols.has('registro') && <th className="px-4 py-3 text-left">Registro</th>}
+                  <th className="px-4 py-3 text-left">Cambiar rol</th>
                 </tr>
               </thead>
               <tbody>
@@ -212,7 +228,8 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 truncate max-w-[180px]">{u.email}</td>
-                    <td className="px-4 py-3"><span className={cn('badge', getRoleBadgeColor(u.role))}>{getRoleLabel(u.role)}</span></td>
+                    {cols.has('rolActual') && <td className="px-4 py-3"><span className={cn('badge', getRoleBadgeColor(u.role))}>{getRoleLabel(u.role)}</span></td>}
+                    {cols.has('rolSolicitado') && (
                     <td className="px-4 py-3">
                       {u.requestedRole ? (
                         <div className="flex items-center gap-2">
@@ -221,6 +238,8 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                         </div>
                       ) : <span className="text-xs text-gray-300">—</span>}
                     </td>
+                    )}
+                    {cols.has('ficha') && (
                     <td className="px-4 py-3">
                       {necesitaFicha ? (
                         <button onClick={() => handleCrearFicha(u)} disabled={creating === u.uid}
@@ -231,7 +250,8 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                         <span className="text-[11px] bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium">Con ficha</span>
                       ) : <span className="text-xs text-gray-300">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400">{formatDate(u.createdAt, { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                    )}
+                    {cols.has('registro') && <td className="px-4 py-3 text-xs text-gray-400">{formatDate(u.createdAt, { year: 'numeric', month: 'short', day: 'numeric' })}</td>}
                     <td className="px-4 py-3">
                       <select value={u.role} onChange={e => handleRole(u.uid, e.target.value as UserRole)} className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-dark focus:outline-none focus:border-royal cursor-pointer">
                         {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}

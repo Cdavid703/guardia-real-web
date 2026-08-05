@@ -785,6 +785,12 @@ export async function addAbono(
   return { id, reciboNumero, token }
 }
 
+/** Todos los pagos/abonos de un concepto en TODOS los meses (para reportes multi-mes). */
+export async function getPagosConceptoTodos(concepto: string): Promise<Pago[]> {
+  const snap = await getDocs(query(collection(db, 'pagos'), where('concepto', '==', concepto)))
+  return snap.docs.map(d => mapPago(d.id, d.data())).sort((a, b) => (b.periodo ?? '').localeCompare(a.periodo ?? ''))
+}
+
 /** Todos los abonos de un periodo (YYYY-MM) y concepto, como lista (varios por integrante). */
 export async function getAbonosPeriodoConcepto(periodo: string, concepto: string): Promise<Pago[]> {
   const snap = await getDocs(query(collection(db, 'pagos'), where('periodoConcepto', '==', periodoConceptoKey(periodo, concepto))))

@@ -9,7 +9,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getAllIntegrantes, getPagosPeriodoConcepto, setPago, deletePago,
-  addAbono, getAbonosPeriodoConcepto, deleteAbono, getTotalConcepto,
+  addAbono, getAbonosPeriodoConcepto, deleteAbono, getTotalConcepto, getPagosConceptoTodos,
   getReciboPerfil, setFirmaRecibo, setReciboNombre, getPagosPorFecha, type IntegranteBase,
 } from '@/lib/firebase'
 import SignaturePad from '@/components/dashboard/SignaturePad'
@@ -44,6 +44,8 @@ export default function PagosPanel() {
   const [abonoModal, setAbonoModal] = useState<IntegranteBase | null>(null)
   const [seleccion, setSeleccion] = useState<Set<string>>(new Set())
   const [procesando, setProcesando] = useState(false)
+  const [todosMeses, setTodosMeses] = useState(false)          // reporte de todos los meses por concepto
+  const [pagosTodos, setPagosTodos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [fam, setFam] = useState<FamiliaKey | 'all'>('all')
@@ -78,6 +80,12 @@ export default function PagosPanel() {
     if (!c) return
     setLoading(true)
     try {
+      if (todosMeses) {
+        const lista = await getPagosConceptoTodos(c)
+        setPagosTodos(lista); setPagos({}); setAbonos({})
+        setTotalConcepto({ total: lista.reduce((s, p) => s + (p.monto ?? 0), 0), count: lista.length })
+        return
+      }
       if (esAcumulable(c)) {
         const [lista, total] = await Promise.all([getAbonosPeriodoConcepto(periodo, c), getTotalConcepto(c)])
         const grouped: Record<string, Pago[]> = {}
@@ -89,7 +97,7 @@ export default function PagosPanel() {
     }
     catch { toast.error('Error al cargar los pagos') }
     finally { setLoading(false) }
-  }, [periodo, concepto])
+  }, [periodo, concepto, todosMeses])
   useEffect(() => { loadPagos() }, [loadPagos])
 
   const sumaAbonos = useCallback((id: string) => (abonos[id] ?? []).reduce((s, p) => s + (p.monto ?? 0), 0), [abonos])
@@ -285,7 +293,10 @@ export default function PagosPanel() {
       <div className="card p-4 mb-5 flex flex-wrap items-end gap-4">
         <div>
           <label className="block text-xs font-semibold text-dark mb-1">Periodo (mes)</label>
-          <input type="month" value={periodo} onChange={e => setPeriodo(e.target.value)} className="input" />
+          <input type="month" value={periodo} onChange={e => setPeriodo(e.target.value)} disabled={todosMeses} className="input disabled:opacity-50 disabled:bg-gray-50" />
+          <button type="button" onClick={() => setTodosMeses(v => !v)} className={cn('mt-1.5 text-[11px] font-semibold inline-flex items-center gap-1 rounded-full px-2.5 py-1 border transition-colors', todosMeses ? 'bg-navy text-white border-navy' : 'bg-white text-gray-500 border-gray-200 hover:border-navy')}>
+            <Receipt size={11} /> {todosMeses ? 'Viendo todos los meses' : 'Ver todos los meses'}
+          </button>
         </div>
         <div>
           <label className="block text-xs font-semibold text-dark mb-1">Concepto</label>
@@ -313,15 +324,17 @@ export default function PagosPanel() {
       </div>
 
       {/* Stats */}
+      {!todosMeses && (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         <Stat icon={CheckCircle2} label={acumulable ? 'Con abono' : 'Pagaron'} value={String(stats.pagaron)} color="text-green-600" />
         <Stat icon={Clock} label={acumulable ? 'Sin abono' : 'Pendientes'} value={String(stats.pendientes)} color="text-amber-600" />
         <Stat icon={Coins} label={acumulable ? 'Recaudado del mes' : 'Recaudado'} value={fmtCOP(stats.recaudado) || '$0'} color="text-royal" />
         <Stat icon={Wallet} label="Integrantes" value={String(stats.total)} color="text-navy" />
       </div>
+      )}
 
       {/* Total histórico del concepto acumulable */}
-      {acumulable && totalConcepto && (
+      {!todosMeses && acumulable && totalConcepto && (
         <div className="bg-gradient-to-br from-navy to-[#0a2350] rounded-xl px-4 py-3 mb-5 flex items-center justify-between text-white">
           <div className="flex items-center gap-2.5">
             <PiggyBank size={20} className="text-gold" />
@@ -371,6 +384,37 @@ export default function PagosPanel() {
 
       {loading ? (
         <div className="flex justify-center py-16"><div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" /></div>
+      ) : todosMeses ? (
+        (() => {
+          const q = norm(search.trim())
+          const filas = pagosTodos.filter(p => !q || norm(p.integranteNombre ?? '').includes(q))
+          const tot = filas.reduce((s, p) => s + (p.monto ?? 0), 0)
+          return (
+            <div>
+              <div className="bg-gradient-to-br from-navy to-[#0a2350] rounded-xl px-4 py-3 mb-4 flex items-center justify-between text-white">
+                <div><p className="text-[10px] font-bold text-gold uppercase tracking-widest">Todos los meses · {concepto}</p><p className="text-xs text-gray-300">{filas.length} pago(s) de todos los meses</p></div>
+                <span className="font-display text-2xl font-bold">{fmtCOP(tot) || '$0'}</span>
+              </div>
+              {filas.length === 0 ? (
+                <div className="card text-center py-12 text-gray-400 text-sm">Sin pagos registrados en este concepto.</div>
+              ) : (
+                <div className="space-y-1.5">
+                  {filas.map(p => (
+                    <div key={p.id} className="flex items-center gap-3 border border-gray-100 bg-white rounded-xl p-3">
+                      <div className="w-9 h-9 rounded-full bg-royal/10 flex items-center justify-center text-royal text-sm font-bold shrink-0">{(p.integranteNombre?.[0] ?? '?').toUpperCase()}</div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-dark truncate">{p.integranteNombre || '—'}</p>
+                        <p className="text-xs text-gray-400 truncate">{periodoLabel(p.periodo)}{p.fecha ? ` · ${p.fecha}` : ''}{p.reciboNumero ? ` · ${p.reciboNumero}` : ''}</p>
+                      </div>
+                      <span className="font-semibold text-navy shrink-0">{fmtCOP(p.monto)}</span>
+                      {p.token && <a href={linkRecibo(p) ?? '#'} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm text-royal shrink-0"><Receipt size={13} /> Recibo</a>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })()
       ) : lista.length === 0 ? (
         <div className="card text-center py-12 text-gray-400 text-sm">Sin resultados.</div>
       ) : (
