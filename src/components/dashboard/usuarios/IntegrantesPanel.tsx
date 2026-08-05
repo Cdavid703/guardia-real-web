@@ -11,7 +11,7 @@ import {
 import {
   getAllIntegrantes, getAllUsers, getIntegrantePrivado, bulkImportIntegrantes,
   upsertIntegrante, linkIntegranteToUser, deleteIntegrante, autoLinkIntegrantes,
-  updateUserRole, mergeIntegrantes, getTiposDocFichas, actualizarTipoDoc, type IntegranteBase,
+  updateUserRole, mergeIntegrantes, getTiposDocFichas, actualizarTipoDoc, reasociarPagosPorNombre, type IntegranteBase,
 } from '@/lib/firebase'
 import { FAMILIAS, SECCIONES_LIST, getSeccion, type FamiliaKey } from '@/lib/secciones'
 import {
@@ -943,6 +943,17 @@ function EditModal({ integrante, onClose, onSaved, uid, isNew }: { integrante: I
       toast.success(isNew ? 'Integrante creado' : 'Ficha actualizada'); onSaved()
     } catch { toast.error('Error al guardar') } finally { setSaving(false) }
   }
+  const [reasociando, setReasociando] = useState(false)
+  const reasociarPagos = async () => {
+    const nombre = `${form.nombre} ${form.apellidos}`.trim()
+    if (!confirm(`Reconectar a esta ficha los pagos registrados a nombre de "${nombre}" (útil si la ficha fue re-creada)?`)) return
+    setReasociando(true)
+    try {
+      const n = await reasociarPagosPorNombre(integrante.id, nombre)
+      toast.success(n > 0 ? `${n} pago(s) reconectados a esta ficha` : 'No se encontraron pagos a ese nombre para reconectar')
+    } catch { toast.error('Error al reconectar pagos') }
+    finally { setReasociando(false) }
+  }
   return (
     <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
@@ -973,9 +984,10 @@ function EditModal({ integrante, onClose, onSaved, uid, isNew }: { integrante: I
             <p className="text-[11px] text-gray-400 mt-1">Cualquiera de estos correos podrá entrar y ver/editar esta ficha. Se enlazan con &ldquo;Enlazar coincidentes&rdquo; cuando la cuenta exista.</p>
           </Fld>
         </div>
-        <div className="flex gap-3 mt-5">
+        <div className="flex flex-wrap gap-3 mt-5">
           <button onClick={save} disabled={saving} className="btn btn-primary btn-md disabled:opacity-60"><Save size={15} /> {saving ? 'Guardando...' : 'Guardar'}</button>
           <button onClick={onClose} className="btn btn-ghost btn-md">Cancelar</button>
+          {!isNew && <button onClick={reasociarPagos} disabled={reasociando} className="btn btn-ghost btn-md text-royal ml-auto disabled:opacity-60"><LinkIcon size={14} /> {reasociando ? 'Reconectando...' : 'Reconectar pagos'}</button>}
         </div>
       </div>
     </div>

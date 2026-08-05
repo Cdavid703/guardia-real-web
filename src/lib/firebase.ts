@@ -312,6 +312,25 @@ export async function setRolFicha(id: string, rol: UserRole): Promise<void> {
   await updateDoc(doc(db, 'integrantes', id), { rol, updatedAt: serverTimestamp() })
 }
 
+/**
+ * Reasocia a una ficha los pagos/abonos que quedaron huérfanos (p. ej. tras
+ * re-crear una ficha borrada): busca pagos con el mismo nombre de integrante y
+ * les apunta el integranteId a esta ficha. Devuelve cuántos reconectó. Solo admin.
+ */
+export async function reasociarPagosPorNombre(integranteId: string, nombre: string): Promise<number> {
+  const objetivo = nombre.trim()
+  if (!objetivo) return 0
+  const snap = await getDocs(query(collection(db, 'pagos'), where('integranteNombre', '==', objetivo)))
+  let n = 0
+  for (const d of snap.docs) {
+    if ((d.data().integranteId as string) !== integranteId) {
+      await updateDoc(d.ref, { integranteId, updatedAt: serverTimestamp() })
+      n++
+    }
+  }
+  return n
+}
+
 /** Ficha COMPLETA (base + sensible) enlazada a un uid de cuenta. */
 export async function getMiIntegrante(uid: string): Promise<Integrante | null> {
   // Cuentas con acceso (puede haber varias por ficha)
