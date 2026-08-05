@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Users, ShieldCheck, UserPlus, Search, ChevronLeft, ChevronRight, EyeOff, IdCard } from 'lucide-react'
 
 const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante, type IntegranteBase } from '@/lib/firebase'
+import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante, setRolFicha, type IntegranteBase } from '@/lib/firebase'
 import { getSeccion } from '@/lib/secciones'
 import { cn, getRoleLabel, getRoleBadgeColor, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -48,6 +48,12 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
   const handleRole = async (targetUid: string, role: UserRole) => {
     try { await updateUserRole(targetUid, role); setUsers(prev => prev.map(u => u.uid === targetUid ? { ...u, role } : u)); toast.success(`Rol actualizado a "${getRoleLabel(role)}"`) }
     catch { toast.error('Error al actualizar el rol') }
+  }
+
+  // Rol de una ficha sin cuenta (queda en la ficha y se aplica al iniciar sesión)
+  const handleRolFicha = async (id: string, rol: UserRole) => {
+    try { await setRolFicha(id, rol); setIntegrantes(prev => prev.map(i => i.id === id ? { ...i, rol } : i)); toast.success(`Rol de ficha: "${getRoleLabel(rol)}"`) }
+    catch { toast.error('Error al actualizar el rol de la ficha') }
   }
 
   const handleApprove = async (u: UserProfile) => {
@@ -144,7 +150,10 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                   <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
                   <p className="text-xs text-gray-400 truncate">{i.correo || 'sin correo'} · {getSeccion(i.seccion)?.label ?? i.seccion ?? '—'}</p>
                 </div>
-                <span className={cn('badge text-xs shrink-0', getRoleBadgeColor(i.rol ?? 'integrante'))}>{getRoleLabel(i.rol ?? 'integrante')}</span>
+                <select value={i.rol ?? 'integrante'} onChange={e => handleRolFicha(i.id, e.target.value as UserRole)}
+                  className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-dark focus:outline-none focus:border-royal cursor-pointer shrink-0">
+                  {ROLES.filter(r => r.value !== 'admin' && r.value !== 'pending').map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                </select>
                 <span className="badge bg-amber-100 text-amber-700 text-xs shrink-0">Sin cuenta</span>
               </div>
             ))}

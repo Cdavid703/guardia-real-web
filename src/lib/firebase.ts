@@ -307,6 +307,11 @@ export async function actualizarTipoDoc(id: string, tipoDoc: string): Promise<vo
   await setDoc(doc(db, 'integrantesPrivado', id), { tipoDoc }, { merge: true })
 }
 
+/** Define el rol asignado a una ficha (se aplica a la cuenta al enlazar). Solo admin. */
+export async function setRolFicha(id: string, rol: UserRole): Promise<void> {
+  await updateDoc(doc(db, 'integrantes', id), { rol, updatedAt: serverTimestamp() })
+}
+
 /** Ficha COMPLETA (base + sensible) enlazada a un uid de cuenta. */
 export async function getMiIntegrante(uid: string): Promise<Integrante | null> {
   // Cuentas con acceso (puede haber varias por ficha)
