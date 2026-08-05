@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
-import { Users, ShieldCheck, UserPlus, Search, ChevronLeft, ChevronRight, EyeOff } from 'lucide-react'
+import { Users, ShieldCheck, UserPlus, Search, ChevronLeft, ChevronRight, EyeOff, IdCard } from 'lucide-react'
 
 const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante } from '@/lib/firebase'
+import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante, type IntegranteBase } from '@/lib/firebase'
+import { getSeccion } from '@/lib/secciones'
 import { cn, getRoleLabel, getRoleBadgeColor, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { UserProfile, UserRole, Integrante } from '@/types'
@@ -24,6 +25,7 @@ const PAGE_SIZE = 25
 
 export default function CuentasRolesPanel({ uid }: { uid: string }) {
   const [users, setUsers]         = useState<UserProfile[]>([])
+  const [integrantes, setIntegrantes] = useState<IntegranteBase[]>([])
   const [linkedUids, setLinkedUids] = useState<Set<string>>(new Set())
   const [loading, setLoading]     = useState(true)
   const [creating, setCreating]   = useState<string | null>(null)
@@ -36,7 +38,8 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
     try {
       const [us, ints] = await Promise.all([getAllUsers(), getAllIntegrantes()])
       setUsers(us)
-      setLinkedUids(new Set(ints.flatMap(i => i.linkedUids)))
+      setIntegrantes(ints)
+      setLinkedUids(new Set(ints.flatMap(i => i.linkedUids ?? [])))
     } catch { toast.error('Error al cargar usuarios') }
     finally { setLoading(false) }
   }, [])
@@ -87,6 +90,10 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
     return u.role === filter
   })
   const pendingApprovals = users.filter(u => u.role === 'pending' && u.requestedRole)
+  // Fichas de integrante que aún no tienen una cuenta de usuario enlazada (no han iniciado sesión)
+  const fichasSinCuenta = integrantes
+    .filter(i => (i.linkedUids ?? []).length === 0)
+    .filter(i => { if (!q) return true; return norm(`${i.nombre} ${i.apellidos} ${i.correo}`).includes(q) })
   const visitantesOcultos = filter === 'all' && !q ? users.filter(u => u.role === 'visitante').length : 0
 
   // Paginación — se reinicia al cambiar filtro o búsqueda
@@ -114,6 +121,30 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                   <span className="badge bg-amber-100 text-amber-700">Solicita: {getRoleLabel(u.requestedRole as UserRole)}</span>
                   <button onClick={() => handleApprove(u)} className="btn btn-primary btn-sm">Aprobar</button>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Fichas sin cuenta de usuario (tienen ficha pero no han iniciado sesión) */}
+      {fichasSinCuenta.length > 0 && (
+        <div className="mb-6">
+          <h3 className="font-display text-navy text-lg font-bold uppercase tracking-wider flex items-center gap-2 mb-1">
+            <IdCard size={18} className="text-royal" /> Fichas sin cuenta <span className="text-gray-400 font-normal normal-case tracking-normal text-sm">({fichasSinCuenta.length})</span>
+          </h3>
+          <p className="text-xs text-gray-500 mb-3 max-w-3xl">
+            Estas personas ya registraron su ficha, pero <strong>aún no han iniciado sesión</strong>, por eso no tienen rol y no aparecen en la lista de abajo. En cuanto entren con su correo, su cuenta se crea y podrás asignarles el rol aquí.
+          </p>
+          <div className="bg-amber-50/60 border border-amber-100 rounded-xl divide-y divide-amber-100 max-h-72 overflow-y-auto">
+            {fichasSinCuenta.map(i => (
+              <div key={i.id} className="px-4 py-2.5 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center shrink-0">{i.nombre[0]?.toUpperCase() ?? '?'}</div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
+                  <p className="text-xs text-gray-400 truncate">{i.correo || 'sin correo'} · {getSeccion(i.seccion)?.label ?? i.seccion ?? '—'}</p>
+                </div>
+                <span className="badge bg-amber-100 text-amber-700 text-xs shrink-0">Sin cuenta</span>
               </div>
             ))}
           </div>
