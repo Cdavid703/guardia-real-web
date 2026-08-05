@@ -128,6 +128,19 @@ export default function IntegrantesPanel({ uid }: { uid: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [integrantes, usersByEmail])
 
+  // Auto-enlace silencioso: al abrir el panel, enlaza fichas cuyo correo ya tiene
+  // cuenta y les asigna su rol, sin que el admin tenga que pulsar el botón.
+  const autoEnlazado = useRef(false)
+  useEffect(() => {
+    if (autoEnlazado.current || loading) return
+    if (integrantes.length === 0 || users.length === 0) return
+    autoEnlazado.current = true
+    if (stats.vinculables === 0) return
+    autoLinkIntegrantes(true)
+      .then(({ enlazados }) => { if (enlazados > 0) { toast.success(`${enlazados} integrante(s) enlazados automáticamente`); load() } })
+      .catch(() => {})
+  }, [loading, integrantes.length, users.length, stats.vinculables, load])
+
   const cumpleMes = useMemo(() => {
     const m = new Date().getMonth() + 1
     return integrantes
