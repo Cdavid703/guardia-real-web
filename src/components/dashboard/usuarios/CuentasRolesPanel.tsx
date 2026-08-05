@@ -144,6 +144,7 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                   <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
                   <p className="text-xs text-gray-400 truncate">{i.correo || 'sin correo'} · {getSeccion(i.seccion)?.label ?? i.seccion ?? '—'}</p>
                 </div>
+                <span className={cn('badge text-xs shrink-0', getRoleBadgeColor(i.rol ?? 'integrante'))}>{getRoleLabel(i.rol ?? 'integrante')}</span>
                 <span className="badge bg-amber-100 text-amber-700 text-xs shrink-0">Sin cuenta</span>
               </div>
             ))}

@@ -50,6 +50,8 @@ export interface Integrante {
   pasaporte:          boolean
   contactoEmergencia: string   // nombre + parentesco + teléfono
   diagnostico:        string   // diagnóstico médico / medicamentos
+  // Rol asignado a esta ficha; viaja a la cuenta cuando la persona inicia sesión
+  rol?:               UserRole  // por defecto 'integrante'
   // Vínculo con cuenta(s) de login
   linkedUid?:         string   // (legacy) uid de la primera cuenta enlazada
   linkedUids?:        string[] // uids de TODAS las cuentas con acceso a esta ficha

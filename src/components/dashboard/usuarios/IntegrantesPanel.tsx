@@ -17,7 +17,7 @@ import { FAMILIAS, SECCIONES_LIST, getSeccion, type FamiliaKey } from '@/lib/sec
 import {
   REQUERIDOS_INTEGRANTE, edadDesde, esMenorDeEdad, descargarCSV, TIPOS_DOCUMENTO, sugerirTipoDoc,
 } from '@/lib/integrantes-utils'
-import type { Integrante, UserProfile } from '@/types'
+import type { Integrante, UserProfile, UserRole } from '@/types'
 import { cn } from '@/lib/utils'
 
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
@@ -902,8 +902,15 @@ const FICHA_VACIA: Integrante = {
   id: '', nombre: '', apellidos: '', tipoDoc: '', numDoc: '', fechaNacimiento: '',
   seccion: '', familia: '', secciones: [], whatsapp: '', correo: '', direccion: '',
   tipoSangre: '', eps: '', pasaporte: false, contactoEmergencia: '', diagnostico: '',
-  activo: true, createdAt: new Date(), updatedAt: new Date(),
+  rol: 'integrante', activo: true, createdAt: new Date(), updatedAt: new Date(),
 }
+
+// Roles asignables desde la ficha
+const ROLES_FICHA: { value: UserRole; label: string }[] = [
+  { value: 'integrante', label: 'Integrante' }, { value: 'director', label: 'Director Musical' },
+  { value: 'junta', label: 'Junta Directiva' }, { value: 'cm', label: 'Community Manager' },
+  { value: 'collector', label: 'Recaudador' }, { value: 'visitante', label: 'Visitante' },
+]
 
 function EditModal({ integrante, onClose, onSaved, uid, isNew }: { integrante: Integrante; onClose: () => void; onSaved: () => void; uid: string; isNew?: boolean }) {
   const [form, setForm] = useState<Integrante>(integrante)
@@ -934,6 +941,7 @@ function EditModal({ integrante, onClose, onSaved, uid, isNew }: { integrante: I
           <Fld label="Nombre"><input className="input" value={form.nombre} onChange={e => set('nombre', e.target.value)} /></Fld>
           <Fld label="Apellidos"><input className="input" value={form.apellidos} onChange={e => set('apellidos', e.target.value)} /></Fld>
           <Fld label="Sección"><select className="input" value={getSeccion(form.seccion)?.key ?? ''} onChange={e => set('seccion', e.target.value)}>{SECCIONES_LIST.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}</select></Fld>
+          <Fld label="Rol"><select className="input" value={form.rol ?? 'integrante'} onChange={e => set('rol', e.target.value as UserRole)}>{ROLES_FICHA.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}</select></Fld>
           <Fld label="WhatsApp"><input className="input" value={form.whatsapp} onChange={e => set('whatsapp', e.target.value)} /></Fld>
           <Fld label="Correo"><input className="input" value={form.correo} onChange={e => set('correo', e.target.value.toLowerCase())} /></Fld>
           <Fld label="Tipo documento"><select className="input" value={form.tipoDoc} onChange={e => set('tipoDoc', e.target.value)}><option value="">—</option>{TIPOS_DOCUMENTO.map(t => <option key={t} value={t}>{t}</option>)}</select></Fld>

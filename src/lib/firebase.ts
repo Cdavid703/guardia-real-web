@@ -194,6 +194,7 @@ export interface IntegranteBase {
   secciones: string[]
   whatsapp:  string
   correo:    string
+  rol?:      UserRole            // rol asignado a la ficha (por defecto integrante)
   linkedUid?: string
   linkedUids: string[]          // normalizado: incluye linkedUid legacy
   correosAutorizados: string[]  // normalizado: incluye correo principal
@@ -224,6 +225,7 @@ function mapBase(id: string, d: Record<string, unknown>): IntegranteBase {
     secciones: (d.secciones as string[]) ?? [],
     whatsapp:  (d.whatsapp as string) ?? '',
     correo:    (d.correo as string) ?? '',
+    rol:       (d.rol as UserRole) ?? undefined,
     linkedUid: (d.linkedUid as string) ?? undefined,
     linkedUids: (d.linkedUids as string[]) ?? (d.linkedUid ? [d.linkedUid as string] : []),
     correosAutorizados: (d.correosAutorizados as string[]) ?? ((d.correo as string) ? [(d.correo as string).toLowerCase()] : []),
@@ -981,7 +983,7 @@ export async function autoLinkIntegrantes(
       if (!u || b.linkedUids.includes(u.uid)) continue
       await linkIntegranteToUser(b.id, u.uid, u.email)
       if (asignarRol && (u.role === 'pending' || u.role === 'visitante')) {
-        await updateUserRole(u.uid, 'integrante')
+        await updateUserRole(u.uid, b.rol ?? 'integrante')
       }
       enlazados++
     }
