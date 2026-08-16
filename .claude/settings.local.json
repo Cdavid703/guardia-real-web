@@ -123,7 +123,12 @@
       "mcp__claude-in-chrome__find",
       "mcp__claude-in-chrome__form_input",
       "mcp__claude-in-chrome__read_page",
-      "mcp__claude-in-chrome__browser_batch"
+      "mcp__claude-in-chrome__browser_batch",
+      "Bash(mkdir -p public/partituras/articulacion)",
+      "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\00f4a2dc-ARTICULACION__Flute.pdf\" \"public/partituras/articulacion/flauta.pdf\")",
+      "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\33d2ff8b-ARTICULACION__Clarinet_in_Bb.pdf\" \"public/partituras/articulacion/clarinete.pdf\")",
+      "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\9c6e4996-ARTICULACION__Alto_Sax.pdf\" \"public/partituras/articulacion/sax-alto.pdf\")",
+      "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\bdaae35d-ARTICULACION__Baritone_Sax.pdf\" \"public/partituras/articulacion/sax-baritono.pdf\")"
     ]
   }
 }

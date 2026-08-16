@@ -13,7 +13,7 @@ import {
   getMiIntegrante,
 } from '@/lib/firebase'
 import {
-  REPERTORIO_SEED, REPERTORIO_SEMANA_SANTA, INSTRUMENTOS_PARTITURA, FAMILIAS_PARTITURA, getInstrumentoPartitura,
+  REPERTORIO_SEED, REPERTORIO_SEMANA_SANTA, REPERTORIO_EJERCICIOS, INSTRUMENTOS_PARTITURA, FAMILIAS_PARTITURA, getInstrumentoPartitura,
 } from '@/lib/repertorio'
 import { getSeccion } from '@/lib/secciones'
 import type { Tema, Partitura, UserRole } from '@/types'
@@ -36,7 +36,7 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
   const [creando, setCreando] = useState(false)
   const [search,  setSearch]  = useState('')
   const [miSeccion, setMiSeccion] = useState<string>('')
-  const [categoria, setCategoria] = useState<'temporada' | 'semana-santa'>('temporada')
+  const [categoria, setCategoria] = useState<'temporada' | 'semana-santa' | 'ejercicios'>('temporada')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -49,7 +49,7 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
 
   const dynCat = useMemo(() => dynTemas.filter(t => (t.categoria ?? 'temporada') === categoria), [dynTemas, categoria])
   const seedFaltantes = useMemo(() => {
-    const seed = categoria === 'temporada' ? REPERTORIO_SEED : REPERTORIO_SEMANA_SANTA
+    const seed = categoria === 'temporada' ? REPERTORIO_SEED : categoria === 'semana-santa' ? REPERTORIO_SEMANA_SANTA : REPERTORIO_EJERCICIOS
     return seed.filter(s => !dynCat.some(d => d.titulo.trim().toLowerCase() === s.titulo.trim().toLowerCase()))
   }, [categoria, dynCat])
   const temas = useMemo(
@@ -118,6 +118,11 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
             categoria === 'semana-santa' ? 'bg-[#5b2a86] text-white shadow' : 'bg-white text-gray-600 border border-gray-200 hover:border-[#5b2a86]')}>
           ✝️ Semana Santa
         </button>
+        <button onClick={() => setCategoria('ejercicios')}
+          className={cn('px-4 py-2 rounded-full text-sm font-semibold transition-all',
+            categoria === 'ejercicios' ? 'bg-[#0f766e] text-white shadow' : 'bg-white text-gray-600 border border-gray-200 hover:border-[#0f766e]')}>
+          🎯 Ejercicios
+        </button>
       </div>
 
       {/* Barra */}
@@ -128,7 +133,7 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
         </div>
         {gestiona && seedFaltantes.length > 0 && (
           <button onClick={importarSeed} disabled={importando} className="btn btn-ghost btn-md disabled:opacity-60">
-            <Download size={16} /> {importando ? 'Cargando...' : `Cargar ${categoria === 'temporada' ? 'repertorio 2026' : 'Semana Santa'} (${seedFaltantes.length})`}
+            <Download size={16} /> {importando ? 'Cargando...' : `Cargar ${categoria === 'temporada' ? 'repertorio 2026' : categoria === 'semana-santa' ? 'Semana Santa' : 'ejercicios'} (${seedFaltantes.length})`}
           </button>
         )}
         {gestiona && (
@@ -160,7 +165,7 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
         />
       )}
       {creando && (
-        <TemaFormModal uid={profile?.uid ?? ''} onClose={() => setCreando(false)} onSaved={() => { setCreando(false); load() }} />
+        <TemaFormModal uid={profile?.uid ?? ''} categoriaBase={categoria} onClose={() => setCreando(false)} onSaved={() => { setCreando(false); load() }} />
       )}
     </div>
   )
@@ -378,12 +383,13 @@ function Dato({ icon: Icon, label, value }: { icon: React.ElementType; label: st
 }
 
 // ── Formulario de tema (crear/editar) ──────────────────────────────
-function TemaFormModal({ tema, uid, onClose, onSaved }: {
-  tema?: Tema; uid: string; onClose: () => void; onSaved: () => void
+function TemaFormModal({ tema, uid, categoriaBase = 'temporada', onClose, onSaved }: {
+  tema?: Tema; uid: string; categoriaBase?: string; onClose: () => void; onSaved: () => void
 }) {
   const [f, setF] = useState<Partial<Tema>>(tema ?? {
     titulo: '', compositor: '', arreglista: '', genero: '', tonalidad: '', compas: '',
     tempo: '', duracion: '', ano: '', dificultad: 'Intermedio', notas: '', audioUrl: '',
+    categoria: categoriaBase,
   })
   const [saving, setSaving] = useState(false)
   const set = (k: keyof Tema, v: unknown) => setF(p => ({ ...p, [k]: v }))

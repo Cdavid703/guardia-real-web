@@ -174,3 +174,23 @@ export const REPERTORIO_SEED: Tema[] = [
 
 /** Repertorio de Semana Santa (sección aparte). */
 export const REPERTORIO_SEMANA_SANTA: Tema[] = (manifest.semanaSanta as TemaManifest[]).map(fromManifest)
+
+// ── Ejercicios técnicos ─────────────────────────────────────────────
+const ARTICULACION: Tema = {
+  id: 'seed-ejercicio-articulacion', numeroMarcacion: 1, titulo: 'Articulación',
+  compositor: '', arreglista: '', genero: 'Ejercicio técnico',
+  tonalidad: '', compas: '', tempo: '', duracion: '', ano: '', dificultad: 'Básico',
+  notas: 'Ejercicio de articulación para calentamiento y precisión rítmica.',
+  partituras: [
+    { instrumento: 'flauta', label: 'Flauta', url: '/partituras/articulacion/flauta.pdf' },
+    { instrumento: 'clarinete-1', label: 'Clarinete', url: '/partituras/articulacion/clarinete.pdf' },
+    { instrumento: 'sax-alto', label: 'Sax Alto', url: '/partituras/articulacion/sax-alto.pdf' },
+    { instrumento: 'sax-baritono', label: 'Sax Barítono', url: '/partituras/articulacion/sax-baritono.pdf' },
+    { instrumento: 'otro', label: 'Barítono (B.C.)', url: '/partituras/articulacion/baritono-bc.pdf' },
+  ],
+  categoria: 'ejercicios', activo: true, visibleTo: ['public'], esSeed: true,
+  createdAt: new Date('2026-08-16'), updatedAt: new Date('2026-08-16'),
+}
+
+/** Ejercicios técnicos (sección aparte). */
+export const REPERTORIO_EJERCICIOS: Tema[] = [ARTICULACION]
