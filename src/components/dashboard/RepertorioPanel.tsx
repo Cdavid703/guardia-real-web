@@ -56,6 +56,11 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
     () => [...dynCat, ...seedFaltantes].sort((a, b) => (a.numeroMarcacion ?? 999) - (b.numeroMarcacion ?? 999)),
     [dynCat, seedFaltantes],
   )
+  // Copias de temas del seed que quedaron en la base (importadas/duplicadas)
+  const copiasSeed = useMemo(() => {
+    const seedTitles = new Set([...REPERTORIO_SEED, ...REPERTORIO_SEMANA_SANTA, ...REPERTORIO_EJERCICIOS].map(s => s.titulo.trim().toLowerCase()))
+    return dynTemas.filter(t => seedTitles.has(t.titulo.trim().toLowerCase()))
+  }, [dynTemas])
 
   useEffect(() => {
     if (!profile) return
@@ -63,6 +68,24 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
   }, [profile])
 
   const gestiona = puedeGestionar(role)
+
+  // Borra de la base las copias de temas del seed (importadas y/o duplicadas).
+  // Los temas del código (seed) siguen apareciendo solos y actualizados.
+  const limpiarImportados = async () => {
+    const seedTitles = new Set(
+      [...REPERTORIO_SEED, ...REPERTORIO_SEMANA_SANTA, ...REPERTORIO_EJERCICIOS]
+        .map(s => s.titulo.trim().toLowerCase()),
+    )
+    const aBorrar = dynTemas.filter(t => seedTitles.has(t.titulo.trim().toLowerCase()))
+    if (aBorrar.length === 0) { toast.info('No hay copias de repertorio que limpiar'); return }
+    if (!confirm(`Se eliminarán ${aBorrar.length} copia(s) del repertorio de la base de datos (incluye duplicados). Los temas del código quedan intactos y actualizados. ¿Continuar?`)) return
+    setImportando(true)
+    try {
+      for (const t of aBorrar) await deleteTema(t.id)
+      toast.success(`${aBorrar.length} copia(s) eliminadas. El repertorio quedó limpio y al día.`)
+    } catch { toast.error('No se pudieron eliminar todas las copias') }
+    finally { setImportando(false); load() }
+  }
 
   const importarSeed = async () => {
     if (!profile) return
@@ -75,9 +98,10 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
         await createTema(datos, profile.uid)
       }
       toast.success(`${seedFaltantes.length} tema(s) del repertorio cargados a la base`)
-      load()
     } catch { toast.error('No se pudo importar el repertorio') }
-    finally { setImportando(false) }
+    // load() siempre en finally: así, aunque falle a mitad, se refresca la lista
+    // y un reintento no vuelve a duplicar los ya importados.
+    finally { setImportando(false); load() }
   }
 
   const filtrados = useMemo(() => {
@@ -135,6 +159,11 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
         {gestiona && seedFaltantes.length > 0 && (
           <button onClick={importarSeed} disabled={importando} className="btn btn-ghost btn-md disabled:opacity-60">
             <Download size={16} /> {importando ? 'Cargando...' : `Cargar ${categoria === 'temporada' ? 'repertorio 2026' : categoria === 'semana-santa' ? 'Semana Santa' : 'ejercicios'} (${seedFaltantes.length})`}
+          </button>
+        )}
+        {gestiona && copiasSeed.length > 0 && (
+          <button onClick={limpiarImportados} disabled={importando} className="btn btn-ghost btn-md text-red-500 hover:bg-red-50 disabled:opacity-60">
+            <Trash2 size={16} /> Limpiar duplicados ({copiasSeed.length})
           </button>
         )}
         {gestiona && (
