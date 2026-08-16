@@ -69,8 +69,9 @@ export default function RepertorioPanel({ role }: { role: UserRole }) {
     setImportando(true)
     try {
       for (const s of seedFaltantes) {
-        const { id, esSeed, createdAt, updatedAt, ...datos } = s
-        void id; void esSeed; void createdAt; void updatedAt
+        // Se descarta visibleTo:['public'] del seed para que createTema lo deje visible a los roles internos.
+        const { id, esSeed, createdAt, updatedAt, visibleTo, ...datos } = s
+        void id; void esSeed; void createdAt; void updatedAt; void visibleTo
         await createTema(datos, profile.uid)
       }
       toast.success(`${seedFaltantes.length} tema(s) del repertorio cargados a la base`)

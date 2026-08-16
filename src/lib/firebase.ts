@@ -1372,8 +1372,11 @@ export async function getRepertorio(): Promise<Tema[]> {
 
 /** Director/admin: crea un tema nuevo. */
 export async function createTema(data: Partial<Tema>, uid: string): Promise<string> {
+  // Firestore rechaza valores `undefined`: se descartan antes de escribir.
+  const clean: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(data)) if (v !== undefined) clean[k] = v
   const ref = await addDoc(collection(db, 'repertoire'), {
-    ...data,
+    ...clean,
     partituras: data.partituras ?? [],
     activo: data.activo ?? true,
     visibleTo: data.visibleTo ?? ['integrante', 'director', 'junta', 'cm', 'admin'],
