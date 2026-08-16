@@ -154,6 +154,7 @@ const EL_AUSENTE: Tema = {
     { instrumento: 'trombon-1', label: 'Trombón 1', url: '/partituras/el-ausente/trombon-1.pdf' },
     { instrumento: 'trombon-2', label: 'Trombón 2', url: '/partituras/el-ausente/trombon-2.pdf' },
     { instrumento: 'tuba', label: 'Tuba', url: '/partituras/el-ausente/tuba.pdf' },
+    { instrumento: 'tuba-sib', label: 'Tuba Si♭', url: '/partituras/el-ausente/tuba-bb.pdf' },
     { instrumento: 'redoblante', label: 'Redoblante', url: '/partituras/el-ausente/redoblante.pdf' },
     { instrumento: 'multitenor', label: 'Multitenor', url: '/partituras/el-ausente/multitenor.pdf' },
     { instrumento: 'platillos', label: 'Platillos', url: '/partituras/el-ausente/platillos.pdf' },
