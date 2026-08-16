@@ -184,8 +184,13 @@ const ARTICULACION: Tema = {
   partituras: [
     { instrumento: 'flauta', label: 'Flauta', url: '/partituras/articulacion/flauta.pdf' },
     { instrumento: 'clarinete-1', label: 'Clarinete', url: '/partituras/articulacion/clarinete.pdf' },
+    { instrumento: 'sax-soprano', label: 'Sax Soprano', url: '/partituras/articulacion/sax-soprano.pdf' },
     { instrumento: 'sax-alto', label: 'Sax Alto', url: '/partituras/articulacion/sax-alto.pdf' },
+    { instrumento: 'sax-tenor', label: 'Sax Tenor', url: '/partituras/articulacion/sax-tenor.pdf' },
     { instrumento: 'sax-baritono', label: 'Sax Barítono', url: '/partituras/articulacion/sax-baritono.pdf' },
+    { instrumento: 'trompeta-1', label: 'Trompeta', url: '/partituras/articulacion/trompeta.pdf' },
+    { instrumento: 'trombon-1', label: 'Trombón', url: '/partituras/articulacion/trombon.pdf' },
+    { instrumento: 'tuba', label: 'Tuba', url: '/partituras/articulacion/tuba.pdf' },
     { instrumento: 'otro', label: 'Barítono (B.C.)', url: '/partituras/articulacion/baritono-bc.pdf' },
   ],
   categoria: 'ejercicios', activo: true, visibleTo: ['public'], esSeed: true,

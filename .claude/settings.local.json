@@ -128,7 +128,12 @@
       "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\00f4a2dc-ARTICULACION__Flute.pdf\" \"public/partituras/articulacion/flauta.pdf\")",
       "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\33d2ff8b-ARTICULACION__Clarinet_in_Bb.pdf\" \"public/partituras/articulacion/clarinete.pdf\")",
       "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\9c6e4996-ARTICULACION__Alto_Sax.pdf\" \"public/partituras/articulacion/sax-alto.pdf\")",
-      "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\bdaae35d-ARTICULACION__Baritone_Sax.pdf\" \"public/partituras/articulacion/sax-baritono.pdf\")"
+      "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\bdaae35d-ARTICULACION__Baritone_Sax.pdf\" \"public/partituras/articulacion/sax-baritono.pdf\")",
+      "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\06779d89-ARTICULACION__Soprano_Sax.pdf\" \"public/partituras/articulacion/sax-soprano.pdf\")",
+      "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\e11443c3-ARTICULACION__Tenor_Sax.pdf\" \"public/partituras/articulacion/sax-tenor.pdf\")",
+      "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\3de7cd8d-ARTICULACION__Trumpet_in_Bb.pdf\" \"public/partituras/articulacion/trompeta.pdf\")",
+      "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\2b739ace-ARTICULACION__Trombone.pdf\" \"public/partituras/articulacion/trombon.pdf\")",
+      "Bash(cp \"C:\\\\Users\\\\USER\\\\.claude\\\\uploads\\\\9d24fa66-144e-4711-ba4a-910673bb42f4\\\\60fd49f0-ARTICULACION__Tuba.pdf\" \"public/partituras/articulacion/tuba.pdf\")"
     ]
   }
 }
