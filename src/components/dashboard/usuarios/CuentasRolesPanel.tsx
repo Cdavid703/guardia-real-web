@@ -20,7 +20,7 @@ const ROLES: { value: UserRole; label: string }[] = [
 ]
 
 // Roles que pertenecen a la banda y deberían tener ficha en el roster
-const ROLES_BANDA: UserRole[] = ['integrante', 'director', 'junta', 'cm']
+const ROLES_BANDA: UserRole[] = ['integrante', 'director', 'junta', 'cm', 'monitor']
 
 const PAGE_SIZE = 25
 

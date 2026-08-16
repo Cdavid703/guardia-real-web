@@ -21,7 +21,7 @@ const NAV_LINKS = [
   { href: '/donar',      label: 'Donar' },
 ]
 
-const INTEGRANTES_ROLES: UserRole[] = ['admin', 'director', 'junta', 'cm', 'integrante']
+const INTEGRANTES_ROLES: UserRole[] = ['admin', 'director', 'junta', 'cm', 'integrante', 'monitor']
 
 export default function Navbar() {
   const [open,      setOpen]      = useState(false)
