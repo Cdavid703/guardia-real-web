@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { ClipboardCheck, Search, Star, Music2, Users } from 'lucide-react'
+import { ClipboardCheck, Search, Music2, Users, Gauge } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
-  getRepertorio, getAllIntegrantes, getCalificacionesTema, setCalificacion, type IntegranteBase,
+  getRepertorio, getAllIntegrantes, getCalificacionesTodas, setCalificacion, type IntegranteBase,
 } from '@/lib/firebase'
 import { REPERTORIO_SEED, REPERTORIO_SEMANA_SANTA, REPERTORIO_EJERCICIOS } from '@/lib/repertorio'
 import { getSeccion } from '@/lib/secciones'
@@ -14,6 +14,9 @@ import type { Tema, Calificacion, UserRole } from '@/types'
 
 const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 const CAT_LABEL: Record<string, string> = { temporada: 'Repertorio 2026', 'semana-santa': 'Semana Santa', ejercicios: 'Ejercicios' }
+const fmt = (n: number) => (Math.round(n * 10) / 10).toFixed(1)
+// Color según nota /5
+const notaColor = (n: number) => n >= 4 ? 'text-green-600' : n >= 3 ? 'text-amber-600' : n > 0 ? 'text-red-500' : 'text-gray-300'
 
 export default function RevisionTemasPanel() {
   const { profile } = useAuth()
@@ -23,14 +26,14 @@ export default function RevisionTemasPanel() {
 
   const [dynTemas, setDynTemas] = useState<Tema[]>([])
   const [roster, setRoster] = useState<IntegranteBase[]>([])
+  const [todas, setTodas] = useState<Calificacion[]>([])
   const [temaId, setTemaId] = useState('')
-  const [califs, setCalifs] = useState<Record<string, Calificacion>>({})
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([getRepertorio().catch(() => []), getAllIntegrantes().catch(() => [])])
-      .then(([d, r]) => { setDynTemas(d); setRoster(r) })
+    Promise.all([getRepertorio().catch(() => []), getAllIntegrantes().catch(() => []), getCalificacionesTodas().catch(() => [])])
+      .then(([d, r, c]) => { setDynTemas(d); setRoster(r); setTodas(c) })
       .finally(() => setLoading(false))
   }, [])
 
@@ -45,42 +48,65 @@ export default function RevisionTemasPanel() {
       return (a.numeroMarcacion ?? 999) - (b.numeroMarcacion ?? 999)
     })
   }, [dynTemas])
-
   const temaSel = temas.find(t => t.id === temaId)
 
-  // Integrantes que el usuario puede revisar
+  // Ficha del propio monitor → sección automática
+  const miFicha = useMemo(
+    () => roster.find(i => (i.linkedUids ?? []).includes(profile?.uid ?? '') || i.linkedUid === profile?.uid),
+    [roster, profile?.uid],
+  )
+  const misSecciones = useMemo(() => {
+    if (seccionesMonitor.length > 0) return seccionesMonitor
+    return [...new Set([miFicha?.seccion, ...(miFicha?.secciones ?? [])].filter(Boolean))] as string[]
+  }, [seccionesMonitor, miFicha])
+
   const integrantes = useMemo(() => {
     const q = norm(search.trim())
     return roster
       .filter(i => {
-        if (!esMonitor) return true // director/admin → todos
+        if (!esMonitor) return true
         const secs = new Set([i.seccion, ...(i.secciones ?? [])].filter(Boolean))
-        return seccionesMonitor.some(s => secs.has(s))
+        return misSecciones.some(s => secs.has(s))
       })
       .filter(i => !q || norm(`${i.nombre} ${i.apellidos} ${getSeccion(i.seccion)?.label ?? ''}`).includes(q))
       .sort((a, b) => `${a.apellidos}`.localeCompare(b.apellidos, 'es'))
-  }, [roster, esMonitor, seccionesMonitor, search])
+  }, [roster, esMonitor, misSecciones, search])
 
-  const loadCalifs = useCallback(async (tid: string) => {
-    if (!tid) { setCalifs({}); return }
-    try { setCalifs(await getCalificacionesTema(tid)) } catch { /* noop */ }
-  }, [])
-  useEffect(() => { loadCalifs(temaId) }, [temaId, loadCalifs])
+  // Calificaciones del tema seleccionado (mapa integranteId → Calificacion)
+  const califsTema = useMemo(() => {
+    const out: Record<string, Calificacion> = {}
+    for (const c of todas) if (c.temaId === temaId) out[c.integranteId] = c
+    return out
+  }, [todas, temaId])
+
+  // Promedio acumulado por integrante (sobre todos los temas calificados)
+  const promedios = useMemo(() => {
+    const m: Record<string, { suma: number; n: number }> = {}
+    for (const c of todas) {
+      if (!c.calificacion || c.calificacion <= 0) continue
+      const g = (m[c.integranteId] ??= { suma: 0, n: 0 })
+      g.suma += c.calificacion; g.n += 1
+    }
+    const out: Record<string, { prom: number; n: number }> = {}
+    for (const [id, g] of Object.entries(m)) out[id] = { prom: g.suma / g.n, n: g.n }
+    return out
+  }, [todas])
 
   const guardar = async (i: IntegranteBase, patch: { calificacion?: number; comentario?: string }) => {
     if (!profile || !temaSel) return
-    const prev = califs[i.id]
-    // Optimista
-    setCalifs(c => ({ ...c, [i.id]: { ...(prev ?? { id: `${i.id}__${temaId}`, integranteId: i.id, temaId, calificacion: 0 }), ...patch } as Calificacion }))
-    try {
-      await setCalificacion(i.id, temaId, { ...patch, temaTitulo: temaSel.titulo }, profile.uid, profile.displayName || 'Revisión')
-    } catch { toast.error('No se pudo guardar'); loadCalifs(temaId) }
+    const base = califsTema[i.id] ?? { id: `${i.id}__${temaId}`, integranteId: i.id, temaId, calificacion: 0 }
+    const nueva = { ...base, ...patch, temaTitulo: temaSel.titulo } as Calificacion
+    setTodas(prev => [...prev.filter(c => !(c.integranteId === i.id && c.temaId === temaId)), nueva])
+    try { await setCalificacion(i.id, temaId, { ...patch, temaTitulo: temaSel.titulo }, profile.uid, profile.displayName || 'Revisión') }
+    catch { toast.error('No se pudo guardar'); getCalificacionesTodas().then(setTodas).catch(() => {}) }
   }
 
-  const promedio = useMemo(() => {
-    const vals = integrantes.map(i => califs[i.id]?.calificacion).filter((v): v is number => !!v && v > 0)
-    return vals.length ? (vals.reduce((s, v) => s + v, 0) / vals.length).toFixed(1) : '—'
-  }, [integrantes, califs])
+  const promSeccion = useMemo(() => {
+    const vals = integrantes.map(i => califsTema[i.id]?.calificacion).filter((v): v is number => !!v && v > 0)
+    return vals.length ? fmt(vals.reduce((s, v) => s + v, 0) / vals.length) : '—'
+  }, [integrantes, califsTema])
+
+  const sinSecciones = esMonitor && misSecciones.length === 0
 
   return (
     <div>
@@ -91,13 +117,19 @@ export default function RevisionTemasPanel() {
             <ClipboardCheck size={12} /> Revisión de temas
           </div>
           <h1 className="font-display text-white text-2xl font-bold uppercase tracking-wider">Revisión de temas</h1>
-          <p className="text-gray-300 text-sm mt-1 max-w-lg">Califica (1–5) y comenta cómo va cada integrante en cada tema. {esMonitor ? 'Ves los integrantes de tus secciones asignadas.' : 'Ves a todos los integrantes.'}</p>
+          <p className="text-gray-300 text-sm mt-1 max-w-lg">Califica de <strong>0 a 5</strong> (con decimales: 4.2, 4.3…) y comenta cómo va cada integrante en cada tema. Cada quien acumula un promedio de todos los temas.</p>
+          {esMonitor && misSecciones.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-3">
+              <span className="text-[11px] text-gray-300">Revisas:</span>
+              {misSecciones.map(s => <span key={s} className="text-[11px] bg-white/10 border border-white/20 text-white rounded-full px-2 py-0.5">{getSeccion(s)?.label ?? s}</span>)}
+            </div>
+          )}
         </div>
       </div>
 
-      {esMonitor && seccionesMonitor.length === 0 ? (
+      {sinSecciones ? (
         <div className="card p-6 text-center text-gray-500 text-sm">
-          Aún no tienes secciones asignadas. Pídele al administrador que te asigne tus secciones en <strong>Cuentas y Roles</strong>.
+          No pudimos deducir tu sección automáticamente (tu ficha no tiene sección). Pídele al administrador que asigne tus secciones en <strong>Cuentas y Roles</strong> o que complete tu ficha.
         </div>
       ) : (
         <>
@@ -120,8 +152,8 @@ export default function RevisionTemasPanel() {
             </div>
             {temaSel && (
               <div className="flex items-center gap-4 text-sm text-gray-500 ml-auto">
-                <span className="inline-flex items-center gap-1"><Users size={14} /> {integrantes.length} integrante(s)</span>
-                <span className="inline-flex items-center gap-1"><Star size={14} className="text-gold" /> Promedio: <strong className="text-navy">{promedio}</strong></span>
+                <span className="inline-flex items-center gap-1"><Users size={14} /> {integrantes.length}</span>
+                <span className="inline-flex items-center gap-1"><Gauge size={14} className="text-royal" /> Prom. tema: <strong className="text-navy">{promSeccion}</strong></span>
               </div>
             )}
           </div>
@@ -142,26 +174,42 @@ export default function RevisionTemasPanel() {
               ) : (
                 <div className="space-y-2">
                   {integrantes.map(i => {
-                    const c = califs[i.id]
+                    const c = califsTema[i.id]
+                    const p = promedios[i.id]
                     return (
                       <div key={i.id} className="border border-gray-100 bg-white rounded-xl p-3">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-royal/10 flex items-center justify-center text-royal text-sm font-bold shrink-0">{(i.nombre[0] ?? '?').toUpperCase()}</div>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
-                            <p className="text-xs text-gray-400 truncate">{getSeccion(i.seccion)?.label ?? i.seccion}</p>
+                            <p className="text-xs text-gray-400 truncate">
+                              {getSeccion(i.seccion)?.label ?? i.seccion}
+                              {p && <span className="text-gray-400"> · Prom: <strong className={notaColor(p.prom)}>{fmt(p.prom)}</strong> <span className="text-gray-300">({p.n} tema{p.n !== 1 ? 's' : ''})</span></span>}
+                            </p>
                           </div>
-                          {/* Estrellas 1–5 */}
-                          <div className="flex items-center gap-0.5 shrink-0">
-                            {[1, 2, 3, 4, 5].map(n => (
-                              <button key={n} onClick={() => guardar(i, { calificacion: (c?.calificacion === n ? 0 : n) })} title={`${n} de 5`} className="p-0.5">
-                                <Star size={20} className={cn('transition-colors', (c?.calificacion ?? 0) >= n ? 'fill-gold text-gold' : 'text-gray-300 hover:text-gold/50')} />
-                              </button>
-                            ))}
+                          {/* Nota numérica de este tema */}
+                          <div className="shrink-0 text-right">
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number" min={0} max={5} step={0.1} inputMode="decimal"
+                                key={`${temaId}_${i.id}`} defaultValue={c?.calificacion ? String(c.calificacion) : ''}
+                                onBlur={e => {
+                                  const raw = e.target.value.trim().replace(',', '.')
+                                  if (raw === '') { if (c?.calificacion) guardar(i, { calificacion: 0 }); return }
+                                  let v = parseFloat(raw); if (isNaN(v)) return
+                                  v = Math.max(0, Math.min(5, Math.round(v * 10) / 10))
+                                  e.target.value = String(v)
+                                  if (v !== (c?.calificacion ?? 0)) guardar(i, { calificacion: v })
+                                }}
+                                className={cn('w-16 text-center font-bold text-lg border rounded-lg px-1 py-1 focus:outline-none focus:border-royal', c?.calificacion ? notaColor(c.calificacion) + ' border-gray-300' : 'text-gray-400 border-gray-200')}
+                                placeholder="—"
+                              />
+                              <span className="text-xs text-gray-400">/5</span>
+                            </div>
                           </div>
                         </div>
                         <input
-                          defaultValue={c?.comentario ?? ''}
+                          defaultValue={c?.comentario ?? ''} key={`cmt_${temaId}_${i.id}`}
                           onBlur={e => { if (e.target.value !== (c?.comentario ?? '')) guardar(i, { comentario: e.target.value }) }}
                           placeholder="Comentario (ej. le falta la parte del coro)..."
                           className="mt-2 w-full text-xs px-3 py-2 border border-gray-200 rounded-lg bg-gray-50/60 focus:outline-none focus:border-royal focus:bg-white"

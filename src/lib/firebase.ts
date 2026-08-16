@@ -1421,21 +1421,28 @@ export async function setCalificacion(
   }, { merge: true })
 }
 
+function mapCalif(id: string, x: Record<string, unknown>): import('@/types').Calificacion {
+  return {
+    id, integranteId: x.integranteId as string, temaId: x.temaId as string,
+    temaTitulo: x.temaTitulo as string, calificacion: (x.calificacion as number) ?? 0,
+    comentario: x.comentario as string, calificadoPor: x.calificadoPor as string,
+    calificadoPorNombre: x.calificadoPorNombre as string,
+    updatedAt: (x.updatedAt as Timestamp)?.toDate(),
+  }
+}
+
 /** Calificaciones de un tema: mapa integranteId → Calificacion. */
 export async function getCalificacionesTema(temaId: string): Promise<Record<string, import('@/types').Calificacion>> {
   const snap = await getDocs(query(collection(db, 'calificaciones'), where('temaId', '==', temaId)))
   const out: Record<string, import('@/types').Calificacion> = {}
-  snap.forEach(d => {
-    const x = d.data()
-    out[x.integranteId as string] = {
-      id: d.id, integranteId: x.integranteId as string, temaId: x.temaId as string,
-      temaTitulo: x.temaTitulo as string, calificacion: (x.calificacion as number) ?? 0,
-      comentario: x.comentario as string, calificadoPor: x.calificadoPor as string,
-      calificadoPorNombre: x.calificadoPorNombre as string,
-      updatedAt: (x.updatedAt as Timestamp)?.toDate(),
-    }
-  })
+  snap.forEach(d => { out[(d.data().integranteId as string)] = mapCalif(d.id, d.data()) })
   return out
+}
+
+/** Todas las calificaciones (para el promedio acumulado por integrante). */
+export async function getCalificacionesTodas(): Promise<import('@/types').Calificacion[]> {
+  const snap = await getDocs(collection(db, 'calificaciones'))
+  return snap.docs.map(d => mapCalif(d.id, d.data()))
 }
 
 /** Sube el PDF de una partitura a Storage y la agrega al tema. */
