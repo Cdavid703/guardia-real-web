@@ -922,7 +922,8 @@ const FICHA_VACIA: Integrante = {
 const ROLES_FICHA: { value: UserRole; label: string }[] = [
   { value: 'integrante', label: 'Integrante' }, { value: 'director', label: 'Director Musical' },
   { value: 'junta', label: 'Junta Directiva' }, { value: 'cm', label: 'Community Manager' },
-  { value: 'collector', label: 'Recaudador' }, { value: 'staff', label: 'Staff' }, { value: 'visitante', label: 'Visitante' },
+  { value: 'collector', label: 'Recaudador' }, { value: 'staff', label: 'Staff' },
+  { value: 'monitor', label: 'Monitor' }, { value: 'visitante', label: 'Visitante' },
 ]
 
 function EditModal({ integrante, onClose, onSaved, uid, isNew }: { integrante: Integrante; onClose: () => void; onSaved: () => void; uid: string; isNew?: boolean }) {

@@ -5,8 +5,8 @@ import Image from 'next/image'
 import { Users, ShieldCheck, UserPlus, Search, ChevronLeft, ChevronRight, Eye, EyeOff, IdCard } from 'lucide-react'
 
 const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante, setRolFicha, type IntegranteBase } from '@/lib/firebase'
-import { getSeccion } from '@/lib/secciones'
+import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante, setRolFicha, setSeccionesMonitor, type IntegranteBase } from '@/lib/firebase'
+import { getSeccion, SECCIONES_LIST } from '@/lib/secciones'
 import { cn, getRoleLabel, getRoleBadgeColor, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { UserProfile, UserRole, Integrante } from '@/types'
@@ -15,7 +15,7 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'Administrador' }, { value: 'director', label: 'Director Musical' },
   { value: 'integrante', label: 'Integrante' }, { value: 'junta', label: 'Junta Directiva' },
   { value: 'cm', label: 'Community Manager' }, { value: 'collector', label: 'Recaudador' },
-  { value: 'staff', label: 'Staff' },
+  { value: 'staff', label: 'Staff' }, { value: 'monitor', label: 'Monitor' },
   { value: 'visitante', label: 'Visitante' }, { value: 'pending', label: 'Pendiente' },
 ]
 
@@ -30,6 +30,7 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
   const [linkedUids, setLinkedUids] = useState<Set<string>>(new Set())
   const [loading, setLoading]     = useState(true)
   const [creating, setCreating]   = useState<string | null>(null)
+  const [monitorModal, setMonitorModal] = useState<UserProfile | null>(null)
   const [filter, setFilter]       = useState<UserRole | 'all'>('all')
   const [search, setSearch]       = useState('')
   const [page, setPage]           = useState(1)
@@ -59,6 +60,15 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
   const handleRolFicha = async (id: string, rol: UserRole) => {
     try { await setRolFicha(id, rol); setIntegrantes(prev => prev.map(i => i.id === id ? { ...i, rol } : i)); toast.success(`Rol de ficha: "${getRoleLabel(rol)}"`) }
     catch { toast.error('Error al actualizar el rol de la ficha') }
+  }
+
+  const guardarSeccionesMonitor = async (u: UserProfile, secciones: string[]) => {
+    try {
+      await setSeccionesMonitor(u.uid, secciones)
+      setUsers(prev => prev.map(p => p.uid === u.uid ? { ...p, seccionesMonitor: secciones } : p))
+      setMonitorModal(null)
+      toast.success('Secciones del monitor guardadas')
+    } catch { toast.error('No se pudieron guardar las secciones') }
   }
 
   const handleApprove = async (u: UserProfile) => {
@@ -227,6 +237,11 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                   <select value={u.role} onChange={e => handleRole(u.uid, e.target.value as UserRole)} className="mt-2.5 w-full text-sm border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-dark focus:outline-none focus:border-royal">
                     {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                   </select>
+                  {u.role === 'monitor' && (
+                    <button onClick={() => setMonitorModal(u)} className="mt-2 w-full text-xs bg-indigo-50 text-indigo-700 rounded-lg px-2.5 py-2 font-semibold">
+                      Secciones que monitorea ({u.seccionesMonitor?.length ?? 0})
+                    </button>
+                  )}
                 </div>
               )
             })}
@@ -281,9 +296,16 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                     )}
                     {cols.has('registro') && <td className="px-4 py-3 text-xs text-gray-400">{formatDate(u.createdAt, { year: 'numeric', month: 'short', day: 'numeric' })}</td>}
                     <td className="px-4 py-3">
-                      <select value={u.role} onChange={e => handleRole(u.uid, e.target.value as UserRole)} className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-dark focus:outline-none focus:border-royal cursor-pointer">
-                        {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                      </select>
+                      <div className="flex items-center gap-2">
+                        <select value={u.role} onChange={e => handleRole(u.uid, e.target.value as UserRole)} className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-dark focus:outline-none focus:border-royal cursor-pointer">
+                          {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                        </select>
+                        {u.role === 'monitor' && (
+                          <button onClick={() => setMonitorModal(u)} className="text-[11px] bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-full px-2.5 py-1 font-semibold whitespace-nowrap">
+                            Secciones ({u.seccionesMonitor?.length ?? 0})
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                   )
@@ -312,6 +334,42 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
           )}
         </div>
       )}
+
+      {monitorModal && (
+        <MonitorSeccionesModal
+          user={monitorModal}
+          onClose={() => setMonitorModal(null)}
+          onSave={secs => guardarSeccionesMonitor(monitorModal, secs)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── Modal: secciones que monitorea un usuario con rol monitor ────────
+function MonitorSeccionesModal({ user, onClose, onSave }: {
+  user: UserProfile; onClose: () => void; onSave: (secciones: string[]) => void
+}) {
+  const [sel, setSel] = useState<Set<string>>(new Set(user.seccionesMonitor ?? []))
+  const toggle = (k: string) => setSel(s => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
+  return (
+    <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
+        <h3 className="font-serif font-bold text-navy text-lg mb-1">Secciones que monitorea</h3>
+        <p className="text-sm text-gray-500 mb-4"><strong className="text-dark">{user.displayName}</strong> podrá revisar/calificar a los integrantes de las secciones marcadas.</p>
+        <div className="grid grid-cols-2 gap-2 mb-5">
+          {SECCIONES_LIST.map(s => (
+            <label key={s.key} className={cn('flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm', sel.has(s.key) ? 'border-indigo-400 bg-indigo-50 text-indigo-800' : 'border-gray-200 hover:border-indigo-300')}>
+              <input type="checkbox" checked={sel.has(s.key)} onChange={() => toggle(s.key)} className="accent-indigo-600" />
+              {s.label}
+            </label>
+          ))}
+        </div>
+        <div className="flex gap-3">
+          <button onClick={() => onSave([...sel])} className="btn btn-primary btn-md flex-1 justify-center">Guardar ({sel.size})</button>
+          <button onClick={onClose} className="btn btn-ghost btn-md">Cancelar</button>
+        </div>
+      </div>
     </div>
   )
 }

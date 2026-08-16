@@ -1398,6 +1398,46 @@ export async function deleteTema(id: string): Promise<void> {
   await deleteDoc(doc(db, 'repertoire', id))
 }
 
+// ── Monitor: secciones asignadas + revisión de temas ────────────────
+/** Admin: define las secciones que monitorea un usuario con rol monitor. */
+export async function setSeccionesMonitor(uid: string, secciones: string[]): Promise<void> {
+  await updateDoc(doc(db, 'users', uid), { seccionesMonitor: secciones, updatedAt: serverTimestamp() })
+}
+
+const califId = (integranteId: string, temaId: string) => `${integranteId}__${temaId}`
+
+/** Guarda/actualiza la calificación (1–5) + comentario de un integrante en un tema. */
+export async function setCalificacion(
+  integranteId: string, temaId: string,
+  data: { calificacion?: number; comentario?: string; temaTitulo?: string },
+  actorUid: string, actorNombre: string,
+): Promise<void> {
+  await setDoc(doc(db, 'calificaciones', califId(integranteId, temaId)), {
+    integranteId, temaId,
+    ...(data.temaTitulo !== undefined && { temaTitulo: data.temaTitulo }),
+    ...(data.calificacion !== undefined && { calificacion: data.calificacion }),
+    ...(data.comentario !== undefined && { comentario: data.comentario }),
+    calificadoPor: actorUid, calificadoPorNombre: actorNombre, updatedAt: serverTimestamp(),
+  }, { merge: true })
+}
+
+/** Calificaciones de un tema: mapa integranteId → Calificacion. */
+export async function getCalificacionesTema(temaId: string): Promise<Record<string, import('@/types').Calificacion>> {
+  const snap = await getDocs(query(collection(db, 'calificaciones'), where('temaId', '==', temaId)))
+  const out: Record<string, import('@/types').Calificacion> = {}
+  snap.forEach(d => {
+    const x = d.data()
+    out[x.integranteId as string] = {
+      id: d.id, integranteId: x.integranteId as string, temaId: x.temaId as string,
+      temaTitulo: x.temaTitulo as string, calificacion: (x.calificacion as number) ?? 0,
+      comentario: x.comentario as string, calificadoPor: x.calificadoPor as string,
+      calificadoPorNombre: x.calificadoPorNombre as string,
+      updatedAt: (x.updatedAt as Timestamp)?.toDate(),
+    }
+  })
+  return out
+}
+
 /** Sube el PDF de una partitura a Storage y la agrega al tema. */
 export async function subirPartitura(
   temaId: string, instrumento: string, file: File,

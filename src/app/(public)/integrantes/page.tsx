@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Shirt, Bell, ClipboardList, History, Lock, LogIn, IdCard, ListMusic, Home, CalendarClock } from 'lucide-react'
+import { Shirt, Bell, ClipboardList, History, Lock, LogIn, IdCard, ListMusic, Home, CalendarClock, ClipboardCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import Tabs from '@/components/ui/Tabs'
@@ -13,16 +13,20 @@ import EquipoNoticiasPanel from '@/components/dashboard/EquipoNoticiasPanel'
 import EquipoEnsayosPanel from '@/components/dashboard/EquipoEnsayosPanel'
 import HistoriaPanel from '@/components/dashboard/HistoriaPanel'
 import RepertorioPanel from '@/components/dashboard/RepertorioPanel'
+import RevisionTemasPanel from '@/components/dashboard/RevisionTemasPanel'
 import MiFichaIntegrante from '@/components/dashboard/MiFichaIntegrante'
 import type { UserRole } from '@/types'
 
-const ALLOWED_ROLES: UserRole[] = ['admin', 'director', 'junta', 'cm', 'integrante']
+const ALLOWED_ROLES: UserRole[] = ['admin', 'director', 'junta', 'cm', 'integrante', 'monitor']
+// Roles que pueden revisar/calificar temas
+const ROLES_REVISION: UserRole[] = ['admin', 'director', 'monitor']
 
 const TABS = [
   { id: 'inicio',     label: 'Inicio',      icon: Home },
   { id: 'itinerario', label: 'Itinerario',  icon: CalendarClock },
   { id: 'ficha',      label: 'Mi ficha',    icon: IdCard },
   { id: 'partituras', label: 'Partituras', icon: ListMusic },
+  { id: 'revision',   label: 'Revisión de temas', icon: ClipboardCheck, roles: ROLES_REVISION },
   { id: 'uniformes',  label: 'Uniformes',  icon: Shirt },
   { id: 'noticias',   label: 'Noticias',   icon: Bell },
   { id: 'ensayos',    label: 'Ensayos',    icon: ClipboardList },
@@ -34,6 +38,7 @@ function IntegrantesContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initial = searchParams.get('tab')
+  const visibleTabs = TABS.filter(t => !t.roles || (profile && t.roles.includes(profile.role)))
   const [activeTab, setActiveTab] = useState(
     TABS.some(t => t.id === initial) ? (initial as string) : 'inicio'
   )
@@ -82,12 +87,13 @@ function IntegrantesContent() {
         </p>
       </div>
 
-      <Tabs tabs={TABS} activeTab={activeTab} onChange={handleChange} className="mb-8 justify-start" />
+      <Tabs tabs={visibleTabs} activeTab={activeTab} onChange={handleChange} className="mb-8 justify-start" />
 
       {activeTab === 'inicio'     && <MiResumen role={profile.role} />}
       {activeTab === 'itinerario' && <ItinerarioPanel role={profile.role} />}
       {activeTab === 'ficha'      && <MiFichaIntegrante />}
       {activeTab === 'partituras' && <RepertorioPanel role={profile.role} />}
+      {activeTab === 'revision'   && ROLES_REVISION.includes(profile.role) && <RevisionTemasPanel />}
       {activeTab === 'uniformes'  && <UniformesPanel />}
       {activeTab === 'noticias'  && <EquipoNoticiasPanel role={profile.role} />}
       {activeTab === 'ensayos'   && <EquipoEnsayosPanel role={profile.role} />}

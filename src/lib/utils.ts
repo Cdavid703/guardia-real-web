@@ -20,6 +20,8 @@ export function getRoleDashboard(role: UserRole): string {
     junta:      '/integrantes',
     // Staff (familiares/logística): portal propio con sus pagos; sin acceso a integrantes.
     staff:      '/dashboard/staff',
+    // Monitor de sección: gestiona la revisión de temas desde /integrantes.
+    monitor:    '/integrantes',
     visitante:  '/',
     pending:    '/pending',
   }
@@ -35,6 +37,7 @@ export function getRoleLabel(role: UserRole): string {
     cm:         'Community Manager',
     collector:  'Recaudador',
     staff:      'Staff',
+    monitor:    'Monitor',
     visitante:  'Visitante',
     pending:    'Pendiente de aprobación',
   }
@@ -50,6 +53,7 @@ export function getRoleBadgeColor(role: UserRole): string {
     cm:         'bg-pink-100 text-pink-700',
     collector:  'bg-teal-100 text-teal-700',
     staff:      'bg-slate-200 text-slate-700',
+    monitor:    'bg-indigo-100 text-indigo-700',
     visitante:  'bg-green-100 text-green-700',
     pending:    'bg-gray-100 text-gray-600',
   }

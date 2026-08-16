@@ -2,7 +2,7 @@
 // GUARDIA REAL DE ANTIOQUIA — Tipos globales
 // ──────────────────────────────────────────────────────────────────
 
-export type UserRole = 'admin' | 'director' | 'integrante' | 'junta' | 'cm' | 'collector' | 'staff' | 'visitante' | 'pending'
+export type UserRole = 'admin' | 'director' | 'integrante' | 'junta' | 'cm' | 'collector' | 'staff' | 'monitor' | 'visitante' | 'pending'
 
 export interface UserProfile {
   uid: string
@@ -12,6 +12,8 @@ export interface UserProfile {
   role: UserRole
   // Rol solicitado por el usuario, pendiente de aprobación por administración
   requestedRole?: UserRole
+  // Secciones que monitorea (solo rol monitor); el admin las asigna
+  seccionesMonitor?: string[]
   createdAt: Date
   updatedAt: Date
   // Info adicional del integrante
@@ -154,6 +156,19 @@ export interface Tema {
   createdAt:       Date
   updatedAt:       Date
   uploadedBy?:     string
+}
+
+/** Revisión de un tema por integrante: calificación (1–5) + comentario. */
+export interface Calificacion {
+  id:            string   // `${integranteId}__${temaId}`
+  integranteId:  string
+  temaId:        string
+  temaTitulo?:   string
+  calificacion:  number   // 1–5 (0 = sin calificar)
+  comentario?:   string
+  calificadoPor?: string  // uid de quien calificó
+  calificadoPorNombre?: string
+  updatedAt?:    Date
 }
 
 export interface NewsArticle {

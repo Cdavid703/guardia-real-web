@@ -23,7 +23,12 @@ service cloud.firestore {
     }
 
     function isMiembro() {
-      return isAuth() && myRole() in ['admin', 'director', 'integrante', 'junta', 'cm', 'collector'];
+      return isAuth() && myRole() in ['admin', 'director', 'integrante', 'junta', 'cm', 'collector', 'monitor'];
+    }
+
+    // Quién puede revisar/calificar temas: admin, director y monitor.
+    function isRevisor() {
+      return isAuth() && myRole() in ['admin', 'director', 'monitor'];
     }
 
     // ¿La cuenta actual está enlazada a esta ficha? (varias cuentas por ficha + legacy)
@@ -175,6 +180,12 @@ service cloud.firestore {
     // Integrantes — roster NO sensible: visible a cualquier miembro de la banda.
     // Las cuentas enlazadas (linkedUids) pueden editar su ficha sin alterar el
     // conjunto de vínculos. Un usuario puede crear su propia ficha (self-service).
+    // Revisión de temas: calificación (1–5) + comentario por integrante/tema.
+    match /calificaciones/{id} {
+      allow read:  if isRevisor();
+      allow write: if isRevisor();
+    }
+
     match /integrantes/{id} {
       allow read:   if isMiembro();
       allow create: if isAdmin()
