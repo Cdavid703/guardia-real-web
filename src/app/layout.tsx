@@ -1,31 +1,24 @@
 import type { Metadata } from 'next'
-import { Cinzel, Playfair_Display, Inter } from 'next/font/google'
+// Fuentes auto-alojadas (@fontsource) — sin depender de Google Fonts en el build.
+import '@fontsource/cinzel/400.css'
+import '@fontsource/cinzel/600.css'
+import '@fontsource/cinzel/700.css'
+import '@fontsource/cinzel/900.css'
+import '@fontsource/playfair-display/400.css'
+import '@fontsource/playfair-display/600.css'
+import '@fontsource/playfair-display/700.css'
+import '@fontsource/playfair-display/400-italic.css'
+import '@fontsource/playfair-display/600-italic.css'
+import '@fontsource/playfair-display/700-italic.css'
+import '@fontsource/inter/300.css'
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/500.css'
+import '@fontsource/inter/600.css'
+import '@fontsource/inter/700.css'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Toaster } from 'sonner'
 import { Analytics } from '@vercel/analytics/next'
-
-const cinzel = Cinzel({
-  subsets: ['latin'],
-  weight: ['400', '600', '700', '900'],
-  variable: '--font-cinzel',
-  display: 'swap',
-})
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['400', '600', '700'],
-  style: ['normal', 'italic'],
-  variable: '--font-playfair',
-  display: 'swap',
-})
-
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-inter',
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.guardiarealdeantioquia.com'),
@@ -75,10 +68,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html
-      lang="es"
-      className={`${cinzel.variable} ${playfair.variable} ${inter.variable}`}
-    >
+    <html lang="es">
       <body className="min-h-screen">
         <AuthProvider>
           {children}

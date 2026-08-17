@@ -25,6 +25,11 @@
   --font-display: 'Cinzel', 'Trajan Pro', serif;
   --font-serif:   'Playfair Display', 'EB Garamond', Georgia, serif;
   --font-sans:    'Inter', 'Helvetica Neue', Arial, sans-serif;
+
+  /* Familias auto-alojadas (usadas por tailwind.config: var(--font-*)) */
+  --font-cinzel:   'Cinzel';
+  --font-playfair: 'Playfair Display';
+  --font-inter:    'Inter';
 }
 
 /* ── Base styles ──────────────────────────────────────────────── */
