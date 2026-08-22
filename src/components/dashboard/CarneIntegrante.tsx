@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
-import { X, Printer, Download, Droplet, Shield, IdCard, Plane, Phone, User } from 'lucide-react'
+import { X, Printer, Download, Droplet, Shield, IdCard, Plane, Phone, User, BadgeCheck } from 'lucide-react'
 import { getSeccion, instrumentoImage } from '@/lib/secciones'
 import QrIntegrante from '@/components/dashboard/QrIntegrante'
 import type { Integrante } from '@/types'
@@ -18,12 +18,17 @@ const telCo = (t?: string) => {
   return d ? `+57 ${d}` : ''
 }
 
+// Número de carné legible, derivado del id del integrante
+const carneNumero = (id?: string) =>
+  `GRA-${(id ?? '').replace(/[^a-zA-Z0-9]/g, '').slice(-6).toUpperCase().padStart(6, '0')}`
+
 /** Carné digital del integrante — horizontal, a medida real, imprimible y en PDF. */
 export default function CarneIntegrante({ ficha, onClose }: { ficha: Integrante; onClose: () => void }) {
   const sec = getSeccion(ficha.seccion)
   const cardRef = useRef<HTMLDivElement>(null)
   const [downloading, setDownloading] = useState(false)
   const [instrOk, setInstrOk] = useState(true)
+  const showInstr = !!(sec?.slug && instrOk)
 
   const descargarPDF = async () => {
     const node = cardRef.current
@@ -82,34 +87,42 @@ export default function CarneIntegrante({ ficha, onClose }: { ficha: Integrante;
           </div>
 
           {/* Cuerpo */}
-          <div className="relative flex-1 flex px-4 py-2.5 gap-3 overflow-hidden">
-            {/* Instrumento de fondo (marca de agua visible, llena el espacio) */}
-            {sec?.slug && instrOk && (
-              <Image src={instrumentoImage(sec.slug)} alt="" width={220} height={220} onError={() => setInstrOk(false)}
-                className="absolute right-2 bottom-0 w-44 h-44 object-contain opacity-[0.10] pointer-events-none z-0" />
-            )}
-
-            {/* Foto + sección */}
-            <div className="relative z-10 shrink-0 w-[96px] flex flex-col items-center justify-center">
-              <div className="relative w-[96px] h-[116px] rounded-lg bg-royal/10 overflow-hidden flex items-center justify-center border-2 border-gold/50">
-                {ficha.fotoURL
-                  ? <Image src={ficha.fotoURL} alt="" width={96} height={116} className="w-[96px] h-[116px] object-cover" />
-                  : <span className="font-display text-royal text-3xl font-bold">{(ficha.nombre[0] ?? '?').toUpperCase()}</span>}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Columna principal */}
+            <div className="flex-1 min-w-0 flex flex-col justify-center gap-2.5 px-4 py-3">
+              <div className="flex gap-3">
+                {/* Foto + sección */}
+                <div className="shrink-0 w-[104px] flex flex-col items-center">
+                  <div className="w-[104px] h-[128px] rounded-lg bg-royal/10 overflow-hidden border-2 border-gold/50 flex items-center justify-center">
+                    {ficha.fotoURL
+                      ? <Image src={ficha.fotoURL} alt="" width={104} height={128} className="w-[104px] h-[128px] object-cover" />
+                      : <span className="font-display text-royal text-3xl font-bold">{(ficha.nombre[0] ?? '?').toUpperCase()}</span>}
+                  </div>
+                  <p className="text-royal text-[10px] font-semibold text-center mt-1 leading-tight">{sec?.label ?? ficha.seccion}</p>
+                </div>
+                {/* Nombre + datos */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <p className="font-serif font-bold text-navy text-[16px] leading-tight mb-2.5">{ficha.nombre} {ficha.apellidos}</p>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-3">
+                    <Campo icon={IdCard}  label="Documento"      value={ficha.numDoc ? `${ficha.tipoDoc} ${ficha.numDoc}`.trim() : ''} />
+                    {ficha.pasaporte && <Campo icon={Plane} label="Pasaporte" value={ficha.numeroPasaporte} />}
+                    <Campo icon={Droplet} label="Tipo de sangre" value={ficha.tipoSangre} color="text-red-500" />
+                    <Campo icon={Shield}  label="EPS"            value={ficha.eps} />
+                  </div>
+                </div>
               </div>
-              <p className="text-royal text-[10px] font-semibold text-center mt-1 leading-tight">{sec?.label ?? ficha.seccion}</p>
-            </div>
 
-            {/* Datos (distribuidos verticalmente) */}
-            <div className="relative z-10 flex-1 min-w-0 flex flex-col justify-center">
-              <p className="font-serif font-bold text-navy text-[16px] leading-tight mb-2">{ficha.nombre} {ficha.apellidos}</p>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-                <Campo icon={IdCard}  label="Documento"      value={ficha.numDoc ? `${ficha.tipoDoc} ${ficha.numDoc}`.trim() : ''} />
-                {ficha.pasaporte && <Campo icon={Plane} label="Pasaporte" value={ficha.numeroPasaporte} />}
-                <Campo icon={Droplet} label="Tipo de sangre" value={ficha.tipoSangre} color="text-red-500" />
-                <Campo icon={Shield}  label="EPS"            value={ficha.eps} />
+              {/* Franja oficial: N.º de carné + vigencia */}
+              <div className="flex items-center justify-between bg-royal/5 border border-royal/10 rounded-md px-2.5 py-1.5">
+                <div className="flex items-center gap-1.5">
+                  <BadgeCheck size={13} className="text-royal shrink-0" />
+                  <p className="text-[8px] text-gray-500 uppercase tracking-wide leading-none">Carné N.º <span className="text-dark font-bold">{carneNumero(ficha.id)}</span></p>
+                </div>
+                <p className="text-[8px] text-gray-500 uppercase tracking-wide leading-none">Vigencia <span className="text-dark font-bold">{new Date().getFullYear()}</span></p>
               </div>
+
               {/* Contacto de emergencia — fila completa, sin cortar */}
-              <div className="flex items-start gap-4 mt-2.5 pt-2 border-t border-gray-100">
+              <div className="flex items-start gap-4 pt-2 border-t border-gray-100">
                 <div className="flex items-start gap-1.5 min-w-0 flex-1">
                   <User size={13} className="text-royal shrink-0 mt-0.5" />
                   <div className="min-w-0">
@@ -127,10 +140,23 @@ export default function CarneIntegrante({ ficha, onClose }: { ficha: Integrante;
               </div>
             </div>
 
-            {/* QR */}
-            <div className="relative z-10 shrink-0 flex flex-col items-center justify-center">
-              <QrIntegrante ficha={ficha} size={84} />
-              <p className="text-[7px] text-gray-400 uppercase tracking-wide mt-0.5">Escanéame</p>
+            {/* Panel lateral navy: QR + instrumento */}
+            <div className={`w-[140px] shrink-0 bg-navy flex flex-col items-center px-3 py-3 ${showInstr ? 'justify-between' : 'justify-center'}`}>
+              <div className="flex flex-col items-center">
+                <div className="bg-white p-1.5 rounded-md">
+                  <QrIntegrante ficha={ficha} size={80} />
+                </div>
+                <p className="text-sky/80 text-[7px] uppercase tracking-widest mt-1">Escanéame</p>
+              </div>
+              {showInstr && (
+                <div className="flex flex-col items-center w-full">
+                  <div className="w-full h-[70px] rounded-lg overflow-hidden border border-white/15">
+                    <Image src={instrumentoImage(sec!.slug)} alt="" width={112} height={70} onError={() => setInstrOk(false)}
+                      className="w-full h-full object-cover" />
+                  </div>
+                  <p className="text-gold text-[9px] font-semibold uppercase tracking-wider mt-1">{sec?.label}</p>
+                </div>
+              )}
             </div>
           </div>
 
