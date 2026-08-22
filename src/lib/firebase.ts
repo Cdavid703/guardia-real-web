@@ -181,7 +181,7 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 /** Campos que viven en la colección sensible (integrantesPrivado). */
 const CAMPOS_SENSIBLES = [
   'tipoDoc', 'numDoc', 'fechaNacimiento', 'direccion',
-  'tipoSangre', 'eps', 'pasaporte', 'contactoEmergencia', 'diagnostico',
+  'tipoSangre', 'eps', 'pasaporte', 'numeroPasaporte', 'contactoEmergencia', 'contactoEmergenciaTel', 'diagnostico',
 ] as const
 
 /** Roster ligero — solo datos no sensibles (colección integrantes). */
@@ -385,7 +385,9 @@ function mergeIntegrante(base: IntegranteBase, priv: Partial<Integrante>): Integ
     tipoSangre:         priv.tipoSangre ?? '',
     eps:                priv.eps ?? '',
     pasaporte:          priv.pasaporte ?? false,
+    numeroPasaporte:    priv.numeroPasaporte ?? '',
     contactoEmergencia: priv.contactoEmergencia ?? '',
+    contactoEmergenciaTel: priv.contactoEmergenciaTel ?? '',
     diagnostico:        priv.diagnostico ?? '',
   }
 }

@@ -975,8 +975,10 @@ function EditModal({ integrante, onClose, onSaved, uid, isNew }: { integrante: I
           <Fld label="Tipo sangre"><input className="input" value={form.tipoSangre} onChange={e => set('tipoSangre', e.target.value)} /></Fld>
           <Fld label="EPS"><input className="input" value={form.eps} onChange={e => set('eps', e.target.value)} /></Fld>
           <Fld label="Pasaporte"><select className="input" value={form.pasaporte ? 'si' : 'no'} onChange={e => set('pasaporte', e.target.value === 'si')}><option value="no">No</option><option value="si">Sí</option></select></Fld>
+          {form.pasaporte && <Fld label="Número de pasaporte"><input className="input" value={form.numeroPasaporte ?? ''} onChange={e => set('numeroPasaporte', e.target.value)} /></Fld>}
           <Fld label="Dirección" full><input className="input" value={form.direccion} onChange={e => set('direccion', e.target.value)} /></Fld>
-          <Fld label="Contacto emergencia" full><input className="input" value={form.contactoEmergencia} onChange={e => set('contactoEmergencia', e.target.value)} /></Fld>
+          <Fld label="Contacto emergencia (nombre y parentesco)"><input className="input" value={form.contactoEmergencia} onChange={e => set('contactoEmergencia', e.target.value)} /></Fld>
+          <Fld label="Tel. contacto emergencia"><input className="input" value={form.contactoEmergenciaTel ?? ''} onChange={e => set('contactoEmergenciaTel', e.target.value)} placeholder="3001234567" /></Fld>
           <Fld label="Condición médica" full><textarea className="input resize-none" rows={2} value={form.diagnostico} onChange={e => set('diagnostico', e.target.value)} /></Fld>
           <Fld label="Correos con acceso (además del principal, separados por coma)" full>
             <input className="input" value={(form.correosAutorizados ?? []).join(', ')}

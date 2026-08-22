@@ -50,7 +50,9 @@ export interface Integrante {
   tipoSangre:         string
   eps:                string
   pasaporte:          boolean
-  contactoEmergencia: string   // nombre + parentesco + teléfono
+  numeroPasaporte?:   string   // número de pasaporte (solo si tiene pasaporte)
+  contactoEmergencia: string   // nombre + parentesco del contacto de emergencia
+  contactoEmergenciaTel?: string // teléfono del contacto de emergencia
   diagnostico:        string   // diagnóstico médico / medicamentos
   // Rol asignado a esta ficha; viaja a la cuenta cuando la persona inicia sesión
   rol?:               UserRole  // por defecto 'integrante'

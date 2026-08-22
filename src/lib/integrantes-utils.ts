@@ -34,7 +34,8 @@ export function sugerirTipoDoc(raw: string): string {
 export const REQUERIDOS_INTEGRANTE: [keyof Integrante, string][] = [
   ['apellidos', 'Apellidos'], ['tipoDoc', 'Tipo de documento'], ['numDoc', 'Número de documento'],
   ['fechaNacimiento', 'Fecha de nacimiento'], ['whatsapp', 'WhatsApp'], ['direccion', 'Dirección'],
-  ['tipoSangre', 'Tipo de sangre'], ['eps', 'EPS'], ['contactoEmergencia', 'Contacto de emergencia'],
+  ['tipoSangre', 'Tipo de sangre'], ['eps', 'EPS'],
+  ['contactoEmergencia', 'Contacto de emergencia'], ['contactoEmergenciaTel', 'Tel. de emergencia'],
 ]
 
 function vacio(v: unknown): boolean {
@@ -43,7 +44,10 @@ function vacio(v: unknown): boolean {
 
 /** Devuelve las etiquetas de los campos requeridos que están vacíos. */
 export function camposFaltantes(data: Partial<Integrante>): string[] {
-  return REQUERIDOS_INTEGRANTE.filter(([k]) => vacio(data[k])).map(([, label]) => label)
+  const faltan = REQUERIDOS_INTEGRANTE.filter(([k]) => vacio(data[k])).map(([, label]) => label)
+  // El número de pasaporte solo es obligatorio si la persona marcó que tiene pasaporte.
+  if (data.pasaporte === true && vacio(data.numeroPasaporte)) faltan.push('Número de pasaporte')
+  return faltan
 }
 
 /** Calcula la edad a partir de una fecha (ISO o dd/mm/yyyy). */

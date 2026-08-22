@@ -170,8 +170,8 @@ export default function MiFichaIntegrante() {
             <Dato icon={MapPin}     label="Dirección"   value={ficha.direccion} />
             <Dato icon={Droplet}    label="Tipo sangre" value={ficha.tipoSangre} />
             <Dato icon={Shield}     label="EPS"         value={ficha.eps} />
-            <Dato icon={Plane}      label="Pasaporte"   value={ficha.pasaporte ? 'Sí' : 'No'} />
-            <Dato icon={HeartPulse} label="Emergencia"  value={ficha.contactoEmergencia} />
+            <Dato icon={Plane}      label="Pasaporte"   value={ficha.pasaporte ? (ficha.numeroPasaporte || 'Sí') : 'No'} />
+            <Dato icon={HeartPulse} label="Emergencia"  value={[ficha.contactoEmergencia, ficha.contactoEmergenciaTel].filter(Boolean).join(' · ')} />
           </div>
           {ficha.diagnostico && ficha.diagnostico.toLowerCase() !== 'no' && (
             <div className="mt-3 pt-3 border-t border-gray-100">
@@ -231,8 +231,10 @@ export default function MiFichaIntegrante() {
             <option value="no">No</option><option value="si">Sí</option>
           </select>
         </Campo>
+        {form.pasaporte && <Campo label="Número de pasaporte"><input className="input" value={form.numeroPasaporte ?? ''} onChange={e => set('numeroPasaporte', e.target.value)} /></Campo>}
         <Campo label="Dirección de residencia" full><input className="input" value={form.direccion ?? ''} onChange={e => set('direccion', e.target.value)} /></Campo>
-        <Campo label="Contacto de emergencia (nombre / parentesco / teléfono)" full><input className="input" value={form.contactoEmergencia ?? ''} onChange={e => set('contactoEmergencia', e.target.value)} /></Campo>
+        <Campo label="Contacto de emergencia (nombre y parentesco)"><input className="input" value={form.contactoEmergencia ?? ''} onChange={e => set('contactoEmergencia', e.target.value)} /></Campo>
+        <Campo label="Tel. del contacto de emergencia"><input className="input" value={form.contactoEmergenciaTel ?? ''} onChange={e => set('contactoEmergenciaTel', e.target.value)} placeholder="3001234567" /></Campo>
         <Campo label="Diagnóstico médico / medicamentos (si aplica)" full>
           <textarea className="input resize-none" rows={2} value={form.diagnostico ?? ''} onChange={e => set('diagnostico', e.target.value)} placeholder="Describe brevemente o escribe 'No'" />
         </Campo>
