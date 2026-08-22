@@ -87,16 +87,11 @@ export default function CarneIntegrante({ ficha, onClose }: { ficha: Integrante;
 
           {/* Cuerpo */}
           <div className="flex-1 flex flex-col items-center px-5 pt-3 pb-2 min-h-0">
-            {/* Foto centrada y grande + insignia del instrumento */}
-            <div className="relative w-[148px] h-[176px] rounded-xl bg-royal/10 overflow-hidden border-2 border-gold/60 shadow-md flex items-center justify-center">
+            {/* Foto centrada y grande */}
+            <div className="w-[148px] h-[176px] rounded-xl bg-royal/10 overflow-hidden border-2 border-gold/60 shadow-md flex items-center justify-center">
               {ficha.fotoURL
                 ? <Image src={ficha.fotoURL} alt="" width={148} height={176} className="w-full h-full object-cover" />
                 : <span className="font-display text-royal text-5xl font-bold">{(ficha.nombre[0] ?? '?').toUpperCase()}</span>}
-              {showInstr && (
-                <div className="absolute -bottom-1.5 -right-1.5 w-10 h-10 rounded-full bg-navy border-2 border-white overflow-hidden flex items-center justify-center">
-                  <Image src={instrumentoImage(sec!.slug)} alt="" width={40} height={40} onError={() => setInstrOk(false)} className="w-full h-full object-cover scale-125" />
-                </div>
-              )}
             </div>
 
             {/* Nombre + sección */}
@@ -135,17 +130,22 @@ export default function CarneIntegrante({ ficha, onClose }: { ficha: Integrante;
             </div>
           </div>
 
-          {/* Pie navy: QR + lema + mascota */}
-          <div className="bg-navy px-5 py-2.5 flex items-center justify-between shrink-0">
+          {/* Pie navy: QR + instrumento + mascota */}
+          <div className="bg-navy px-4 py-2.5 flex items-center justify-between shrink-0">
             <div className="flex flex-col items-center">
               <div className="bg-white p-1 rounded-md">
-                <QrIntegrante ficha={ficha} size={66} />
+                <QrIntegrante ficha={ficha} size={64} />
               </div>
               <p className="text-sky/80 text-[6px] uppercase tracking-[0.2em] mt-0.5">Escanéame</p>
             </div>
-            <div className="text-center px-1">
-              <p className="font-serif italic text-gold text-[10px] leading-tight">&ldquo;Disciplina,<br />progreso y honor&rdquo;</p>
-            </div>
+            {showInstr && (
+              <div className="flex flex-col items-center">
+                <div className="w-[86px] h-[62px] rounded-lg overflow-hidden border border-white/15">
+                  <Image src={instrumentoImage(sec!.slug)} alt="" width={86} height={62} onError={() => setInstrOk(false)} className="w-full h-full object-cover" />
+                </div>
+                <p className="text-gold text-[8px] font-semibold uppercase tracking-wider mt-1">{sec?.label}</p>
+              </div>
+            )}
             <Image src="/images/mascota.png" alt="Mascota Guardia Real de Antioquia" width={74} height={86} className="w-[74px] h-[86px] object-contain drop-shadow" />
           </div>
         </div>
