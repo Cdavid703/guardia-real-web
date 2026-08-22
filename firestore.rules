@@ -23,7 +23,7 @@ service cloud.firestore {
     }
 
     function isMiembro() {
-      return isAuth() && myRole() in ['admin', 'director', 'integrante', 'junta', 'cm', 'collector', 'monitor'];
+      return isAuth() && myRole() in ['admin', 'director', 'integrante', 'junta', 'cm', 'collector', 'monitor', 'staff'];
     }
 
     // Quién puede revisar/calificar temas: admin, director y monitor.
