@@ -72,12 +72,11 @@ export default function CarneIntegrante({ ficha, onClose }: { ficha: Integrante;
         <div ref={cardRef} className="carne-printable bg-white overflow-hidden shadow-2xl mx-auto flex flex-col"
           style={{ width: CARD_W, height: CARD_H, borderRadius: 16 }}>
           {/* Cabecera navy */}
-          <div className="bg-navy relative px-4 py-2.5 shrink-0">
+          <div className="bg-navy relative px-4 py-2 shrink-0">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gold" />
-            <div className="relative flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
-                <Image src="/images/escudo.png" alt="" width={26} height={26} className="object-contain" />
-              </div>
+            <div className="relative flex items-center gap-3">
+              <Image src="/images/escudo.png" alt="Escudo Guardia Real de Antioquia" width={48} height={48}
+                className="object-contain shrink-0 drop-shadow" />
               <div className="leading-tight">
                 <p className="font-display text-white text-[13px] font-bold uppercase tracking-wider">Guardia Real de Antioquia</p>
                 <p className="text-sky text-[9px] uppercase tracking-wider">Corporación Musical · Carné de integrante</p>
