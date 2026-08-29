@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import {
-  Users, Clock, CheckCircle, ClipboardList, Contact, Eye, TrendingUp, LayoutDashboard,
+  Users, Clock, CheckCircle, ClipboardList, Contact, Eye, TrendingUp, LayoutDashboard, IdCard,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAllUsers, getIngresoRequests, getAllIntegrantes } from '@/lib/firebase'
@@ -12,12 +12,14 @@ import Tabs from '@/components/ui/Tabs'
 import IntegrantesPanel from '@/components/dashboard/usuarios/IntegrantesPanel'
 import SolicitudesPanel from '@/components/dashboard/usuarios/SolicitudesPanel'
 import CuentasRolesPanel from '@/components/dashboard/usuarios/CuentasRolesPanel'
+import FichasSinCuentaPanel from '@/components/dashboard/usuarios/FichasSinCuentaPanel'
 
 const TABS = [
   { id: 'resumen',     label: 'Resumen',      icon: LayoutDashboard },
   { id: 'integrantes', label: 'Integrantes',  icon: Contact },
   { id: 'solicitudes', label: 'Solicitudes',  icon: ClipboardList },
   { id: 'cuentas',     label: 'Cuentas y roles', icon: Users },
+  { id: 'sincuenta',   label: 'Fichas sin cuenta', icon: IdCard },
 ]
 
 function AdminHub() {

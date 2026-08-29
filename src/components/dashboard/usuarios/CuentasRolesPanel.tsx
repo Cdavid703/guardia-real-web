@@ -13,7 +13,7 @@ const telKey = (s?: string) => {
 // Nombre normalizado (sin acentos, minúsculas, espacios colapsados)
 const nameKey = (s?: string) => norm(s ?? '').replace(/\s+/g, ' ').trim()
 const titleCase = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase())
-import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante, setRolFicha, setSeccionesMonitor, linkIntegranteToUser, type IntegranteBase } from '@/lib/firebase'
+import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante, setSeccionesMonitor, linkIntegranteToUser, type IntegranteBase } from '@/lib/firebase'
 import { getSeccion, SECCIONES_LIST } from '@/lib/secciones'
 import { cn, getRoleLabel, getRoleBadgeColor, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -62,12 +62,6 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
   const handleRole = async (targetUid: string, role: UserRole) => {
     try { await updateUserRole(targetUid, role); setUsers(prev => prev.map(u => u.uid === targetUid ? { ...u, role } : u)); toast.success(`Rol actualizado a "${getRoleLabel(role)}"`) }
     catch { toast.error('Error al actualizar el rol') }
-  }
-
-  // Rol de una ficha sin cuenta (queda en la ficha y se aplica al iniciar sesión)
-  const handleRolFicha = async (id: string, rol: UserRole) => {
-    try { await setRolFicha(id, rol); setIntegrantes(prev => prev.map(i => i.id === id ? { ...i, rol } : i)); toast.success(`Rol de ficha: "${getRoleLabel(rol)}"`) }
-    catch { toast.error('Error al actualizar el rol de la ficha') }
   }
 
   const [enlazando, setEnlazando] = useState<string | null>(null)
@@ -167,10 +161,6 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
     return u.role === filter
   })
   const pendingApprovals = users.filter(u => u.role === 'pending' && u.requestedRole)
-  // Fichas de integrante que aún no tienen una cuenta de usuario enlazada (no han iniciado sesión)
-  const fichasSinCuenta = integrantes
-    .filter(i => (i.linkedUids ?? []).length === 0)
-    .filter(i => { if (!q) return true; return norm(`${i.nombre} ${i.apellidos} ${i.correo}`).includes(q) })
   const visitantesOcultos = filter === 'all' && !q ? users.filter(u => u.role === 'visitante').length : 0
 
   // Paginación — se reinicia al cambiar filtro o búsqueda
@@ -289,34 +279,6 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                     </div>
                   ))}
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Fichas sin cuenta de usuario (tienen ficha pero no han iniciado sesión) */}
-      {fichasSinCuenta.length > 0 && (
-        <div className="mb-6">
-          <h3 className="font-display text-navy text-lg font-bold uppercase tracking-wider flex items-center gap-2 mb-1">
-            <IdCard size={18} className="text-royal" /> Fichas sin cuenta <span className="text-gray-400 font-normal normal-case tracking-normal text-sm">({fichasSinCuenta.length})</span>
-          </h3>
-          <p className="text-xs text-gray-500 mb-3 max-w-3xl">
-            Estas personas ya registraron su ficha, pero <strong>aún no han iniciado sesión</strong>, por eso no tienen rol y no aparecen en la lista de abajo. En cuanto entren con su correo, su cuenta se crea y podrás asignarles el rol aquí.
-          </p>
-          <div className="bg-amber-50/60 border border-amber-100 rounded-xl divide-y divide-amber-100 max-h-72 overflow-y-auto">
-            {fichasSinCuenta.map(i => (
-              <div key={i.id} className="px-4 py-2.5 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center shrink-0">{i.nombre[0]?.toUpperCase() ?? '?'}</div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
-                  <p className="text-xs text-gray-400 truncate">{i.correo || 'sin correo'} · {getSeccion(i.seccion)?.label ?? i.seccion ?? '—'}</p>
-                </div>
-                <select value={i.rol ?? 'integrante'} onChange={e => handleRolFicha(i.id, e.target.value as UserRole)}
-                  className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-dark focus:outline-none focus:border-royal cursor-pointer shrink-0">
-                  {ROLES.filter(r => r.value !== 'admin' && r.value !== 'pending').map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                </select>
-                <span className="badge bg-amber-100 text-amber-700 text-xs shrink-0">Sin cuenta</span>
               </div>
             ))}
           </div>
