@@ -64,12 +64,16 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
     catch { toast.error('Error al actualizar el rol') }
   }
 
+  // Selector manual de ficha: enlaza una cuenta a una ficha que ya existe
+  const [fichaPicker, setFichaPicker] = useState<UserProfile | null>(null)
+
   const [enlazando, setEnlazando] = useState<string | null>(null)
   const handleEnlazar = async (fichaId: string, u: UserProfile) => {
     setEnlazando(`${fichaId}:${u.uid}`)
     try {
       await linkIntegranteToUser(fichaId, u.uid, u.email)
       toast.success(`Cuenta de ${u.displayName} enlazada a la ficha`)
+      setFichaPicker(null)
       fetchAll()
     } catch { toast.error('No se pudo enlazar') }
     finally { setEnlazando(null) }
@@ -401,8 +405,9 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                       <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                         <span className={cn('badge text-xs', getRoleBadgeColor(u.role))}>{getRoleLabel(u.role)}</span>
                         {u.requestedRole && <button onClick={() => handleApprove(u)} className="badge bg-amber-100 text-amber-700 text-xs">Solicita {getRoleLabel(u.requestedRole)} · Aprobar</button>}
-                        {necesitaFicha && <button onClick={() => handleCrearFicha(u)} disabled={creating === u.uid} className="text-[11px] bg-gold/15 text-amber-700 rounded-full px-2 py-0.5 font-semibold inline-flex items-center gap-1"><UserPlus size={10} /> {creating === u.uid ? 'Creando...' : 'Crear ficha'}</button>}
-                        {!necesitaFicha && ROLES_BANDA.includes(u.role) && <span className="text-[11px] bg-green-100 text-green-700 rounded-full px-2 py-0.5 font-medium">Con ficha</span>}
+                        {necesitaFicha && <button onClick={() => setFichaPicker(u)} className="text-[11px] bg-royal/10 text-royal rounded-full px-2 py-0.5 font-semibold inline-flex items-center gap-1"><Link2 size={10} /> Enlazar a ficha</button>}
+                        {necesitaFicha && <button onClick={() => handleCrearFicha(u)} disabled={creating === u.uid} className="text-[11px] bg-gold/15 text-amber-700 rounded-full px-2 py-0.5 font-semibold inline-flex items-center gap-1"><UserPlus size={10} /> {creating === u.uid ? 'Creando...' : 'Crear ficha nueva'}</button>}
+                        {!necesitaFicha && ROLES_BANDA.includes(u.role) && <button onClick={() => setFichaPicker(u)} className="text-[11px] bg-green-100 text-green-700 rounded-full px-2 py-0.5 font-medium inline-flex items-center gap-1">Con ficha{fichaByUid.get(u.uid) ? `: ${fichaByUid.get(u.uid)!.nombre}` : ''} · cambiar</button>}
                       </div>
                     </div>
                   </div>
@@ -457,12 +462,23 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                     {cols.has('ficha') && (
                     <td className="px-4 py-3">
                       {necesitaFicha ? (
-                        <button onClick={() => handleCrearFicha(u)} disabled={creating === u.uid}
-                          className="text-[11px] bg-gold/15 text-amber-700 hover:bg-gold hover:text-navy rounded-full px-2.5 py-1 font-semibold flex items-center gap-1 transition-colors disabled:opacity-60">
-                          <UserPlus size={11} /> {creating === u.uid ? 'Creando...' : 'Crear ficha'}
-                        </button>
+                        <div className="flex flex-col gap-1 items-start">
+                          <button onClick={() => setFichaPicker(u)}
+                            className="text-[11px] bg-royal/10 text-royal hover:bg-royal hover:text-white rounded-full px-2.5 py-1 font-semibold flex items-center gap-1 transition-colors whitespace-nowrap">
+                            <Link2 size={11} /> Enlazar a ficha existente
+                          </button>
+                          <button onClick={() => handleCrearFicha(u)} disabled={creating === u.uid}
+                            className="text-[11px] bg-gold/15 text-amber-700 hover:bg-gold hover:text-navy rounded-full px-2.5 py-1 font-semibold flex items-center gap-1 transition-colors disabled:opacity-60 whitespace-nowrap">
+                            <UserPlus size={11} /> {creating === u.uid ? 'Creando...' : 'Crear ficha nueva'}
+                          </button>
+                        </div>
                       ) : ROLES_BANDA.includes(u.role) ? (
-                        <span className="text-[11px] bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium">Con ficha</span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="text-[11px] bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-medium">
+                            Con ficha{fichaByUid.get(u.uid) ? `: ${fichaByUid.get(u.uid)!.nombre} ${fichaByUid.get(u.uid)!.apellidos}` : ''}
+                          </span>
+                          <button onClick={() => setFichaPicker(u)} className="text-[10px] text-gray-400 hover:text-royal hover:underline">Enlazar a otra ficha…</button>
+                        </div>
                       ) : <span className="text-xs text-gray-300">—</span>}
                     </td>
                     )}
@@ -514,6 +530,77 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
           onSave={secs => guardarSeccionesMonitor(monitorModal, secs)}
         />
       )}
+
+      {fichaPicker && (
+        <EnlazarFichaModal
+          user={fichaPicker}
+          integrantes={integrantes}
+          enlazando={enlazando}
+          onClose={() => setFichaPicker(null)}
+          onPick={ficha => handleEnlazar(ficha.id, fichaPicker)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── Modal: enlazar una cuenta a una ficha que ya existe ──────────────
+// Resuelve el caso de la misma persona con dos cuentas: se enlaza la
+// segunda cuenta a la ficha de la primera, en vez de crearle otra.
+function EnlazarFichaModal({ user, integrantes, enlazando, onClose, onPick }: {
+  user: UserProfile; integrantes: IntegranteBase[]; enlazando: string | null
+  onClose: () => void; onPick: (ficha: IntegranteBase) => void
+}) {
+  const [q, setQ] = useState('')
+  const nq = norm(q.trim())
+  const lista = integrantes
+    .filter(i => !nq || norm(`${i.nombre} ${i.apellidos} ${i.correo}`).includes(nq))
+    .slice(0, 60)
+
+  return (
+    <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col p-6" onClick={e => e.stopPropagation()}>
+        <h3 className="font-serif font-bold text-navy text-lg mb-1">Enlazar a una ficha existente</h3>
+        <p className="text-sm text-gray-500 mb-4">
+          La cuenta <strong className="text-dark">{user.displayName}</strong> ({user.email}) quedará enlazada a la ficha que elijas.
+          Si es la misma persona que ya entra con otro correo, elige <strong className="text-dark">su ficha de siempre</strong>: ambas cuentas la compartirán.
+        </p>
+        <div className="relative mb-3">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input autoFocus value={q} onChange={e => setQ(e.target.value)} className="input pl-9" placeholder="Buscar ficha por nombre o correo..." />
+        </div>
+        <div className="flex-1 overflow-y-auto -mx-2 px-2">
+          {lista.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-8">Ninguna ficha coincide con la búsqueda</p>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {lista.map(i => {
+                const cuentas = (i.linkedUids ?? []).length
+                const yaEnlazada = (i.linkedUids ?? []).includes(user.uid)
+                return (
+                  <div key={i.id} className="py-2 flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
+                      <p className="text-xs text-gray-400 truncate">
+                        {i.correo || 'sin correo'} · {getSeccion(i.seccion)?.label ?? i.seccion ?? '—'} · {cuentas === 0 ? 'sin cuentas' : `${cuentas} cuenta${cuentas !== 1 ? 's' : ''}`}
+                      </p>
+                    </div>
+                    {yaEnlazada ? (
+                      <span className="text-[11px] bg-green-100 text-green-700 rounded-full px-2.5 py-1 font-semibold shrink-0">Ya enlazada</span>
+                    ) : (
+                      <button onClick={() => onPick(i)} disabled={enlazando === `${i.id}:${user.uid}`}
+                        className="text-[11px] bg-royal text-white hover:bg-royal/90 rounded-full px-3 py-1 font-semibold flex items-center gap-1 transition-colors disabled:opacity-60 shrink-0">
+                        <Link2 size={11} /> {enlazando === `${i.id}:${user.uid}` ? 'Enlazando...' : 'Enlazar'}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+        <button onClick={onClose} className="btn btn-ghost btn-md mt-4 self-end">Cerrar</button>
+      </div>
     </div>
   )
 }
