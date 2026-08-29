@@ -280,7 +280,23 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                           <span className="text-[11px] text-gray-500">Comparte la ficha con todas; los roles no cambian.</span>
                         </div>
                       )
-                      return null
+                      if (ficha) return (
+                        <p className="mt-2 text-[11px] text-green-700 flex items-center gap-1.5">
+                          <Link2 size={12} className="shrink-0" /> Ya comparten la ficha de <strong>{ficha.nombre} {ficha.apellidos}</strong> — no hay nada que unir.
+                        </p>
+                      )
+                      // Ninguna cuenta del grupo tiene ficha: no hay ficha que compartir todavía.
+                      return (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="text-[11px] text-gray-500 flex items-center gap-1.5">
+                            <IdCard size={12} className="shrink-0" /> Ninguna de estas cuentas tiene ficha, por eso no hay una que compartir.
+                          </span>
+                          <button onClick={() => handleCrearFicha(g.cuentas[0])} disabled={creating === g.cuentas[0].uid}
+                            className="text-[11px] bg-white border border-royal/30 text-royal hover:bg-royal hover:text-white rounded-full px-3 py-1 font-semibold flex items-center gap-1 transition-colors disabled:opacity-60">
+                            <UserPlus size={11} /> {creating === g.cuentas[0].uid ? 'Creando...' : `Crear ficha para ${g.cuentas[0].displayName}`}
+                          </button>
+                        </div>
+                      )
                     })()}
                   </div>
                 ))}
