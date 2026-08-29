@@ -75,6 +75,18 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
     finally { setEnlazando(null) }
   }
 
+  // Une un grupo de cuentas duplicadas: enlaza la ficha existente a todas las cuentas que aún no la tienen.
+  const [uniendo, setUniendo] = useState<string | null>(null)
+  const handleUnirFicha = async (ficha: IntegranteBase, cuentas: UserProfile[]) => {
+    setUniendo(ficha.id)
+    try {
+      for (const u of cuentas) await linkIntegranteToUser(ficha.id, u.uid, u.email)
+      toast.success(`Ficha de ${ficha.nombre} enlazada a ${cuentas.length} cuenta${cuentas.length !== 1 ? 's' : ''} más`)
+      fetchAll()
+    } catch { toast.error('No se pudieron unir las cuentas') }
+    finally { setUniendo(null) }
+  }
+
   const guardarSeccionesMonitor = async (u: UserProfile, secciones: string[]) => {
     try {
       await setSeccionesMonitor(u.uid, secciones)
@@ -152,6 +164,23 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
     return pares
   }, [users, integrantes])
 
+  // Mapa cuenta → ficha (primera ficha enlazada a ese uid), para el botón "Unir"
+  const fichaByUid = useMemo(() => {
+    const m = new Map<string, IntegranteBase>()
+    for (const i of integrantes) for (const uid of (i.linkedUids ?? [])) if (!m.has(uid)) m.set(uid, i)
+    return m
+  }, [integrantes])
+
+  // Para un grupo de duplicados: ficha a compartir, cuentas a las que les falta y si hay fichas distintas.
+  const unifyInfo = (cuentas: UserProfile[]) => {
+    const fichas = new Map<string, IntegranteBase>()
+    for (const u of cuentas) { const f = fichaByUid.get(u.uid); if (f) fichas.set(f.id, f) }
+    if (fichas.size > 1) return { ficha: null as IntegranteBase | null, faltantes: [] as UserProfile[], varias: true }
+    const ficha = fichas.size === 1 ? [...fichas.values()][0] : null
+    const faltantes = ficha ? cuentas.filter(u => !(ficha.linkedUids ?? []).includes(u.uid)) : []
+    return { ficha, faltantes, varias: false }
+  }
+
   const q = norm(search.trim())
   const filtered = users.filter(u => {
     const matchesSearch = !q || norm(`${u.displayName} ${u.email}`).includes(q)
@@ -206,7 +235,7 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
           {showCoinc && (
             <>
               <p className="text-xs text-gray-500 mb-3 max-w-3xl">
-                Cuentas que comparten <strong>el mismo teléfono</strong> o <strong>el mismo nombre</strong> (probablemente la misma persona con correos distintos). Revísalas: puedes dejar una principal y cambiar el rol de las demás a <strong>Visitante</strong>, o enlazarlas a la misma ficha desde &ldquo;Integrantes&rdquo;. <span className="text-gray-400">(Las cuentas no se borran; solo se ajusta su rol.)</span>
+                Cuentas que comparten <strong>el mismo teléfono</strong> o <strong>el mismo nombre</strong> (probablemente la misma persona con correos distintos). Usa <strong>&ldquo;Unir&rdquo;</strong> para que todas compartan la misma ficha (entre con el correo que entre, verá sus datos). Si quieres, deja una principal y baja el rol de las demás a <strong>Visitante</strong>. <span className="text-gray-400">(Las cuentas no se borran ni se fusionan en Firebase; solo se comparte la ficha.)</span>
               </p>
               <div className="space-y-3">
                 {coincidencias.map((g, gi) => (
@@ -235,6 +264,24 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
                         </div>
                       ))}
                     </div>
+                    {(() => {
+                      const { ficha, faltantes, varias } = unifyInfo(g.cuentas)
+                      if (varias) return (
+                        <p className="mt-2 text-[11px] text-orange-700 flex items-center gap-1.5">
+                          <AlertTriangle size={12} className="shrink-0" /> Estas cuentas tienen <strong>fichas distintas</strong>. Fusiona primero las fichas desde &ldquo;Integrantes&rdquo;.
+                        </p>
+                      )
+                      if (ficha && faltantes.length > 0) return (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <button onClick={() => handleUnirFicha(ficha, faltantes)} disabled={uniendo === ficha.id}
+                            className="text-[11px] bg-royal text-white hover:bg-royal/90 rounded-full px-3 py-1.5 font-semibold flex items-center gap-1 transition-colors disabled:opacity-60">
+                            <Link2 size={12} /> {uniendo === ficha.id ? 'Uniendo...' : `Unir a la ficha de ${ficha.nombre} (${faltantes.length} cuenta${faltantes.length !== 1 ? 's' : ''})`}
+                          </button>
+                          <span className="text-[11px] text-gray-500">Comparte la ficha con todas; los roles no cambian.</span>
+                        </div>
+                      )
+                      return null
+                    })()}
                   </div>
                 ))}
               </div>
