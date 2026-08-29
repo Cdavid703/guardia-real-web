@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import Image from 'next/image'
-import { Users, ShieldCheck, UserPlus, Search, ChevronLeft, ChevronRight, Eye, EyeOff, IdCard, AlertTriangle, Phone, ChevronDown } from 'lucide-react'
+import { Users, ShieldCheck, UserPlus, Search, ChevronLeft, ChevronRight, Eye, EyeOff, IdCard, AlertTriangle, Phone, ChevronDown, Link2 } from 'lucide-react'
 
 const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 // Teléfono normalizado a dígitos (sin +57 / ceros): clave para detectar repetidos
@@ -13,7 +13,7 @@ const telKey = (s?: string) => {
 // Nombre normalizado (sin acentos, minúsculas, espacios colapsados)
 const nameKey = (s?: string) => norm(s ?? '').replace(/\s+/g, ' ').trim()
 const titleCase = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase())
-import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante, setRolFicha, setSeccionesMonitor, type IntegranteBase } from '@/lib/firebase'
+import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante, setRolFicha, setSeccionesMonitor, linkIntegranteToUser, type IntegranteBase } from '@/lib/firebase'
 import { getSeccion, SECCIONES_LIST } from '@/lib/secciones'
 import { cn, getRoleLabel, getRoleBadgeColor, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -68,6 +68,17 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
   const handleRolFicha = async (id: string, rol: UserRole) => {
     try { await setRolFicha(id, rol); setIntegrantes(prev => prev.map(i => i.id === id ? { ...i, rol } : i)); toast.success(`Rol de ficha: "${getRoleLabel(rol)}"`) }
     catch { toast.error('Error al actualizar el rol de la ficha') }
+  }
+
+  const [enlazando, setEnlazando] = useState<string | null>(null)
+  const handleEnlazar = async (fichaId: string, u: UserProfile) => {
+    setEnlazando(`${fichaId}:${u.uid}`)
+    try {
+      await linkIntegranteToUser(fichaId, u.uid, u.email)
+      toast.success(`Cuenta de ${u.displayName} enlazada a la ficha`)
+      fetchAll()
+    } catch { toast.error('No se pudo enlazar') }
+    finally { setEnlazando(null) }
   }
 
   const guardarSeccionesMonitor = async (u: UserProfile, secciones: string[]) => {
@@ -129,6 +140,23 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
     return grupos.sort((a, b) => b.cuentas.length - a.cuentas.length)
   }, [users])
   const cuentasRepetidas = coincidencias.reduce((n, g) => n + g.cuentas.length, 0)
+
+  // ── Cruce cuenta ↔ ficha por teléfono (misma persona sin enlazar) ──
+  const coincCuentaFicha = useMemo(() => {
+    const fichasPorTel = new Map<string, IntegranteBase[]>()
+    for (const i of integrantes) {
+      const t = telKey(i.whatsapp)
+      if (t) { const g = fichasPorTel.get(t) ?? []; g.push(i); fichasPorTel.set(t, g) }
+    }
+    const pares: { cuenta: UserProfile; fichas: IntegranteBase[] }[] = []
+    for (const u of users) {
+      const t = telKey(u.phone)
+      if (!t) continue
+      const fichas = (fichasPorTel.get(t) ?? []).filter(i => !(i.linkedUids ?? []).includes(u.uid))
+      if (fichas.length > 0) pares.push({ cuenta: u, fichas })
+    }
+    return pares
+  }, [users, integrantes])
 
   const q = norm(search.trim())
   const filtered = users.filter(u => {
@@ -222,6 +250,48 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* Cuenta ↔ ficha con el mismo teléfono (misma persona sin enlazar) */}
+      {coincCuentaFicha.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Link2 size={18} className="text-royal shrink-0" />
+            <h3 className="font-display text-navy text-lg font-bold uppercase tracking-wider">Cuenta y ficha con el mismo teléfono</h3>
+            <span className="badge bg-royal/10 text-royal text-xs">{coincCuentaFicha.length}</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-3 max-w-3xl">
+            El teléfono de estas <strong>cuentas</strong> coincide con el WhatsApp de una <strong>ficha</strong> que aún no está enlazada a ellas — probablemente es la misma persona. Enlázalas para unir cuenta y ficha.
+          </p>
+          <div className="space-y-2">
+            {coincCuentaFicha.map(({ cuenta: u, fichas }) => (
+              <div key={u.uid} className="bg-sky-50/50 border border-sky-100 rounded-xl p-3">
+                <div className="flex items-center gap-2.5 mb-2">
+                  {u.photoURL ? <Image src={u.photoURL} alt={u.displayName} width={30} height={30} className="rounded-full shrink-0" /> : <div className="w-8 h-8 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center shrink-0">{u.displayName[0]?.toUpperCase()}</div>}
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-dark truncate">{u.displayName} <span className="badge bg-white text-gray-500 text-[10px] border border-gray-200">{u.phone}</span></p>
+                    <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                  </div>
+                </div>
+                <div className="divide-y divide-sky-100 pl-2 border-l-2 border-sky-200">
+                  {fichas.map(i => (
+                    <div key={i.id} className="py-2 flex items-center gap-2">
+                      <IdCard size={14} className="text-royal shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-dark truncate">{i.nombre} {i.apellidos}</p>
+                        <p className="text-xs text-gray-400 truncate">{i.correo || 'sin correo'} · {getSeccion(i.seccion)?.label ?? i.seccion ?? '—'} · WA {i.whatsapp}</p>
+                      </div>
+                      <button onClick={() => handleEnlazar(i.id, u)} disabled={enlazando === `${i.id}:${u.uid}`}
+                        className="text-[11px] bg-royal/10 text-royal hover:bg-royal hover:text-white rounded-full px-3 py-1 font-semibold flex items-center gap-1 transition-colors disabled:opacity-60 shrink-0">
+                        <Link2 size={11} /> {enlazando === `${i.id}:${u.uid}` ? 'Enlazando...' : 'Enlazar'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
