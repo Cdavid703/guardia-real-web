@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { IdCard, Search, Users } from 'lucide-react'
+import { IdCard, Search, Users, AlertTriangle } from 'lucide-react'
 import { getAllIntegrantes, setRolFicha, type IntegranteBase } from '@/lib/firebase'
 import { getSeccion } from '@/lib/secciones'
 import { getRoleLabel } from '@/lib/utils'
@@ -22,12 +22,14 @@ const ROLES_FICHA: { value: UserRole; label: string }[] = [
 export default function FichasSinCuentaPanel() {
   const [integrantes, setIntegrantes] = useState<IntegranteBase[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [search, setSearch] = useState('')
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
+    setError(false)
     try { setIntegrantes(await getAllIntegrantes()) }
-    catch { toast.error('Error al cargar las fichas') }
+    catch { setError(true); toast.error('Error al cargar las fichas') }
     finally { setLoading(false) }
   }, [])
   useEffect(() => { fetchAll() }, [fetchAll])
@@ -63,10 +65,17 @@ export default function FichasSinCuentaPanel() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16"><div className="w-7 h-7 border-2 border-royal/30 border-t-royal rounded-full animate-spin" /></div>
+        ) : error ? (
+          <div className="text-center py-16 text-gray-500">
+            <AlertTriangle size={36} className="mx-auto mb-3 text-orange-400" />
+            <p className="text-sm mb-3">No se pudieron cargar las fichas.</p>
+            <button onClick={fetchAll} className="text-xs bg-royal text-white rounded-full px-4 py-1.5 font-semibold hover:bg-royal/90">Reintentar</button>
+          </div>
         ) : fichasSinCuenta.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <Users size={36} className="mx-auto mb-3 opacity-30" />
             <p className="text-sm">{q ? 'Ninguna ficha sin cuenta coincide con la búsqueda' : 'No hay fichas sin cuenta — todas están enlazadas 🎉'}</p>
+            {!q && <p className="text-xs mt-1 text-gray-300">Se revisaron {integrantes.length} fichas.</p>}
           </div>
         ) : (
           <div className="divide-y divide-gray-100">

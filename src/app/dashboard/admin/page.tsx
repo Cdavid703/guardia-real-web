@@ -55,6 +55,7 @@ function AdminHub() {
       {tab === 'integrantes' && profile && <IntegrantesPanel uid={profile.uid} />}
       {tab === 'solicitudes' && profile && <SolicitudesPanel uid={profile.uid} />}
       {tab === 'cuentas'     && profile && <CuentasRolesPanel uid={profile.uid} />}
+      {tab === 'sincuenta'   && profile && <FichasSinCuentaPanel />}
     </div>
   )
 }
