@@ -1,10 +1,18 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import Image from 'next/image'
-import { Users, ShieldCheck, UserPlus, Search, ChevronLeft, ChevronRight, Eye, EyeOff, IdCard } from 'lucide-react'
+import { Users, ShieldCheck, UserPlus, Search, ChevronLeft, ChevronRight, Eye, EyeOff, IdCard, AlertTriangle, Phone, ChevronDown } from 'lucide-react'
 
 const norm = (s: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+// Teléfono normalizado a dígitos (sin +57 / ceros): clave para detectar repetidos
+const telKey = (s?: string) => {
+  const d = (s ?? '').replace(/\D/g, '').replace(/^57/, '').replace(/^0+/, '')
+  return d.length >= 7 ? d.slice(-10) : ''
+}
+// Nombre normalizado (sin acentos, minúsculas, espacios colapsados)
+const nameKey = (s?: string) => norm(s ?? '').replace(/\s+/g, ' ').trim()
+const titleCase = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase())
 import { getAllUsers, getAllIntegrantes, updateUserRole, updateUserProfile, upsertIntegrante, setRolFicha, setSeccionesMonitor, type IntegranteBase } from '@/lib/firebase'
 import { getSeccion, SECCIONES_LIST } from '@/lib/secciones'
 import { cn, getRoleLabel, getRoleBadgeColor, formatDate } from '@/lib/utils'
@@ -102,6 +110,26 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
     finally { setCreating(null) }
   }
 
+  // ── Detector de cuentas duplicadas (mismo teléfono o mismo nombre) ──
+  const [showCoinc, setShowCoinc] = useState(true)
+  const coincidencias = useMemo(() => {
+    const byTel = new Map<string, UserProfile[]>()
+    const byName = new Map<string, UserProfile[]>()
+    for (const u of users) {
+      const t = telKey(u.phone)
+      if (t) { const g = byTel.get(t) ?? []; g.push(u); byTel.set(t, g) }
+      const n = nameKey(u.displayName)
+      if (n && n.length >= 5) { const g = byName.get(n) ?? []; g.push(u); byName.set(n, g) }
+    }
+    const sig = (cs: UserProfile[]) => cs.map(c => c.uid).sort().join('|')
+    const grupos: { tipo: 'tel' | 'nombre'; clave: string; cuentas: UserProfile[] }[] = []
+    const vistos = new Set<string>()
+    for (const [clave, cuentas] of byTel) if (cuentas.length > 1) { grupos.push({ tipo: 'tel', clave, cuentas }); vistos.add(sig(cuentas)) }
+    for (const [clave, cuentas] of byName) if (cuentas.length > 1 && !vistos.has(sig(cuentas))) grupos.push({ tipo: 'nombre', clave, cuentas })
+    return grupos.sort((a, b) => b.cuentas.length - a.cuentas.length)
+  }, [users])
+  const cuentasRepetidas = coincidencias.reduce((n, g) => n + g.cuentas.length, 0)
+
   const q = norm(search.trim())
   const filtered = users.filter(u => {
     const matchesSearch = !q || norm(`${u.displayName} ${u.email}`).includes(q)
@@ -145,6 +173,55 @@ export default function CuentasRolesPanel({ uid }: { uid: string }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Posibles cuentas duplicadas (mismo teléfono o mismo nombre) */}
+      {coincidencias.length > 0 && (
+        <div className="mb-6">
+          <button onClick={() => setShowCoinc(s => !s)} className="w-full flex items-center gap-2 mb-2 text-left">
+            <AlertTriangle size={18} className="text-orange-500 shrink-0" />
+            <h3 className="font-display text-navy text-lg font-bold uppercase tracking-wider">Posibles cuentas duplicadas</h3>
+            <span className="badge bg-orange-100 text-orange-700 text-xs">{coincidencias.length} grupo{coincidencias.length !== 1 ? 's' : ''} · {cuentasRepetidas} cuentas</span>
+            <ChevronDown size={16} className={cn('text-gray-400 ml-auto transition-transform', showCoinc ? 'rotate-180' : '')} />
+          </button>
+          {showCoinc && (
+            <>
+              <p className="text-xs text-gray-500 mb-3 max-w-3xl">
+                Cuentas que comparten <strong>el mismo teléfono</strong> o <strong>el mismo nombre</strong> (probablemente la misma persona con correos distintos). Revísalas: puedes dejar una principal y cambiar el rol de las demás a <strong>Visitante</strong>, o enlazarlas a la misma ficha desde &ldquo;Integrantes&rdquo;. <span className="text-gray-400">(Las cuentas no se borran; solo se ajusta su rol.)</span>
+              </p>
+              <div className="space-y-3">
+                {coincidencias.map((g, gi) => (
+                  <div key={gi} className="bg-orange-50/50 border border-orange-100 rounded-xl p-3">
+                    <div className="flex items-center gap-1.5 mb-2 text-xs font-semibold text-orange-800">
+                      {g.tipo === 'tel' ? <Phone size={13} /> : <Users size={13} />}
+                      {g.tipo === 'tel' ? <>Mismo teléfono: <span className="font-bold">+57 {g.clave}</span></> : <>Mismo nombre: <span className="font-bold">{titleCase(g.clave)}</span></>}
+                      <span className="badge bg-orange-100 text-orange-700 text-[10px]">{g.cuentas.length} cuentas</span>
+                    </div>
+                    <div className="divide-y divide-orange-100">
+                      {g.cuentas.map(u => (
+                        <div key={u.uid} className="py-2 flex flex-col sm:flex-row sm:items-center gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            {u.photoURL ? <Image src={u.photoURL} alt={u.displayName} width={32} height={32} className="rounded-full shrink-0" /> : <div className="w-8 h-8 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center shrink-0">{u.displayName[0]?.toUpperCase()}</div>}
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-dark truncate">{u.displayName} {linkedUids.has(u.uid) && <span className="text-[10px] bg-green-100 text-green-700 rounded-full px-1.5 py-0.5 font-medium align-middle">con ficha</span>}</p>
+                              <p className="text-xs text-gray-500 truncate">{u.email}{u.phone ? ` · ${u.phone}` : ''} · <span className="text-gray-400">{formatDate(u.createdAt, { year: 'numeric', month: 'short', day: 'numeric' })}</span></p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={cn('badge text-xs', getRoleBadgeColor(u.role))}>{getRoleLabel(u.role)}</span>
+                            <select value={u.role} onChange={e => handleRole(u.uid, e.target.value as UserRole)} className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-dark focus:outline-none focus:border-royal cursor-pointer">
+                              {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
